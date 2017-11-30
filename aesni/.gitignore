@@ -1,0 +1,5 @@
+test/*
+!test/*.c
+PQCsignKAT_*.rsp
+PQCsignKAT_*.req
+PQCgenKAT_sign
