@@ -331,7 +331,7 @@ static void keccak_absorb(uint64_t *s, unsigned int r,
                           unsigned char p)
 {
     unsigned long long i;
-    unsigned char t[200];
+    unsigned char t[r];
 
     while (mlen >= r) {
         for (i = 0; i < r / 8; ++i) {

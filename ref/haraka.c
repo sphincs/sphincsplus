@@ -145,7 +145,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
                             unsigned char p)
 {
     unsigned long long i;
-    unsigned char t[64];
+    unsigned char t[r];
 
     while (mlen >= r) {
         // XOR block to state
