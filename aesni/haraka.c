@@ -50,10 +50,10 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
   s1 = _mm_unpacklo_epi32(s1, tmp);
 
 #define TRUNCSTORE(out, s0, s1, s2, s3) \
-  *(u64*)(out) = (u64*)(s0)[1]; \
-  *(u64*)(out + 8) = (u64*)(s1)[1]; \
-  *(u64*)(out + 16) = (u64*)(s2)[0]; \
-  *(u64*)(out + 24) = (u64*)(s3)[0];
+  _mm_storeu_si128((u128 *)out, \
+                   (__m128i)_mm_shuffle_pd((__m128d)s0, (__m128d)s1, 3)); \
+  _mm_storeu_si128((u128 *)(out + 16), \
+                   (__m128i)_mm_shuffle_pd((__m128d)s2, (__m128d)s3, 0));
 
 u128 rc[40];
 u128 rc_sseed[40];
