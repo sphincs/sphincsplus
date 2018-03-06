@@ -76,6 +76,15 @@ int main()
             printf("    output message as expected.\n");
         }
 
+        /* Test if signature is valid when validating in-place. */
+        if (crypto_sign_open(sm, &mlen, sm, smlen, pk)) {
+            printf("  X in-place verification failed!\n");
+            ret = -1;
+        }
+        else {
+            printf("    in-place verification succeeded.\n");
+        }
+
         /* Test if flipping bits invalidates the signature (it should). */
 
         /* Flip the first bit of the message. Should invalidate. */
