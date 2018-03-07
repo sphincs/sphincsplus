@@ -233,7 +233,7 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
         return -1;
     }
 
-    /* If verification was successful, copy the message from the signature. */
+    /* If verification was successful, move the message to the right place. */
     memmove(m, m + SPX_BYTES, *mlen);
 
     return 0;
