@@ -6,3 +6,4 @@ compiler:
 script:
   - make -C ref test
   - make -C haraka-aesni test
+  # - make -C shake256-avx2 test  # cannot currently test this on TravisCI
