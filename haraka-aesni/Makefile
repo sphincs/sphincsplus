@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer
 LDLIBS += -lcrypto
 HASH_C = hash_haraka.c
 
