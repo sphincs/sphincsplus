@@ -22,15 +22,21 @@ TESTS = test/wots \
 		test/fors \
 		test/spx \
 
-.PHONY: clean test
+BENCHMARK = test/benchmark
+
+.PHONY: clean test benchmark
 
 default: PQCgenKAT_sign
 
-all: PQCgenKAT_sign tests
+all: PQCgenKAT_sign tests benchmarks
 
 tests: $(TESTS)
 
 test: $(TESTS:=.exec)
+
+benchmarks: $(BENCHMARK)
+
+benchmark: $(BENCHMARK:=.exec)
 
 PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< $(LDLIBS)
@@ -43,6 +49,7 @@ test/%.exec: test/%
 
 clean:
 	-$(RM) $(TESTS)
+	-$(RM) $(BENCHMARK)
 	-$(RM) PQCgenKAT_sign
 	-$(RM) PQCsignKAT_*.rsp
 	-$(RM) PQCsignKAT_*.req
