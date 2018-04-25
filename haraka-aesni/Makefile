@@ -1,5 +1,6 @@
 CC = /usr/bin/gcc
 CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer
+LDLIBS += -lcrypto
 HASH_C = hash_haraka.c
 
 SOURCES =          $(HASH_C) hash_address.c randombytes.c wots.c utils.c fors.c sign.c haraka.c
