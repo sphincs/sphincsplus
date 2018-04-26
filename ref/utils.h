@@ -20,7 +20,7 @@ unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen);
  * Expects address to be complete other than the tree_height and tree_index.
  */
 void compute_root(unsigned char *root, const unsigned char *leaf,
-                  unsigned long leafidx, uint32_t idx_offset,
+                  uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
                   const unsigned char *pub_seed, uint32_t addr[8]);
 

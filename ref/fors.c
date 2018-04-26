@@ -24,15 +24,15 @@ static void fors_gen_leaf(unsigned char *leaf, const unsigned char *sk_seed,
                           const unsigned char *pub_seed,
                           uint32_t addr_idx, const uint32_t fors_tree_addr[8])
 {
-    uint32_t fors_leaf_adr[8] = {0};
+    uint32_t fors_leaf_addr[8] = {0};
 
-    /* Only copy the parts that must be kept in fors_leaf_adr. */
-    copy_keypair_addr(fors_leaf_adr, fors_tree_addr);
-    set_type(fors_leaf_adr, SPX_ADDR_TYPE_FORSTREE);
-    set_tree_index(fors_leaf_adr, addr_idx);
+    /* Only copy the parts that must be kept in fors_leaf_addr. */
+    copy_keypair_addr(fors_leaf_addr, fors_tree_addr);
+    set_type(fors_leaf_addr, SPX_ADDR_TYPE_FORSTREE);
+    set_tree_index(fors_leaf_addr, addr_idx);
 
-    fors_gen_sk(leaf, sk_seed, fors_leaf_adr);
-    fors_sk_to_leaf(leaf, leaf, pub_seed, fors_leaf_adr);
+    fors_gen_sk(leaf, sk_seed, fors_leaf_addr);
+    fors_sk_to_leaf(leaf, leaf, pub_seed, fors_leaf_addr);
 }
 
 /**

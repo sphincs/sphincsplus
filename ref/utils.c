@@ -39,16 +39,16 @@ unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen)
  * Expects address to be complete other than the tree_height and tree_index.
  */
 void compute_root(unsigned char *root, const unsigned char *leaf,
-                  unsigned long leafidx, uint32_t idx_offset,
+                  uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
                   const unsigned char *pub_seed, uint32_t addr[8])
 {
     uint32_t i;
     unsigned char buffer[2 * SPX_N];
 
-    /* If leafidx is odd (last bit = 1), current path element is a right child
+    /* If leaf_idx is odd (last bit = 1), current path element is a right child
        and auth_path has to go left. Otherwise it is the other way around. */
-    if (leafidx & 1) {
+    if (leaf_idx & 1) {
         memcpy(buffer + SPX_N, leaf, SPX_N);
         memcpy(buffer, auth_path, SPX_N);
     }
@@ -59,14 +59,14 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
     auth_path += SPX_N;
 
     for (i = 0; i < tree_height - 1; i++) {
-        leafidx >>= 1;
+        leaf_idx >>= 1;
         idx_offset >>= 1;
         /* Set the address of the node we're creating. */
         set_tree_height(addr, i + 1);
-        set_tree_index(addr, leafidx + idx_offset);
+        set_tree_index(addr, leaf_idx + idx_offset);
 
         /* Pick the right or left neighbor, depending on parity of the node. */
-        if (leafidx & 1) {
+        if (leaf_idx & 1) {
             thash(buffer + SPX_N, buffer, 2, pub_seed, addr);
             memcpy(buffer, auth_path, SPX_N);
         }
@@ -78,10 +78,10 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
     }
 
     /* The last iteration is exceptional; we do not copy an auth_path node. */
-    leafidx >>= 1;
+    leaf_idx >>= 1;
     idx_offset >>= 1;
     set_tree_height(addr, tree_height);
-    set_tree_index(addr, leafidx + idx_offset);
+    set_tree_index(addr, leaf_idx + idx_offset);
     thash(root, buffer, 2, pub_seed, addr);
 }
 
