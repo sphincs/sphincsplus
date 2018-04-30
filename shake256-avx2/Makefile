@@ -11,6 +11,7 @@ DET_HEADERS = $(HEADERS:randombytes.%=rng.%)
 TESTS = test/wots \
 		test/fors \
 		test/spx \
+		test/thashx4 \
 
 BENCHMARK = test/benchmark
 
