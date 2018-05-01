@@ -1,1 +1,1 @@
-../ref/wots.c
+../shake256-avx2/wots.c
