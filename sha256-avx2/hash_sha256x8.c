@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hash.h"
+#include "sha256avx.h"
 
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
@@ -32,14 +33,10 @@ static void sha256x8(unsigned char *out0,
                      const unsigned char *in6,
                      const unsigned char *in7, unsigned long long inlen)
 {
-    SHA256(in0, inlen, out0);
-    SHA256(in1, inlen, out1);
-    SHA256(in2, inlen, out2);
-    SHA256(in3, inlen, out3);
-    SHA256(in4, inlen, out4);
-    SHA256(in5, inlen, out5);
-    SHA256(in6, inlen, out6);
-    SHA256(in7, inlen, out7);
+    sha256ctx ctx;
+    sha256_init8x(&ctx);
+    sha256_update8x(&ctx, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
+    sha256_final8x(&ctx, out0, out1, out2, out3, out4, out5, out6, out7);
 }
 
 static void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
