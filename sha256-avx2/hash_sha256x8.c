@@ -15,7 +15,7 @@
     #error Linking against SHA-256 with N larger than 32 bytes is not supported
 #endif
 
-/* This is a temporary placeholder while we work on x8 parallel SHA256 */
+/* This provides a wrapper around the internals of 8x parallel SHA256 */
 static void sha256x8(unsigned char *out0,
                      unsigned char *out1,
                      unsigned char *out2,
