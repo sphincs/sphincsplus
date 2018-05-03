@@ -5,6 +5,7 @@
 #include "params.h"
 #include "hashx4.h"
 #include "haraka.h"
+#include "harakax4.h"
 
 static void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
 {
