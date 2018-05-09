@@ -76,7 +76,7 @@ static void display_result(double result, unsigned long long *l, size_t llen, un
     result /= NTESTS;
     delta(l, NTESTS + 1);
     med = median(l, llen);
-    printf("avg. %10.2lf us (%1.2lf sec); median ", result, result / 1e6);
+    printf("avg. %11.2lf us (%2.2lf sec); median ", result, result / 1e6);
     printfalignedcomma(med, 12);
     printf(" cycles,  %5llux: ", mul);
     printfalignedcomma(mul*med, 12);
