@@ -5,12 +5,13 @@ from subprocess import run, DEVNULL
 import sys
 import itertools
 
-implementations = [('haraka-aesni', ['haraka']),
-                   ('ref', ['haraka', 'shake256', 'sha256']),
+implementations = [
+                   ('ref', ['shake256', 'sha256', 'haraka']),
+                   ('haraka-aesni', ['haraka']),
                    ('shake256-avx2', ['shake256']),
                    ]
 
-options = ["s", "f"]
+options = ["f", "s"]
 sizes = [128, 192, 256]
 
 PARAMDIR = "../ref/params/"  # relative to an implementation directory
