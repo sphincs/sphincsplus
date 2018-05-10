@@ -58,27 +58,26 @@ void sha256_update8x(sha256ctx *ctx,
                      const unsigned char *d7,
                      unsigned long long len) 
 {
-    unsigned int i;
+    unsigned long long i = 0;
 
-    for (i = 0; i < len; ++i) {
-        // Load message into vectors
-        // TODO: load larger chunks whenever possible?
-        ctx->msgblocks[64*0 + ctx->datalen] = d0[i];
-        ctx->msgblocks[64*1 + ctx->datalen] = d1[i];
-        ctx->msgblocks[64*2 + ctx->datalen] = d2[i];
-        ctx->msgblocks[64*3 + ctx->datalen] = d3[i];
-        ctx->msgblocks[64*4 + ctx->datalen] = d4[i];
-        ctx->msgblocks[64*5 + ctx->datalen] = d5[i];
-        ctx->msgblocks[64*6 + ctx->datalen] = d6[i];
-        ctx->msgblocks[64*7 + ctx->datalen] = d7[i];
-        ctx->datalen++;
+    while(i < len) {
+        int bytes_to_copy = (len - i) > 64 ? 64 : (len - i);
+        memcpy(&ctx->msgblocks[64*0], d0 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*1], d1 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*2], d2 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*3], d3 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*4], d4 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*5], d5 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*6], d6 + i, bytes_to_copy);
+        memcpy(&ctx->msgblocks[64*7], d7 + i, bytes_to_copy);
+        ctx->datalen += bytes_to_copy;
+        i += bytes_to_copy;
         if (ctx->datalen == 64) {
             sha256_transform8x(ctx, ctx->msgblocks);
             ctx->msglen += 512;
             ctx->datalen = 0;
-        }
+        }        
     }
-
 }
 
 void sha256_final8x(sha256ctx *ctx,
