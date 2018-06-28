@@ -175,6 +175,14 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
     set_type(tree_addr, SPX_ADDR_TYPE_HASHTREE);
     set_type(wots_pk_addr, SPX_ADDR_TYPE_WOTSPK);
 
+    /* The API caller does not necessarily know what size a signature should be
+       but SPHINCS+ signatures are always exactly SPX_BYTES. */
+    if (smlen < SPX_BYTES) {
+        memset(m, 0, smlen);
+        *mlen = 0;
+        return -1;
+    }
+
     *mlen = smlen - SPX_BYTES;
 
     /* Put the message all the way at the end of the m buffer, so that we can
@@ -228,7 +236,7 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
     /* Check if the root node equals the root node in the public key. */
     if (memcmp(root, pub_root, SPX_N)) {
         /* If not, zero the message */
-        memset(m, 0, *mlen);
+        memset(m, 0, smlen);
         *mlen = 0;
         return -1;
     }
