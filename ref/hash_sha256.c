@@ -112,7 +112,7 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
         tmp[i] ^= 0x5c;
     }
 
-    SHA256(tmp, SPX_SHA256_BLOCK_BYTES, outbuf);
+    SHA256(tmp, SPX_SHA256_BLOCK_BYTES + SPX_SHA256_OUTPUT_BYTES, outbuf);
 
     memcpy(R, outbuf, SPX_N);
 }
