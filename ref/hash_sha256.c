@@ -64,17 +64,13 @@ void initialize_hash_function(const unsigned char *pub_seed,
 void prf_addr(unsigned char *out, const unsigned char *key,
               const uint32_t addr[8])
 {
-    unsigned char buf[SPX_SHA256_BLOCK_BYTES + SPX_ADDR_BYTES];
+    unsigned char buf[SPX_N + SPX_ADDR_BYTES];
     unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
-    /* We need to pad out the first block so that the key and the input are in
-       separate compression function calls */
     memcpy(buf, key, SPX_N);
-    memset(buf + SPX_N, 0, SPX_SHA256_BLOCK_BYTES - SPX_N);
+    addr_to_bytes(buf + SPX_N, addr);
 
-    addr_to_bytes(buf + SPX_SHA256_BLOCK_BYTES, addr);
-
-    SHA256(buf, SPX_SHA256_BLOCK_BYTES + SPX_ADDR_BYTES, outbuf);
+    SHA256(buf, SPX_N + SPX_ADDR_BYTES, outbuf);
     memcpy(out, outbuf, SPX_N);
 }
 
