@@ -110,7 +110,7 @@ void sha256_final8x(sha256ctx *ctx,
             }
         }
         sha256_transform8x(ctx, ctx->msgblocks);
-        memset(ctx->msgblocks, 0, 8 * 56);
+        memset(ctx->msgblocks, 0, 8 * 64);
     }
 
     // Add length of the message to each block

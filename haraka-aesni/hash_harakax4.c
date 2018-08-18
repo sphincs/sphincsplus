@@ -89,6 +89,8 @@ void thashx4(unsigned char *out0,
 
         haraka256x4(outbuf, buf_tmp);
 
+        memset(buf_tmp, 0, 64 * 4);
+
         memcpy(buf_tmp,       buf0, SPX_ADDR_BYTES + SPX_N);
         memcpy(buf_tmp + 64,  buf1, SPX_ADDR_BYTES + SPX_N);
         memcpy(buf_tmp + 128, buf2, SPX_ADDR_BYTES + SPX_N);
