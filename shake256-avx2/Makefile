@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer -flto
 HASH_C = hash_shake256.c
 
 SOURCES =          $(HASH_C) hash_shake256x4.c hash_address.c randombytes.c wots.c utils.c utilsx4.c fors.c sign.c fips202.c fips202x4.c keccak4x/KeccakP-1600-times4-SIMD256.o

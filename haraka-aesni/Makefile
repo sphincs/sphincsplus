@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer -flto
 
 SOURCES =          hash_haraka.c hash_harakax4.c hash_address.c randombytes.c wots.c utils.c utilsx4.c fors.c sign.c haraka.c
 HEADERS = params.h hash.h        hashx4.h        hash_address.h randombytes.h wots.h utils.h utilsx4.h fors.h api.h haraka.h harakax4.h

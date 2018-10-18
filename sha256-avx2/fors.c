@@ -136,7 +136,7 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
     unsigned char sigbufx8[8 * SPX_N * (1 + SPX_FORS_HEIGHT)];
     uint32_t fors_tree_addrx8[8*8] = {0};
     uint32_t fors_pk_addr[8] = {0};
-    uint32_t idx_offset[8];
+    uint32_t idx_offset[8] = {0};
     unsigned int i, j;
 
     for (j = 0; j < 8; j++) {

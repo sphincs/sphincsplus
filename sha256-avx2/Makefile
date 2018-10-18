@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -g -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer
+CFLAGS = -g -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer -flto
 HASH_C = hash_sha256.c
 LDLIBS += -lcrypto
 
