@@ -5,7 +5,7 @@
 #include "hash.h"
 #include "hashx4.h"
 #include "wots.h"
-#include "hash_address.h"
+#include "address.h"
 #include "params.h"
 
 // TODO clarify address expectations, and make them more uniform.

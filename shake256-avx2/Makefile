@@ -2,8 +2,8 @@ CC = /usr/bin/gcc
 CFLAGS = -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer -flto
 HASH_C = hash_shake256.c
 
-SOURCES =          $(HASH_C) hash_shake256x4.c hash_address.c randombytes.c wots.c utils.c utilsx4.c fors.c sign.c fips202.c fips202x4.c keccak4x/KeccakP-1600-times4-SIMD256.o
-HEADERS = params.h hash.h    hashx4.h          hash_address.h randombytes.h wots.h utils.h utilsx4.h fors.h api.h fips202.h fips202x4.h
+SOURCES =          $(HASH_C) hash_shake256x4.c address.c randombytes.c wots.c utils.c utilsx4.c fors.c sign.c fips202.c fips202x4.c keccak4x/KeccakP-1600-times4-SIMD256.o
+HEADERS = params.h hash.h    hashx4.h          address.h randombytes.h wots.h utils.h utilsx4.h fors.h api.h fips202.h fips202x4.h
 
 DET_SOURCES = $(SOURCES:randombytes.%=rng.%)
 DET_HEADERS = $(HEADERS:randombytes.%=rng.%)

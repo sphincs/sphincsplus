@@ -6,7 +6,7 @@
 #include "wots.h"
 #include "fors.h"
 #include "hash.h"
-#include "hash_address.h"
+#include "address.h"
 #include "randombytes.h"
 #include "utils.h"
 

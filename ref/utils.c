@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hash.h"
-#include "hash_address.h"
+#include "address.h"
 
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.

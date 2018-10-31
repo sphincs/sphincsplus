@@ -2,7 +2,7 @@
 #include <string.h>
 #include <openssl/sha.h>
 
-#include "hash_address.h"
+#include "address.h"
 #include "utils.h"
 #include "params.h"
 #include "hash.h"

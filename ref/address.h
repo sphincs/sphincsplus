@@ -1,5 +1,5 @@
-#ifndef SPX_HASH_ADDRESS_H
-#define SPX_HASH_ADDRESS_H
+#ifndef SPX_ADDRESS_H
+#define SPX_ADDRESS_H
 
 #include <stdint.h>
 

@@ -7,7 +7,7 @@
 #include "utilsx4.h"
 #include "hash.h"
 #include "hashx4.h"
-#include "hash_address.h"
+#include "address.h"
 
 static void fors_gen_skx4(unsigned char *sk0,
                           unsigned char *sk1,

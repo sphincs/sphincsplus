@@ -2,8 +2,8 @@ CC = /usr/bin/gcc
 CFLAGS = -Wall -Wextra -Wpedantic -O3
 HASH_C = hash_shake256.c
 
-SOURCES =          $(HASH_C) hash_address.c randombytes.c wots.c utils.c fors.c sign.c
-HEADERS = params.h hash.h    hash_address.h randombytes.h wots.h utils.h fors.h api.h
+SOURCES =          $(HASH_C) address.c randombytes.c wots.c utils.c fors.c sign.c
+HEADERS = params.h hash.h    address.h randombytes.h wots.h utils.h fors.h api.h
 
 ifeq ($(HASH_C),hash_shake256.c)
 	SOURCES += fips202.c

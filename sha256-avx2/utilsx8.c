@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hashx8.h"
-#include "hash_address.h"
+#include "address.h"
 
 /**
  * For a given leaf index, computes the authentication path and the resulting
