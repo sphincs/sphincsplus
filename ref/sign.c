@@ -34,6 +34,38 @@ static void wots_gen_leaf(unsigned char *leaf, const unsigned char *sk_seed,
 }
 
 /*
+ * Returns the length of a secret key, in bytes
+ */
+unsigned long long crypto_secretkeybytes()
+{
+    return CRYPTO_SECRETKEYBYTES;
+}
+
+/*
+ * Returns the length of a public key, in bytes
+ */
+unsigned long long crypto_publickeybytes()
+{
+    return CRYPTO_PUBLICKEYBYTES;
+}
+
+/*
+ * Returns the length of a signature, in bytes
+ */
+unsigned long long crypto_bytes()
+{
+    return CRYPTO_BYTES;
+}
+
+/*
+ * Returns the length of the seed required to generate a key pair, in bytes
+ */
+unsigned long long crypto_seedbytes()
+{
+    return CRYPTO_SEEDBYTES;
+}
+
+/*
  * Generates an SPX key pair given a seed of length 
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]

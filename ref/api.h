@@ -10,6 +10,25 @@
 #define CRYPTO_BYTES SPX_BYTES
 #define CRYPTO_SEEDBYTES 3*SPX_N
 
+/*
+ * Returns the length of a secret key, in bytes
+ */
+unsigned long long crypto_secretkeybytes();
+
+/*
+ * Returns the length of a public key, in bytes
+ */
+unsigned long long crypto_publickeybytes();
+
+/*
+ * Returns the length of a signature, in bytes
+ */
+unsigned long long crypto_bytes();
+
+/*
+ * Returns the length of the seed required to generate a key pair, in bytes
+ */
+unsigned long long crypto_seedbytes();
 
 /*
  * Generates a SPHINCS+ key pair given a seed.
