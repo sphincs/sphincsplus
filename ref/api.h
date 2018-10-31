@@ -8,6 +8,15 @@
 #define CRYPTO_SECRETKEYBYTES SPX_SK_BYTES
 #define CRYPTO_PUBLICKEYBYTES SPX_PK_BYTES
 #define CRYPTO_BYTES SPX_BYTES
+#define CRYPTO_SEEDBYTES 3*SPX_N
+
+
+/*
+ * Generates a SPHINCS+ key pair given a seed.
+ * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
+ * Format pk: [root || PUB_SEED]
+ */
+int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk, const unsigned char *seed);
 
 /*
  * Generates a SPHINCS+ key pair.

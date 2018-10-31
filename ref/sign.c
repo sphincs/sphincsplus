@@ -34,11 +34,11 @@ static void wots_gen_leaf(unsigned char *leaf, const unsigned char *sk_seed,
 }
 
 /*
- * Generates an SPX key pair.
+ * Generates an SPX key pair given a seed of length 
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
+int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk, const unsigned char *seed)
 {
     /* We do not need the auth path in key generation, but it simplifies the
        code to have just one treehash routine that computes both root and path
@@ -49,8 +49,8 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
     set_layer_addr(top_tree_addr, SPX_D - 1);
     set_type(top_tree_addr, SPX_ADDR_TYPE_HASHTREE);
 
-    /* Initialize SK_SEED, SK_PRF and PUB_SEED. */
-    randombytes(sk, 3 * SPX_N);
+    /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
+    memcpy(sk, seed, CRYPTO_SEEDBYTES);
 
     memcpy(pk, sk + 2*SPX_N, SPX_N);
 
@@ -65,6 +65,20 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
     memcpy(pk + SPX_N, sk + 3*SPX_N, SPX_N);
 
     return 0;
+}
+
+/*
+ * Generates an SPX key pair.
+ * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
+ * Format pk: [PUB_SEED || root]
+ */
+int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
+{
+  unsigned char seed[CRYPTO_SEEDBYTES];
+  randombytes(seed, CRYPTO_SEEDBYTES);
+  crypto_sign_seed_keypair(pk, sk, seed);
+    
+  return 0;
 }
 
 /**
