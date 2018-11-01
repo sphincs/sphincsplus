@@ -36,7 +36,7 @@ static void wots_gen_leaf(unsigned char *leaf, const unsigned char *sk_seed,
 /*
  * Returns the length of a secret key, in bytes
  */
-unsigned long long crypto_secretkeybytes()
+unsigned long long crypto_sign_secretkeybytes(void)
 {
     return CRYPTO_SECRETKEYBYTES;
 }
@@ -44,7 +44,7 @@ unsigned long long crypto_secretkeybytes()
 /*
  * Returns the length of a public key, in bytes
  */
-unsigned long long crypto_publickeybytes()
+unsigned long long crypto_sign_publickeybytes(void)
 {
     return CRYPTO_PUBLICKEYBYTES;
 }
@@ -52,7 +52,7 @@ unsigned long long crypto_publickeybytes()
 /*
  * Returns the length of a signature, in bytes
  */
-unsigned long long crypto_bytes()
+unsigned long long crypto_sign_bytes(void)
 {
     return CRYPTO_BYTES;
 }
@@ -60,7 +60,7 @@ unsigned long long crypto_bytes()
 /*
  * Returns the length of the seed required to generate a key pair, in bytes
  */
-unsigned long long crypto_seedbytes()
+unsigned long long crypto_sign_seedbytes(void)
 {
     return CRYPTO_SEEDBYTES;
 }
