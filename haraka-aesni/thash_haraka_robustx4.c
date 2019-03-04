@@ -28,35 +28,33 @@ void thashx4(unsigned char *out0,
     unsigned char bitmask1[inblocks * SPX_N];
     unsigned char bitmask2[inblocks * SPX_N];
     unsigned char bitmask3[inblocks * SPX_N];
+    unsigned char outbuf[32 * 4];
+    unsigned char buf_tmp[64 * 4];
     unsigned int i;
 
     (void)pub_seed; /* Suppress an 'unused parameter' warning. */
 
-    addr_to_bytes(buf0, addrx4 + 0*8);
-    addr_to_bytes(buf1, addrx4 + 1*8);
-    addr_to_bytes(buf2, addrx4 + 2*8);
-    addr_to_bytes(buf3, addrx4 + 3*8);
-
     if (inblocks == 1) {
-        unsigned char outbuf[32 * 4];
-        unsigned char buf_tmp[64 * 4];
         memset(buf_tmp, 0, 64 * 4);
 
         // Generate masks first in buffer
-
-        memcpy(buf_tmp,      buf0, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 32, buf1, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 64, buf2, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 96, buf3, SPX_ADDR_BYTES + SPX_N);
+        addr_to_bytes(buf_tmp,      addrx4 + 0*8);
+        addr_to_bytes(buf_tmp + 32, addrx4 + 1*8);
+        addr_to_bytes(buf_tmp + 64, addrx4 + 2*8);
+        addr_to_bytes(buf_tmp + 96, addrx4 + 3*8);
 
         haraka256x4(outbuf, buf_tmp);
 
-        memset(buf_tmp, 0, 64 * 4);
+        /* move addresses to make room for inputs; zero old values */
+        memcpy(buf_tmp + 192, buf_tmp + 96, SPX_ADDR_BYTES);
+        memcpy(buf_tmp + 128, buf_tmp + 64, SPX_ADDR_BYTES);
+        memcpy(buf_tmp + 64,  buf_tmp + 32, SPX_ADDR_BYTES);
+        /* skip memcpy(buf_tmp, buf_tmp, SPX_ADDR_BYTES); already in place */
 
-        memcpy(buf_tmp,       buf0, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 64,  buf1, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 128, buf2, SPX_ADDR_BYTES + SPX_N);
-        memcpy(buf_tmp + 192, buf3, SPX_ADDR_BYTES + SPX_N);
+        /* skip memset(buf_tmp, 0, SPX_ADDR_BYTES); remained untouched */
+        memset(buf_tmp + 32, 0, SPX_ADDR_BYTES);
+        /* skip memset(buf_tmp + 64, 0, SPX_ADDR_BYTES); contains addr1 */
+        memset(buf_tmp + 96, 0, SPX_ADDR_BYTES);
 
         for (i = 0; i < SPX_N; i++) {
             buf_tmp[SPX_ADDR_BYTES + i]       = in0[i] ^ outbuf[i];
@@ -73,6 +71,11 @@ void thashx4(unsigned char *out0,
         memcpy(out3, outbuf + 96, SPX_N);
     } else {
         /* All other tweakable hashes*/
+        addr_to_bytes(buf0, addrx4 + 0*8);
+        addr_to_bytes(buf1, addrx4 + 1*8);
+        addr_to_bytes(buf2, addrx4 + 2*8);
+        addr_to_bytes(buf3, addrx4 + 3*8);
+
         haraka_Sx4(bitmask0, bitmask1, bitmask2, bitmask3, inblocks * SPX_N,
                    buf0, buf1, buf2, buf3, SPX_ADDR_BYTES);
 
@@ -84,6 +87,6 @@ void thashx4(unsigned char *out0,
         }
 
         haraka_Sx4(out0, out1, out2, out3, SPX_N,
-                    buf0, buf1, buf2, buf3, SPX_ADDR_BYTES + inblocks*SPX_N);
+                   buf0, buf1, buf2, buf3, SPX_ADDR_BYTES + inblocks*SPX_N);
     }
 }
