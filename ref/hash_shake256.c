@@ -7,15 +7,6 @@
 #include "hash.h"
 #include "fips202.h"
 
-static void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
-{
-    int i;
-
-    for (i = 0; i < 8; i++) {
-        ull_to_bytes(bytes + i*4, 4, addr[i]);
-    }
-}
-
 /* For SHAKE256, there is no immediate reason to initialize at the start,
    so this function is an empty operation. */
 void initialize_hash_function(const unsigned char *pub_seed,
@@ -97,26 +88,4 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
-}
-
-/**
- * Takes an array of inblocks concatenated arrays of SPX_N bytes.
- */
-void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const unsigned char *pub_seed, uint32_t addr[8])
-{
-    unsigned char buf[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char bitmask[inblocks * SPX_N];
-    unsigned int i;
-
-    memcpy(buf, pub_seed, SPX_N);
-    addr_to_bytes(buf + SPX_N, addr);
-
-    shake256(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_ADDR_BYTES);
-
-    for (i = 0; i < inblocks * SPX_N; i++) {
-        buf[SPX_N + SPX_ADDR_BYTES + i] = in[i] ^ bitmask[i];
-    }
-
-    shake256(out, SPX_N, buf, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
 }

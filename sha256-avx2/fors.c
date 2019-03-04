@@ -7,6 +7,8 @@
 #include "utilsx8.h"
 #include "hash.h"
 #include "hashx8.h"
+#include "thash.h"
+#include "thashx8.h"
 #include "address.h"
 
 static void fors_gen_skx8(unsigned char *sk0,

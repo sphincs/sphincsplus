@@ -2,7 +2,7 @@
 
 #include "utils.h"
 #include "params.h"
-#include "hashx4.h"
+#include "thashx4.h"
 #include "address.h"
 
 /**

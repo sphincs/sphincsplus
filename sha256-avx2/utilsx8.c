@@ -2,7 +2,7 @@
 
 #include "utils.h"
 #include "params.h"
-#include "hashx8.h"
+#include "thashx8.h"
 #include "address.h"
 
 /**

@@ -1,5 +1,16 @@
 #include <stdint.h>
+
 #include "params.h"
+#include "utils.h"
+
+void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        ull_to_bytes(bytes + i*4, 4, addr[i]);
+    }
+}
 
 void set_layer_addr(uint32_t addr[8], uint32_t layer)
 {

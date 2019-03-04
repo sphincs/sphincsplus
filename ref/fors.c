@@ -5,6 +5,7 @@
 #include "fors.h"
 #include "utils.h"
 #include "hash.h"
+#include "thash.h"
 #include "address.h"
 
 static void fors_gen_sk(unsigned char *sk, const unsigned char *sk_seed,

@@ -9,6 +9,8 @@
 #define SPX_ADDR_TYPE_FORSTREE 3
 #define SPX_ADDR_TYPE_FORSPK 4
 
+void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8]);
+
 void set_layer_addr(uint32_t addr[8], uint32_t layer);
 
 void set_tree_addr(uint32_t addr[8], uint64_t tree);

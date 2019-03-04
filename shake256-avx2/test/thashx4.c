@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../hashx4.h"
-#include "../hash.h"
+#include "../thashx4.h"
+#include "../thash.h"
 #include "../randombytes.h"
 #include "../params.h"
 

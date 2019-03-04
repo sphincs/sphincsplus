@@ -6,48 +6,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hash.h"
-
-#define SPX_SHA256_BLOCK_BYTES 64
-#define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
-
-#if SPX_SHA256_OUTPUT_BYTES < SPX_N
-    #error Linking against SHA-256 with N larger than 32 bytes is not supported
-#endif
-
-static void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
-{
-    int i;
-
-    for (i = 0; i < 8; i++) {
-        ull_to_bytes(bytes + i*4, 4, addr[i]);
-    }
-}
-
-/**
- * Note that inlen should be sufficiently small that it still allows for
- * an array to be allocated on the stack. Typically 'in' is merely a seed.
- * Outputs outlen number of bytes
- */
-static void mgf1(unsigned char *out, unsigned long outlen,
-                 const unsigned char *in, unsigned long inlen)
-{
-    unsigned char inbuf[inlen + 4];
-    unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
-    unsigned long i;
-
-    memcpy(inbuf, in, inlen);
-
-    /* While we can fit in at least another full block of SHA256 output.. */
-    for (i = 0; (i+1)*SPX_SHA256_OUTPUT_BYTES <= outlen; i++) {
-        ull_to_bytes(inbuf + inlen, 4, i);
-        SHA256(inbuf, inlen + 4, out);
-        out += SPX_SHA256_OUTPUT_BYTES;
-    }
-    /* Until we cannot anymore, and we fill the remainder. */
-    ull_to_bytes(inbuf + inlen, 4, i);
-    SHA256(inbuf, inlen + 4, outbuf);
-    memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
-}
+#include "sha256.h"
 
 /* For SHA256, there is no immediate reason to initialize at the start,
    so this function is an empty operation. */
@@ -158,28 +117,4 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
-}
-
-/**
- * Takes an array of inblocks concatenated arrays of SPX_N bytes.
- */
-void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const unsigned char *pub_seed, uint32_t addr[8])
-{
-    unsigned char buf[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
-    unsigned char bitmask[inblocks * SPX_N];
-    unsigned int i;
-
-    memcpy(buf, pub_seed, SPX_N);
-    addr_to_bytes(buf + SPX_N, addr);
-
-    mgf1(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_ADDR_BYTES);
-
-    for (i = 0; i < inblocks * SPX_N; i++) {
-        buf[SPX_N + SPX_ADDR_BYTES + i] = in[i] ^ bitmask[i];
-    }
-
-    SHA256(buf, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N, outbuf);
-    memcpy(out, outbuf, SPX_N);
 }

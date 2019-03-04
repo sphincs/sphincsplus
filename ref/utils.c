@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hash.h"
+#include "thash.h"
 #include "address.h"
 
 /**
