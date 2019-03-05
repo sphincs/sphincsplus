@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "params.h"
 #include "hashx8.h"
+#include "sha256.h"
 #include "sha256x8.h"
 #include "sha256avx.h"
 
@@ -22,13 +23,14 @@ void prf_addrx8(unsigned char *out0,
                 const unsigned char *key,
                 const uint32_t addrx8[8*8])
 {
-    unsigned char bufx8[8 * (SPX_N + SPX_ADDR_BYTES)];
+    unsigned char bufx8[8 * (SPX_N + SPX_SHA256_ADDR_BYTES)];
     unsigned char outbufx8[8 * SPX_SHA256_OUTPUT_BYTES];
     unsigned int j;
 
     for (j = 0; j < 8; j++) {
-        memcpy(bufx8 + j*(SPX_N + SPX_ADDR_BYTES), key, SPX_N);
-        addr_to_bytes(bufx8 + SPX_N + j*(SPX_N + SPX_ADDR_BYTES), addrx8 + j*8);
+        memcpy(bufx8 + j*(SPX_N + SPX_SHA256_ADDR_BYTES), key, SPX_N);
+        compress_address(bufx8 + SPX_N + j*(SPX_N + SPX_SHA256_ADDR_BYTES),
+                         addrx8 + j*8);
     }
 
     sha256x8(outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES,
@@ -39,15 +41,15 @@ void prf_addrx8(unsigned char *out0,
              outbufx8 + 5*SPX_SHA256_OUTPUT_BYTES,
              outbufx8 + 6*SPX_SHA256_OUTPUT_BYTES,
              outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
-             bufx8 + 0*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 1*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 2*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 3*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 4*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 5*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 6*(SPX_N + SPX_ADDR_BYTES),
-             bufx8 + 7*(SPX_N + SPX_ADDR_BYTES),
-             SPX_N + SPX_ADDR_BYTES);
+             bufx8 + 0*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 1*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 2*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 3*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 4*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 5*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 6*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             bufx8 + 7*(SPX_N + SPX_SHA256_ADDR_BYTES),
+             SPX_N + SPX_SHA256_ADDR_BYTES);
 
     memcpy(out0, outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES, SPX_N);
     memcpy(out1, outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES, SPX_N);

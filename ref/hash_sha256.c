@@ -23,13 +23,13 @@ void initialize_hash_function(const unsigned char *pub_seed,
 void prf_addr(unsigned char *out, const unsigned char *key,
               const uint32_t addr[8])
 {
-    unsigned char buf[SPX_N + SPX_ADDR_BYTES];
+    unsigned char buf[SPX_N + SPX_SHA256_ADDR_BYTES];
     unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
     memcpy(buf, key, SPX_N);
-    addr_to_bytes(buf + SPX_N, addr);
+    compress_address(buf + SPX_N, addr);
 
-    SHA256(buf, SPX_N + SPX_ADDR_BYTES, outbuf);
+    SHA256(buf, SPX_N + SPX_SHA256_ADDR_BYTES, outbuf);
     memcpy(out, outbuf, SPX_N);
 }
 

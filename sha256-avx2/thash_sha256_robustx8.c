@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "params.h"
 #include "thashx8.h"
+#include "sha256.h"
 #include "sha256x8.h"
 #include "sha256avx.h"
 
@@ -30,53 +31,54 @@ void thashx8(unsigned char *out0,
              const unsigned char *in7, unsigned int inblocks,
              const unsigned char *pub_seed, uint32_t addrx8[8*8])
 {
-    unsigned char bufx8[8*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)];
+    unsigned char bufx8[8*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)];
     unsigned char outbufx8[8*SPX_SHA256_OUTPUT_BYTES];
     unsigned char bitmaskx8[8*(inblocks * SPX_N)];
     unsigned int i;
 
-    memset(bufx8, 0, 8*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N));
+    memset(bufx8, 0, 8*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N));
 
     for (i = 0; i < 8; i++) {
-        memcpy(bufx8 + i*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N), pub_seed, SPX_N);
-        addr_to_bytes(bufx8 + SPX_N + i*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N), addrx8 + i*8);
+        memcpy(bufx8 + i*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), pub_seed, SPX_N);
+        compress_address(bufx8 + SPX_N + i*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                         addrx8 + i*8);
     }
 
     mgf1x8(bitmaskx8, inblocks * SPX_N,
-           bufx8 + 0*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 1*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 2*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 3*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 4*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 5*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 6*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           bufx8 + 7*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-           SPX_N + SPX_ADDR_BYTES);
+           bufx8 + 0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 1*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 2*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 3*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 4*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 5*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 6*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           bufx8 + 7*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+           SPX_N + SPX_SHA256_ADDR_BYTES);
 
     for (i = 0; i < inblocks * SPX_N; i++) {
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                0*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in0[i] ^ bitmaskx8[i + 0*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                1*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                1*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in1[i] ^ bitmaskx8[i + 1*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                2*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                2*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in2[i] ^ bitmaskx8[i + 2*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                3*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                3*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in3[i] ^ bitmaskx8[i + 3*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                4*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                4*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in4[i] ^ bitmaskx8[i + 4*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                5*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                5*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in5[i] ^ bitmaskx8[i + 5*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                6*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                6*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in6[i] ^ bitmaskx8[i + 6*(inblocks * SPX_N)];
-        bufx8[SPX_N + SPX_ADDR_BYTES + i +
-                7*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N)] =
+        bufx8[SPX_N + SPX_SHA256_ADDR_BYTES + i +
+                7*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)] =
             in7[i] ^ bitmaskx8[i + 7*(inblocks * SPX_N)];
     }
 
@@ -88,15 +90,15 @@ void thashx8(unsigned char *out0,
              outbufx8 + 5*SPX_SHA256_OUTPUT_BYTES,
              outbufx8 + 6*SPX_SHA256_OUTPUT_BYTES,
              outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
-             bufx8 + 0*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 1*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 2*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 3*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 4*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 5*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 6*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 7*(SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N),
-             SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
+             bufx8 + 0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 1*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 2*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 3*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 4*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 5*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 6*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             bufx8 + 7*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+             SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N);
 
     memcpy(out0, outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES, SPX_N);
     memcpy(out1, outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES, SPX_N);

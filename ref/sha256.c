@@ -4,6 +4,22 @@
 #include "sha256.h"
 #include "utils.h"
 
+/*
+ * Compresses an address to a 22-byte sequence.
+ * This reduces the number of required SHA256 compression calls, as the last
+ * block of input is padded with at least 65 bits.
+ */
+void compress_address(unsigned char *out, const uint32_t addr[8])
+{
+    ull_to_bytes(out,      1, addr[0]); /* drop 3 bytes of the layer field */
+    ull_to_bytes(out + 1,  4, addr[2]); /* drop the highest tree address word */
+    ull_to_bytes(out + 5,  4, addr[3]);
+    ull_to_bytes(out + 9,  1, addr[4]); /* drop 3 bytes of the type field */
+    ull_to_bytes(out + 10, 4, addr[5]);
+    ull_to_bytes(out + 14, 4, addr[6]);
+    ull_to_bytes(out + 18, 4, addr[7]);
+}
+
 /**
  * Note that inlen should be sufficiently small that it still allows for
  * an array to be allocated on the stack. Typically 'in' is merely a seed.
