@@ -1,6 +1,5 @@
 CC = /usr/bin/gcc
 CFLAGS = -g -Wall -Wextra -Wpedantic -O3 -march=native -fomit-frame-pointer -flto
-LDLIBS += -lcrypto
 
 THASH = robust
 

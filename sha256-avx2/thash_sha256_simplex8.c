@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <openssl/sha.h>
 
 #include "address.h"
 #include "utils.h"

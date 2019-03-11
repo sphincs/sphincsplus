@@ -10,6 +10,14 @@
 
 #define SPX_SHA256_ADDR_BYTES 22
 
+#include <stddef.h>
+#include <stdint.h>
+
+void sha256_inc_init(uint8_t *state);
+void sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
+void sha256_inc_finalize(uint8_t *out, uint8_t *state, const uint8_t *in, size_t inlen);
+void sha256(uint8_t *out, const uint8_t *in, size_t inlen);
+
 void compress_address(unsigned char *out, const uint32_t addr[8]);
 
 void mgf1(unsigned char *out, unsigned long outlen,

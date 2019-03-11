@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <openssl/sha.h>
 
 #include "address.h"
 #include "utils.h"
@@ -29,7 +28,7 @@ void prf_addr(unsigned char *out, const unsigned char *key,
     memcpy(buf, key, SPX_N);
     compress_address(buf + SPX_N, addr);
 
-    SHA256(buf, SPX_N + SPX_SHA256_ADDR_BYTES, outbuf);
+    sha256(outbuf, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
     memcpy(out, outbuf, SPX_N);
 }
 
@@ -58,8 +57,8 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
     }
     memcpy(m_with_prefix + SPX_SHA256_BLOCK_BYTES, optrand, SPX_N);
 
-    SHA256(m_with_prefix, mlen + SPX_SHA256_BLOCK_BYTES + SPX_N,
-           tmp + SPX_SHA256_BLOCK_BYTES);
+    sha256(tmp + SPX_SHA256_BLOCK_BYTES,
+           m_with_prefix, mlen + SPX_SHA256_BLOCK_BYTES + SPX_N);
 
     memcpy(tmp, sk_prf, SPX_N);
     memset(tmp + SPX_N, 0, SPX_SHA256_BLOCK_BYTES - SPX_N);
@@ -67,7 +66,7 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
         tmp[i] ^= 0x5c;
     }
 
-    SHA256(tmp, SPX_SHA256_BLOCK_BYTES + SPX_SHA256_OUTPUT_BYTES, outbuf);
+    sha256(outbuf, tmp, SPX_SHA256_BLOCK_BYTES + SPX_SHA256_OUTPUT_BYTES);
 
     memcpy(R, outbuf, SPX_N);
 }
@@ -100,7 +99,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
-    SHA256(m - SPX_N - SPX_PK_BYTES, mlen + SPX_N + SPX_PK_BYTES, seed);
+    sha256(seed, m - SPX_N - SPX_PK_BYTES, mlen + SPX_N + SPX_PK_BYTES);
 
     mgf1(bufp, SPX_DGST_BYTES, seed, SPX_SHA256_OUTPUT_BYTES);
 

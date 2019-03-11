@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <openssl/sha.h>
 
 #include "thash.h"
 #include "address.h"
@@ -22,6 +21,6 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     compress_address(buf + SPX_SHA256_BLOCK_BYTES, addr);
     memcpy(buf + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES, in, inblocks * SPX_N);
 
-    SHA256(buf, SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N, outbuf);
+    sha256(outbuf, buf, SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N);
     memcpy(out, outbuf, SPX_N);
 }

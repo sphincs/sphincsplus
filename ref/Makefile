@@ -18,7 +18,6 @@ endif
 ifeq ($(HASH),sha256)
 	SOURCES += sha256.c
 	HEADERS += sha256.h
-	LDLIBS += -lcrypto
 endif
 
 DET_SOURCES = $(SOURCES:randombytes.%=rng.%)

@@ -1,5 +1,4 @@
 #include <string.h>
-#include <openssl/sha.h>
 
 #include "sha256x8.h"
 #include "sha256avx.h"

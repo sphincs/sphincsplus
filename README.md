@@ -15,10 +15,6 @@ The [SPHINCS+ specification](https://sphincs.org/data/sphincs+-specification.pdf
 | SPHINCS+-256s | 32 | 64 |  8 |     14 | 22 | 16 |          255 |       64 |      128 |    29,792 |
 | SPHINCS+-256f | 32 | 68 | 17 |     10 | 30 | 16 |          254 |       64 |      128 |    49,216 |
 
-### Dependencies
-
-For the instances that use SHA-256, we rely on OpenSSL. If you want to use `hash_sha256.c`, make sure to install the OpenSSL development headers. On Debian-based systems, this is achieved by installing the OpenSSL development package `libssl-dev`.
-
 ### License
 
 All included code is available under the CC0 1.0 Universal Public Domain Dedication, with the exception of `rng.c`, `rng.h` and `PQCgenKAT_sign.c`, which were provided by NIST.
