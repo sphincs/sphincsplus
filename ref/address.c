@@ -8,7 +8,7 @@ void set_layer_addr(uint32_t addr[8], uint32_t layer)
 
 void set_tree_addr(uint32_t addr[8], uint64_t tree)
 {
-#if SPX_FULL_HEIGHT > 64
+#if (SPX_TREE_HEIGHT * (SPX_D - 1)) > 64
     #error Subtree addressing is currently limited to at most 2^64 trees
 #endif
     addr[1] = 0;
