@@ -30,52 +30,57 @@ void thashx8(unsigned char *out0,
              const unsigned char *in7, unsigned int inblocks,
              const unsigned char *pub_seed, uint32_t addrx8[8*8])
 {
-    unsigned char bufx8[8*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)];
+    unsigned char bufx8[8*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)];
     unsigned char outbufx8[8*SPX_SHA256_OUTPUT_BYTES];
     unsigned int i;
+    sha256ctx ctx;
 
-    memset(bufx8, 0, 8*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N));
+    (void)pub_seed; /* Suppress an 'unused parameter' warning. */
+
+    sha256_init_frombytes_x8(&ctx, state_seeded, 512);
 
     for (i = 0; i < 8; i++) {
-        memcpy(bufx8 + i*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), pub_seed, SPX_N);
-        compress_address(bufx8 + SPX_SHA256_BLOCK_BYTES + i*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+        compress_address(bufx8 + i*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
                          addrx8 + i*8);
     }
 
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        0*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in0, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        1*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in1, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        2*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in2, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        3*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in3, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        4*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in4, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        5*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in5, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        6*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in6, inblocks * SPX_N);
-    memcpy(bufx8 + SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES +
-        7*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in7, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        0*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in0, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        1*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in1, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        2*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in2, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        3*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in3, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        4*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in4, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        5*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in5, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        6*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in6, inblocks * SPX_N);
+    memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
+        7*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in7, inblocks * SPX_N);
 
-    sha256x8(outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 2*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 3*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 4*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 5*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 6*SPX_SHA256_OUTPUT_BYTES,
-             outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
-             bufx8 + 0*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 1*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 2*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 3*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 4*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 5*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 6*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             bufx8 + 7*(SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-             SPX_SHA256_BLOCK_BYTES + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N);
+    sha256_update8x(&ctx,
+                    bufx8 + 0*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 1*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 2*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 3*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 4*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 5*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 6*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    bufx8 + 7*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                    SPX_SHA256_ADDR_BYTES + inblocks*SPX_N);
+
+    sha256_final8x(&ctx,
+                   outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 2*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 3*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 4*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 5*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 6*SPX_SHA256_OUTPUT_BYTES,
+                   outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES);
 
     memcpy(out0, outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES, SPX_N);
     memcpy(out1, outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES, SPX_N);

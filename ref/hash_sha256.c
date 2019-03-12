@@ -12,7 +12,7 @@
 void initialize_hash_function(const unsigned char *pub_seed,
                               const unsigned char *sk_seed)
 {
-    (void)pub_seed; /* Suppress an 'unused parameter' warning. */
+    seed_state(pub_seed);
     (void)sk_seed; /* Suppress an 'unused parameter' warning. */
 }
 

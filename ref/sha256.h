@@ -23,4 +23,8 @@ void compress_address(unsigned char *out, const uint32_t addr[8]);
 void mgf1(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 
+uint8_t state_seeded[40];
+
+void seed_state(const unsigned char *pub_seed);
+
 #endif

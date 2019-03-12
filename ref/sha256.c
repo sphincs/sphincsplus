@@ -370,3 +370,24 @@ void mgf1(unsigned char *out, unsigned long outlen,
     sha256(outbuf, inbuf, inlen + 4);
     memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
 }
+
+uint8_t state_seeded[40];
+
+/**
+ * Absorb the constant pub_seed using one round of the compression function
+ * This initializes state_seeded, which can then be reused in thash
+ **/
+void seed_state(const unsigned char *pub_seed) {
+    uint8_t block[SPX_SHA256_BLOCK_BYTES];
+    size_t i;
+
+    for (i = 0; i < SPX_N; ++i) {
+        block[i] = pub_seed[i];
+    }
+    for (i = SPX_N; i < SPX_SHA256_BLOCK_BYTES; ++i) {
+        block[i] = 0;
+    }
+
+    sha256_inc_init(state_seeded);
+    sha256_inc_blocks(state_seeded, block, 1);
+}
