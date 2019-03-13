@@ -366,9 +366,11 @@ void mgf1(unsigned char *out, unsigned long outlen,
         out += SPX_SHA256_OUTPUT_BYTES;
     }
     /* Until we cannot anymore, and we fill the remainder. */
-    ull_to_bytes(inbuf + inlen, 4, i);
-    sha256(outbuf, inbuf, inlen + 4);
-    memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
+    if (outlen > i*SPX_SHA256_OUTPUT_BYTES) {
+        ull_to_bytes(inbuf + inlen, 4, i);
+        sha256(outbuf, inbuf, inlen + 4);
+        memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
+    }
 }
 
 uint8_t state_seeded[40];
