@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99
 
 HASH = shake256
 THASH = robust
