@@ -4,6 +4,7 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "haraka.h"
 #include "harakax4.h"
@@ -275,6 +276,75 @@ static void haraka_S_squeezeblocks4x(unsigned char *h0,
     }
 }
 
+void haraka_S_inc_init(uint8_t *s_inc)
+{
+    size_t i;
+
+    for (i = 0; i < 64; i++) {
+        s_inc[i] = 0;
+    }
+    s_inc[64] = 0;
+}
+
+void haraka_S_inc_absorb(uint8_t *s_inc, const uint8_t *m, size_t mlen)
+{
+    size_t i;
+
+    /* Recall that s_inc[64] is the non-absorbed bytes xored into the state */
+    while (mlen + s_inc[64] >= HARAKAS_RATE) {
+        for (i = 0; i < (size_t)(HARAKAS_RATE - s_inc[64]); i++) {
+            /* Take the i'th byte from message
+               xor with the s_inc[64] + i'th byte of the state */
+            s_inc[s_inc[64] + i] ^= m[i];
+        }
+        mlen -= (size_t)(HARAKAS_RATE - s_inc[64]);
+        m += HARAKAS_RATE - s_inc[64];
+        s_inc[64] = 0;
+
+        haraka512_perm(s_inc, s_inc);
+    }
+
+    for (i = 0; i < mlen; i++) {
+        s_inc[s_inc[64] + i] ^= m[i];
+    }
+    s_inc[64] += mlen;
+}
+
+void haraka_S_inc_finalize(uint8_t *s_inc)
+{
+    /* After haraka_S_inc_absorb, we are guaranteed that s_inc[64] < HARAKAS_RATE,
+       so we can always use one more byte for p in the current state. */
+    s_inc[s_inc[64]] ^= 0x1F;
+    s_inc[HARAKAS_RATE - 1] ^= 128;
+    s_inc[64] = 0;
+}
+
+void haraka_S_inc_squeeze(uint8_t *out, size_t outlen, uint8_t *s_inc)
+{
+    size_t i;
+
+    /* First consume any bytes we still have sitting around */
+    for (i = 0; i < outlen && i < s_inc[64]; i++) {
+        /* There are s_inc[64] bytes left, so r - s_inc[64] is the first
+           available byte. We consume from there, i.e., up to r. */
+        out[i] = (uint8_t)s_inc[(HARAKAS_RATE - s_inc[64] + i)];
+    }
+    out += i;
+    outlen -= i;
+    s_inc[64] -= i;
+
+    /* Then squeeze the remaining necessary blocks */
+    while (outlen > 0) {
+        haraka512_perm(s_inc, s_inc);
+
+        for (i = 0; i < outlen && i < HARAKAS_RATE; i++) {
+            out[i] = s_inc[i];
+        }
+        out += i;
+        outlen -= i;
+        s_inc[64] = HARAKAS_RATE - i;
+    }
+}
 
 void haraka_S(unsigned char *out, unsigned long long outlen,
               const unsigned char *in, unsigned long long inlen)

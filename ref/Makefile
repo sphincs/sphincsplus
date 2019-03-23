@@ -49,6 +49,9 @@ PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
 test/%: test/%.c $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)
 
+test/haraka: test/haraka.c haraka.c randombytes.c randombytes.h
+	$(CC) $(CFLAGS) -o $@ randombytes.c $<
+
 test/%.exec: test/%
 	@$<
 
