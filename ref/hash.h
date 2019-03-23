@@ -11,10 +11,10 @@ void prf_addr(unsigned char *out, const unsigned char *key,
 
 void gen_message_random(unsigned char *R, const unsigned char *sk_seed,
                         const unsigned char *optrand,
-                        unsigned char *m_with_prefix, unsigned long long mlen);
+                        const unsigned char *m, unsigned long long mlen);
 
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
-                  unsigned char *m_with_prefix, unsigned long long mlen);
+                  const unsigned char *m, unsigned long long mlen);
 
 #endif

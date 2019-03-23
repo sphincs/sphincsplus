@@ -32,33 +32,30 @@ void prf_addr(unsigned char *out, const unsigned char *key,
 
 /**
  * Computes the message-dependent randomness R, using a secret seed and an
- * optional randomization value prefixed to the message.
- * This requires m to have at least 2*SPX_N bytes * bytes of space available in
- * front of the pointer, i.e. before the message to use for the prefix. This is
- * necessary to prevent having to move the message around (and allocate memory
- * for it).
+ * optional randomization value as well as the message.
  */
 void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
-                        unsigned char *m, unsigned long long mlen)
+                        const unsigned char *m, unsigned long long mlen)
 {
-    memcpy(m - 2*SPX_N, sk_prf, SPX_N);
-    memcpy(m - SPX_N, optrand, SPX_N);
-    shake256(R, SPX_N, m - 2*SPX_N, mlen + 2*SPX_N);
+    uint64_t s_inc[26];
+
+    shake256_inc_init(s_inc);
+    shake256_inc_absorb(s_inc, sk_prf, SPX_N);
+    shake256_inc_absorb(s_inc, optrand, SPX_N);
+    shake256_inc_absorb(s_inc, m, mlen);
+    shake256_inc_finalize(s_inc);
+    shake256_inc_squeeze(R, SPX_N, s_inc);
 }
 
 /**
  * Computes the message hash using R, the public key, and the message.
- * Notably, it requires m to have SPX_N + SPX_PK_BYTES bytes of space available
- * in front of the pointer, i.e. before the message, to use for the prefix.
- * This is necessary to prevent having to move the * message around (and
- * allocate memory for it).
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
  */
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
-                  unsigned char *m, unsigned long long mlen)
+                  const unsigned char *m, unsigned long long mlen)
 {
 #define SPX_TREE_BITS (SPX_TREE_HEIGHT * (SPX_D - 1))
 #define SPX_TREE_BYTES ((SPX_TREE_BITS + 7) / 8)
@@ -68,12 +65,14 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
+    uint64_t s_inc[26];
 
-    memcpy(m - SPX_N - SPX_PK_BYTES, R, SPX_N);
-    memcpy(m - SPX_PK_BYTES, pk, SPX_PK_BYTES);
-
-    shake256(buf, SPX_DGST_BYTES,
-             m - SPX_N - SPX_PK_BYTES, mlen + SPX_N + SPX_PK_BYTES);
+    shake256_inc_init(s_inc);
+    shake256_inc_absorb(s_inc, R, SPX_N);
+    shake256_inc_absorb(s_inc, pk, SPX_PK_BYTES);
+    shake256_inc_absorb(s_inc, m, mlen);
+    shake256_inc_finalize(s_inc);
+    shake256_inc_squeeze(buf, SPX_DGST_BYTES, s_inc);
 
     memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
     bufp += SPX_FORS_MSG_BYTES;

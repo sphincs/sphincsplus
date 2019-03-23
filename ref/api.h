@@ -35,7 +35,8 @@ unsigned long long crypto_sign_seedbytes(void);
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [root || PUB_SEED]
  */
-int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk, const unsigned char *seed);
+int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
+                             const unsigned char *seed);
 
 /*
  * Generates a SPHINCS+ key pair.
