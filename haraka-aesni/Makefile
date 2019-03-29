@@ -33,7 +33,7 @@ PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
 test/%: test/%.c $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(SOURCES) $<
+	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)
 
 test/%.exec: test/%
 	@$<
