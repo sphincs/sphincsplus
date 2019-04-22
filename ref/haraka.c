@@ -714,7 +714,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
     unsigned char t[r];
 
     while (mlen >= r) {
-        // XOR block to state
+        /* XOR block to state */
         for (i = 0; i < r; ++i) {
             s[i] ^= m[i];
         }
@@ -846,14 +846,13 @@ void haraka512_perm(unsigned char *out, const unsigned char *in)
     uint64_t q[8], tmp_q;
     unsigned int i, j;
 
-    //print_state(in);
     br_range_dec32le(w, 16, in);
     for (i = 0; i < 4; i++) {
         br_aes_ct64_interleave_in(&q[i], &q[i + 4], w + (i << 2));
     }
     br_aes_ct64_ortho(q);
 
-    // AES rounds
+    /* AES rounds */
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 2; j++) {
             br_aes_ct64_bitslice_Sbox(q);
@@ -861,7 +860,7 @@ void haraka512_perm(unsigned char *out, const unsigned char *in)
             mix_columns(q);
             add_round_key(q, tweaked512_rc64[2*i + j]);
         }
-        // Mix states
+        /* Mix states */
         for (j = 0; j < 8; j++) {
             tmp_q = q[j];
             q[j] = (tmp_q & 0x0001000100010001) << 5 |
@@ -918,7 +917,7 @@ void haraka256(unsigned char *out, const unsigned char *in)
     }
     br_aes_ct_ortho(q);
 
-    // AES rounds
+    /* AES rounds */
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 2; j++) {
             br_aes_ct_bitslice_Sbox(q);
@@ -927,7 +926,7 @@ void haraka256(unsigned char *out, const unsigned char *in)
             add_round_key32(q, tweaked256_rc32[2*i + j]);
         }
 
-        // Mix states
+        /* Mix states */
         for (j = 0; j < 8; j++) {
             tmp_q = q[j];
             q[j] = (tmp_q & 0x81818181) |
@@ -962,7 +961,7 @@ void haraka256_sk(unsigned char *out, const unsigned char *in)
     }
     br_aes_ct_ortho(q);
 
-    // AES rounds
+    /* AES rounds */
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 2; j++) {
             br_aes_ct_bitslice_Sbox(q);
@@ -971,7 +970,7 @@ void haraka256_sk(unsigned char *out, const unsigned char *in)
             add_round_key32(q, tweaked256_rc32_sseed[2*i + j]);
         }
 
-        // Mix states
+        /* Mix states */
         for (j = 0; j < 8; j++) {
             tmp_q = q[j];
             q[j] = (tmp_q & 0x81818181) |
