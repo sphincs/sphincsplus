@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../hash.h"
 #include "../wots.h"
 #include "../randombytes.h"
 #include "../params.h"
@@ -24,6 +25,8 @@ int main()
     randombytes((unsigned char *)addr, 8 * sizeof(uint32_t));
 
     printf("Testing WOTS signature and PK derivation.. ");
+
+    initialize_hash_function(pub_seed, seed);
 
     wots_gen_pk(pk1, seed, pub_seed, addr);
     wots_sign(sig, m, seed, pub_seed, addr);

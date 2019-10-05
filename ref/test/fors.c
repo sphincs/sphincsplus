@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../hash.h"
 #include "../fors.h"
 #include "../randombytes.h"
 #include "../params.h"
@@ -24,6 +25,8 @@ int main()
     randombytes((unsigned char *)addr, 8 * sizeof(uint32_t));
 
     printf("Testing FORS signature and PK derivation.. ");
+
+    initialize_hash_function(pub_seed, sk_seed);
 
     fors_sign(sig, pk1, m, sk_seed, pub_seed, addr);
     fors_pk_from_sig(pk2, sig, m, pub_seed, addr);
