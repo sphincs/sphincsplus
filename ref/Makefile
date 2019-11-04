@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99
+CFLAGS = -O3 -std=c99 -Wall -Wextra -Wpedantic -Werror -Wvla -Wmissing-prototypes -Wredundant-decls
 
 HASH = shake256
 THASH = robust
@@ -16,8 +16,8 @@ ifeq ($(HASH),haraka)
 	HEADERS += haraka.h
 endif
 ifeq ($(HASH),sha256)
-	SOURCES += sha256.c
-	HEADERS += sha256.h
+	SOURCES += sha256.c sha2.c
+	HEADERS += sha256.h sha2.h
 endif
 
 DET_SOURCES = $(SOURCES:randombytes.%=rng.%)
@@ -44,7 +44,7 @@ benchmarks: $(BENCHMARK)
 benchmark: $(BENCHMARK:=.exec)
 
 PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
+	$(CC) $(CFLAGS) -DNIST_COMPATIBLE -o $@ $(DET_SOURCES) $< -lcrypto
 
 test/%: test/%.c $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)

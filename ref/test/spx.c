@@ -17,21 +17,22 @@ int main()
     /* Make stdout buffer more responsive. */
     setbuf(stdout, NULL);
 
-    unsigned char pk[SPX_PK_BYTES];
-    unsigned char sk[SPX_SK_BYTES];
-    unsigned char *m = malloc(SPX_MLEN);
-    unsigned char *sm = malloc(SPX_BYTES + SPX_MLEN);
-    unsigned char *mout = malloc(SPX_BYTES + SPX_MLEN);
-    unsigned long long smlen;
-    unsigned long long mlen;
+    uint8_t pk[SPX_PK_BYTES];
+    uint8_t sk[SPX_SK_BYTES];
+    uint8_t *m = malloc(SPX_MLEN);
+    uint8_t *sm = malloc(SPX_BYTES + SPX_MLEN);
+    uint8_t *mout = malloc(SPX_BYTES + SPX_MLEN);
+    size_t smlen;
+    size_t mlen;
 
     randombytes(m, SPX_MLEN);
 
     printf("Generating keypair.. ");
 
-    if (crypto_sign_keypair(pk, sk)) {
+    if (SPX_crypto_sign_keypair(pk, sk)) {
         printf("failed!\n");
-        return -1;
+        ret = -1;
+        goto end;
     }
     printf("successful.\n");
 
@@ -40,19 +41,18 @@ int main()
     for (i = 0; i < SPX_SIGNATURES; i++) {
         printf("  - iteration #%d:\n", i);
 
-        crypto_sign(sm, &smlen, m, SPX_MLEN, sk);
+        SPX_crypto_sign(sm, &smlen, m, SPX_MLEN, sk);
 
         if (smlen != SPX_BYTES + SPX_MLEN) {
-            printf("  X smlen incorrect [%llu != %u]!\n",
-                   smlen, SPX_BYTES);
+            printf("  X smlen incorrect [%zu != %u]!\n", smlen, SPX_BYTES);
             ret = -1;
         }
         else {
-            printf("    smlen as expected [%llu].\n", smlen);
+            printf("    smlen as expected [%zu].\n", smlen);
         }
 
         /* Test if signature is valid. */
-        if (crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
+        if (SPX_crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
             printf("  X verification failed!\n");
             ret = -1;
         }
@@ -62,11 +62,11 @@ int main()
 
         /* Test if the correct message was recovered. */
         if (mlen != SPX_MLEN) {
-            printf("  X mlen incorrect [%llu != %u]!\n", mlen, SPX_MLEN);
+            printf("  X mlen incorrect [%zu != %u]!\n", mlen, SPX_MLEN);
             ret = -1;
         }
         else {
-            printf("    mlen as expected [%llu].\n", mlen);
+            printf("    mlen as expected [%zu].\n", mlen);
         }
         if (memcmp(m, mout, SPX_MLEN)) {
             printf("  X output message incorrect!\n");
@@ -77,7 +77,7 @@ int main()
         }
 
         /* Test if signature is valid when validating in-place. */
-        if (crypto_sign_open(sm, &mlen, sm, smlen, pk)) {
+        if (SPX_crypto_sign_open(sm, &mlen, sm, smlen, pk)) {
             printf("  X in-place verification failed!\n");
             ret = -1;
         }
@@ -89,7 +89,7 @@ int main()
 
         /* Flip the first bit of the message. Should invalidate. */
         sm[smlen - 1] ^= 1;
-        if (!crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
+        if (!SPX_crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
             printf("  X flipping a bit of m DID NOT invalidate signature!\n");
             ret = -1;
         }
@@ -117,6 +117,7 @@ int main()
 #endif
     }
 
+end:
     free(m);
     free(sm);
     free(mout);

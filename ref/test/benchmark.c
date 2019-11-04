@@ -6,9 +6,10 @@
 
 #include "../api.h"
 #include "../fors.h"
-#include "../wots.h"
+#include "../hash.h"
 #include "../params.h"
 #include "../randombytes.h"
+#include "../wots.h"
 
 #define SPX_MLEN 32
 #define NTESTS 10
@@ -116,6 +117,8 @@ int main()
     unsigned char wots_sig[SPX_WOTS_BYTES];
     unsigned char wots_m[SPX_N];
     unsigned char wots_pk[SPX_WOTS_PK_BYTES];
+    uint8_t seed[SPX_N];
+    uint8_t pub_seed[SPX_N];
 
     unsigned long long smlen;
     unsigned long long mlen;
@@ -132,14 +135,18 @@ int main()
            SPX_WOTS_W);
 
     printf("Running %d iterations.\n", NTESTS);
+    hash_state hash_state;
+    randombytes(seed, SPX_N);
+    randombytes(pub_seed, SPX_N);
+    SPX_initialize_hash_function(&hash_state, seed, pub_seed);
 
-    MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
-    MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pk(wots_pk, sk, pk, (uint32_t *) addr));
-    MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
-    MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, sk, pk, (uint32_t *) addr));
-    MEASURE("  - WOTS signing..   ", SPX_D, wots_sign(wots_sig, wots_m, sk, pk, (uint32_t *) addr));
-    MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pk(wots_pk, sk, pk, (uint32_t *) addr));
-    MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
+    MEASURE("Generating keypair.. ", 1, SPX_crypto_sign_keypair(pk, sk));
+    MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), SPX_wots_gen_pk(wots_pk, sk, pk, (uint32_t *) addr, &hash_state));
+    MEASURE("Signing..            ", 1, SPX_crypto_sign(sm, (size_t*)&smlen, m, SPX_MLEN, sk));
+    MEASURE("  - FORS signing..   ", 1, SPX_fors_sign(fors_sig, fors_pk, fors_m, sk, pk, (uint32_t *) addr, &hash_state));
+    MEASURE("  - WOTS signing..   ", SPX_D, SPX_wots_sign(wots_sig, wots_m, sk, pk, (uint32_t *) addr, &hash_state));
+    MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), SPX_wots_gen_pk(wots_pk, sk, pk, (uint32_t *) addr, &hash_state));
+    MEASURE("Verifying..          ", 1, SPX_crypto_sign_open(mout, (size_t*)&mlen, sm, smlen, pk));
 
     printf("Signature size: %d (%.2f KiB)\n", SPX_BYTES, SPX_BYTES / 1024.0);
     printf("Public key size: %d (%.2f KiB)\n", SPX_PK_BYTES, SPX_PK_BYTES / 1024.0);

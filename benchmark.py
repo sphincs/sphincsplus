@@ -7,9 +7,9 @@ import itertools
 
 implementations = [
                    ('ref', ['shake256', 'sha256', 'haraka']),
-                   ('haraka-aesni', ['haraka']),
-                   ('shake256-avx2', ['shake256']),
-                   ('sha256-avx2', ['sha256']),
+                   #('haraka-aesni', ['haraka']),
+                   #('shake256-avx2', ['shake256']),
+                   #('sha256-avx2', ['sha256']),
                    ]
 
 options = ["f", "s"]

@@ -5,11 +5,13 @@ This code was taken from the SPHINCS reference implementation and is public doma
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "randombytes.h"
+
 static int fd = -1;
 
-void randombytes(unsigned char *x, unsigned long long xlen)
+void randombytes(unsigned char *x, size_t xlen)
 {
-    int i;
+    ssize_t i;
 
     if (fd == -1) {
         for (;;) {
@@ -23,19 +25,19 @@ void randombytes(unsigned char *x, unsigned long long xlen)
 
     while (xlen > 0) {
         if (xlen < 1048576) {
-            i = xlen;
+            i = (ssize_t)xlen;
         }
         else {
             i = 1048576;
         }
 
-        i = read(fd, x, i);
+        i = read(fd, x, (size_t)i);
         if (i < 1) {
             sleep(1);
             continue;
         }
 
         x += i;
-        xlen -= i;
+        xlen -= (size_t)i;
     }
 }

@@ -1,10 +1,11 @@
-
 //
 //  PQCgenKAT_sign.c
 //
 //  Created by Bassham, Lawrence E (Fed) on 8/29/17.
 //  Copyright © 2017 Bassham, Lawrence E (Fed). All rights reserved.
-//
+
+#define NIST_COMPATIBLE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,12 +35,12 @@ main()
     unsigned char       msg[3300];
     unsigned char       entropy_input[48];
     unsigned char       *m, *sm, *m1;
-    unsigned long long  mlen, smlen, mlen1;
+    size_t              mlen, smlen, mlen1;
     int                 count;
     int                 done;
     unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
     int                 ret_val;
-    
+
     // Create the REQUEST file
     sprintf(fn_req, "PQCsignKAT_%d.req", CRYPTO_SECRETKEYBYTES);
     if ( (fp_req = fopen(fn_req, "w")) == NULL ) {
@@ -51,7 +52,7 @@ main()
         printf("Couldn't open <%s> for write\n", fn_rsp);
         return KAT_FILE_OPEN_ERROR;
     }
-    
+
     for (int i=0; i<48; i++)
         entropy_input[i] = i;
 
@@ -61,7 +62,7 @@ main()
         randombytes(seed, 48);
         fprintBstr(fp_req, "seed = ", seed, 48);
         mlen = 33*(i+1);
-        fprintf(fp_req, "mlen = %llu\n", mlen);
+        fprintf(fp_req, "mlen = %zu\n", mlen);
         randombytes(msg, mlen);
         fprintBstr(fp_req, "msg = ", msg, mlen);
         fprintf(fp_req, "pk =\n");
@@ -70,13 +71,13 @@ main()
         fprintf(fp_req, "sm =\n\n");
     }
     fclose(fp_req);
-    
+
     //Create the RESPONSE file based on what's in the REQUEST file
     if ( (fp_req = fopen(fn_req, "r")) == NULL ) {
         printf("Couldn't open <%s> for read\n", fn_req);
         return KAT_FILE_OPEN_ERROR;
     }
-    
+
     fprintf(fp_rsp, "# %s\n\n", CRYPTO_ALGNAME);
     done = 0;
     do {
@@ -87,33 +88,33 @@ main()
             break;
         }
         fprintf(fp_rsp, "count = %d\n", count);
-        
+
         if ( !ReadHex(fp_req, seed, 48, "seed = ") ) {
             printf("ERROR: unable to read 'seed' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
         }
         fprintBstr(fp_rsp, "seed = ", seed, 48);
-        
+
         randombytes_init(seed, NULL, 256);
-        
+
         if ( FindMarker(fp_req, "mlen = ") )
-            fscanf(fp_req, "%llu", &mlen);
+            fscanf(fp_req, "%zu", &mlen);
         else {
             printf("ERROR: unable to read 'mlen' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
         }
-        fprintf(fp_rsp, "mlen = %llu\n", mlen);
-        
+        fprintf(fp_rsp, "mlen = %zu\n", mlen);
+
         m = (unsigned char *)calloc(mlen, sizeof(unsigned char));
         m1 = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
         sm = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
-        
+
         if ( !ReadHex(fp_req, m, (int)mlen, "msg = ") ) {
             printf("ERROR: unable to read 'msg' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
         }
         fprintBstr(fp_rsp, "msg = ", m, mlen);
-        
+
         // Generate the public/private keypair
         if ( (ret_val = crypto_sign_keypair(pk, sk)) != 0) {
             printf("crypto_sign_keypair returned <%d>\n", ret_val);
@@ -121,36 +122,36 @@ main()
         }
         fprintBstr(fp_rsp, "pk = ", pk, CRYPTO_PUBLICKEYBYTES);
         fprintBstr(fp_rsp, "sk = ", sk, CRYPTO_SECRETKEYBYTES);
-        
+
         if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
             printf("crypto_sign returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
-        fprintf(fp_rsp, "smlen = %llu\n", smlen);
+        fprintf(fp_rsp, "smlen = %zu\n", smlen);
         fprintBstr(fp_rsp, "sm = ", sm, smlen);
         fprintf(fp_rsp, "\n");
-        
+
         if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) {
             printf("crypto_sign_open returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         if ( mlen != mlen1 ) {
-            printf("crypto_sign_open returned bad 'mlen': Got <%llu>, expected <%llu>\n", mlen1, mlen);
+            printf("crypto_sign_open returned bad 'mlen': Got <%zu>, expected <%zu>\n", mlen1, mlen);
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         if ( memcmp(m, m1, mlen) ) {
             printf("crypto_sign_open returned bad 'm' value\n");
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         free(m);
         free(m1);
         free(sm);
 
     } while ( !done );
-    
+
     fclose(fp_req);
     fclose(fp_rsp);
 
@@ -233,7 +234,7 @@ ReadHex(FILE *infile, unsigned char *A, int Length, char *str)
 				ich = ch - 'a' + 10;
             else // shouldn't ever get here
                 ich = 0;
-			
+
 			for ( i=0; i<Length-1; i++ )
 				A[i] = (A[i] << 4) | (A[i+1] >> 4);
 			A[Length-1] = (A[Length-1] << 4) | ich;

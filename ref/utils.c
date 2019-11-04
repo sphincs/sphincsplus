@@ -1,22 +1,22 @@
+#include <stddef.h>
 #include <string.h>
 
-#include "utils.h"
-#include "params.h"
-#include "hash.h"
-#include "thash.h"
 #include "address.h"
+#include "hash.h"
+#include "hash_state.h"
+#include "params.h"
+#include "thash.h"
+#include "utils.h"
 
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.
  */
-void ull_to_bytes(unsigned char *out, unsigned int outlen,
-                  unsigned long long in)
-{
-    int i;
+void SPX_ull_to_bytes(
+    unsigned char *out, size_t outlen, unsigned long long in) {
 
     /* Iterate over out in decreasing order, for big-endianness. */
-    for (i = outlen - 1; i >= 0; i--) {
-        out[i] = in & 0xff;
+    for (size_t i = outlen; i > 0; i--) {
+        out[i - 1] = in & 0xff;
         in = in >> 8;
     }
 }
@@ -24,13 +24,12 @@ void ull_to_bytes(unsigned char *out, unsigned int outlen,
 /**
  * Converts the inlen bytes in 'in' from big-endian byte order to an integer.
  */
-unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen)
-{
+unsigned long long SPX_bytes_to_ull(
+    const unsigned char *in, size_t inlen) {
     unsigned long long retval = 0;
-    unsigned int i;
 
-    for (i = 0; i < inlen; i++) {
-        retval |= ((unsigned long long)in[i]) << (8*(inlen - 1 - i));
+    for (size_t i = 0; i < inlen; i++) {
+        retval |= ((unsigned long long)in[i]) << (8 * (inlen - 1 - i));
     }
     return retval;
 }
@@ -39,11 +38,12 @@ unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen)
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-void compute_root(unsigned char *root, const unsigned char *leaf,
-                  uint32_t leaf_idx, uint32_t idx_offset,
-                  const unsigned char *auth_path, uint32_t tree_height,
-                  const unsigned char *pub_seed, uint32_t addr[8])
-{
+void SPX_compute_root(
+    unsigned char *root, const unsigned char *leaf,
+    uint32_t leaf_idx, uint32_t idx_offset,
+    const unsigned char *auth_path, uint32_t tree_height,
+    const unsigned char *pub_seed, uint32_t addr[8],
+    const hash_state *hash_state_seeded) {
     uint32_t i;
     unsigned char buffer[2 * SPX_N];
 
@@ -52,8 +52,7 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
     if (leaf_idx & 1) {
         memcpy(buffer + SPX_N, leaf, SPX_N);
         memcpy(buffer, auth_path, SPX_N);
-    }
-    else {
+    } else {
         memcpy(buffer, leaf, SPX_N);
         memcpy(buffer + SPX_N, auth_path, SPX_N);
     }
@@ -63,16 +62,18 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
         leaf_idx >>= 1;
         idx_offset >>= 1;
         /* Set the address of the node we're creating. */
-        set_tree_height(addr, i + 1);
-        set_tree_index(addr, leaf_idx + idx_offset);
+        SPX_set_tree_height(addr, i + 1);
+        SPX_set_tree_index(
+            addr, leaf_idx + idx_offset);
 
         /* Pick the right or left neighbor, depending on parity of the node. */
         if (leaf_idx & 1) {
-            thash(buffer + SPX_N, buffer, 2, pub_seed, addr);
+            SPX_thash_2(
+                buffer + SPX_N, buffer, pub_seed, addr, hash_state_seeded);
             memcpy(buffer, auth_path, SPX_N);
-        }
-        else {
-            thash(buffer, buffer, 2, pub_seed, addr);
+        } else {
+            SPX_thash_2(
+                buffer, buffer, pub_seed, addr, hash_state_seeded);
             memcpy(buffer + SPX_N, auth_path, SPX_N);
         }
         auth_path += SPX_N;
@@ -81,9 +82,11 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
     /* The last iteration is exceptional; we do not copy an auth_path node. */
     leaf_idx >>= 1;
     idx_offset >>= 1;
-    set_tree_height(addr, tree_height);
-    set_tree_index(addr, leaf_idx + idx_offset);
-    thash(root, buffer, 2, pub_seed, addr);
+    SPX_set_tree_height(addr, tree_height);
+    SPX_set_tree_index(
+        addr, leaf_idx + idx_offset);
+    SPX_thash_2(
+        root, buffer, pub_seed, addr, hash_state_seeded);
 }
 
 /**
@@ -94,26 +97,29 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-void treehash(unsigned char *root, unsigned char *auth_path,
-              const unsigned char *sk_seed, const unsigned char *pub_seed,
-              uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
-              void (*gen_leaf)(
-                 unsigned char* /* leaf */,
-                 const unsigned char* /* sk_seed */,
-                 const unsigned char* /* pub_seed */,
-                 uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
-              uint32_t tree_addr[8])
-{
-    unsigned char stack[(tree_height + 1)*SPX_N];
-    unsigned int heights[tree_height + 1];
+static void SPX_treehash(
+    unsigned char *root, unsigned char *auth_path,
+    unsigned char *stack, unsigned int *heights,
+    const unsigned char *sk_seed, const unsigned char *pub_seed,
+    uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
+    void (*gen_leaf)(
+        unsigned char * /* leaf */,
+        const unsigned char * /* sk_seed */,
+        const unsigned char * /* pub_seed */,
+        uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */,
+        const hash_state * /* hash_state_seeded */),
+    uint32_t tree_addr[8],
+    const hash_state *hash_state_seeded) {
+
     unsigned int offset = 0;
     uint32_t idx;
     uint32_t tree_idx;
 
     for (idx = 0; idx < (uint32_t)(1 << tree_height); idx++) {
         /* Add the next leaf node to the stack. */
-        gen_leaf(stack + offset*SPX_N,
-                 sk_seed, pub_seed, idx + idx_offset, tree_addr);
+        gen_leaf(stack + offset * SPX_N,
+                 sk_seed, pub_seed, idx + idx_offset, tree_addr,
+                 hash_state_seeded);
         offset++;
         heights[offset - 1] = 0;
 
@@ -128,12 +134,14 @@ void treehash(unsigned char *root, unsigned char *auth_path,
             tree_idx = (idx >> (heights[offset - 1] + 1));
 
             /* Set the address of the node we're creating. */
-            set_tree_height(tree_addr, heights[offset - 1] + 1);
-            set_tree_index(tree_addr,
-                           tree_idx + (idx_offset >> (heights[offset-1] + 1)));
+            SPX_set_tree_height(
+                tree_addr, heights[offset - 1] + 1);
+            SPX_set_tree_index(
+                tree_addr, tree_idx + (idx_offset >> (heights[offset - 1] + 1)));
             /* Hash the top-most nodes from the stack together. */
-            thash(stack + (offset - 2)*SPX_N,
-                  stack + (offset - 2)*SPX_N, 2, pub_seed, tree_addr);
+            SPX_thash_2(
+                stack + (offset - 2)*SPX_N, stack + (offset - 2)*SPX_N,
+                pub_seed, tree_addr, hash_state_seeded);
             offset--;
             /* Note that the top-most node is now one layer higher. */
             heights[offset - 1]++;
@@ -146,4 +154,46 @@ void treehash(unsigned char *root, unsigned char *auth_path,
         }
     }
     memcpy(root, stack, SPX_N);
+}
+
+/* The wrappers below ensure that we use fixed-size buffers on the stack */
+
+void SPX_treehash_FORS_HEIGHT(
+    unsigned char *root, unsigned char *auth_path,
+    const unsigned char *sk_seed, const unsigned char *pub_seed,
+    uint32_t leaf_idx, uint32_t idx_offset,
+    void (*gen_leaf)(
+        unsigned char * /* leaf */,
+        const unsigned char * /* sk_seed */,
+        const unsigned char * /* pub_seed */,
+        uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */,
+        const hash_state * /* hash_state_seeded */),
+    uint32_t tree_addr[8], const hash_state *hash_state_seeded) {
+
+    unsigned char stack[(SPX_FORS_HEIGHT + 1)*SPX_N];
+    unsigned int heights[SPX_FORS_HEIGHT + 1];
+
+    SPX_treehash(
+        root, auth_path, stack, heights, sk_seed, pub_seed,
+        leaf_idx, idx_offset, SPX_FORS_HEIGHT, gen_leaf, tree_addr, hash_state_seeded);
+}
+
+void SPX_treehash_TREE_HEIGHT(
+    unsigned char *root, unsigned char *auth_path,
+    const unsigned char *sk_seed, const unsigned char *pub_seed,
+    uint32_t leaf_idx, uint32_t idx_offset,
+    void (*gen_leaf)(
+        unsigned char * /* leaf */,
+        const unsigned char * /* sk_seed */,
+        const unsigned char * /* pub_seed */,
+        uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */,
+        const hash_state * /* hash_state_seeded */),
+    uint32_t tree_addr[8], const hash_state *hash_state_seeded) {
+
+    unsigned char stack[(SPX_TREE_HEIGHT + 1)*SPX_N];
+    unsigned int heights[SPX_TREE_HEIGHT + 1];
+
+    SPX_treehash(
+        root, auth_path, stack, heights, sk_seed, pub_seed,
+        leaf_idx, idx_offset, SPX_TREE_HEIGHT, gen_leaf, tree_addr, hash_state_seeded);
 }

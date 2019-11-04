@@ -1,8 +1,9 @@
 #ifndef SPX_WOTS_H
 #define SPX_WOTS_H
 
-#include <stdint.h>
+#include "hash_state.h"
 #include "params.h"
+#include <stdint.h>
 
 /**
  * WOTS key generation. Takes a 32 byte seed for the private key, expands it to
@@ -12,24 +13,29 @@
  *
  * Writes the computed public key to 'pk'.
  */
-void wots_gen_pk(unsigned char *pk, const unsigned char *seed,
-                 const unsigned char *pub_seed, uint32_t addr[8]);
+void SPX_wots_gen_pk(
+    unsigned char *pk, const unsigned char *sk_seed,
+    const unsigned char *pub_seed, uint32_t addr[8],
+    const hash_state *hash_state_seeded);
 
 /**
  * Takes a n-byte message and the 32-byte seed for the private key to compute a
  * signature that is placed at 'sig'.
  */
-void wots_sign(unsigned char *sig, const unsigned char *msg,
-               const unsigned char *seed, const unsigned char *pub_seed,
-               uint32_t addr[8]);
+void SPX_wots_sign(
+    unsigned char *sig, const unsigned char *msg,
+    const unsigned char *sk_seed, const unsigned char *pub_seed,
+    uint32_t addr[8], const hash_state *hash_state_seeded);
 
 /**
  * Takes a WOTS signature and an n-byte message, computes a WOTS public key.
  *
  * Writes the computed public key to 'pk'.
  */
-void wots_pk_from_sig(unsigned char *pk,
-                      const unsigned char *sig, const unsigned char *msg,
-                      const unsigned char *pub_seed, uint32_t addr[8]);
+void SPX_wots_pk_from_sig(
+    unsigned char *pk,
+    const unsigned char *sig, const unsigned char *msg,
+    const unsigned char *pub_seed, uint32_t addr[8],
+    const hash_state *hash_state_seeded);
 
 #endif
