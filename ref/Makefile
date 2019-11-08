@@ -1,4 +1,3 @@
-CC = /usr/bin/gcc
 CFLAGS = -O3 -std=c99 -Wall -Wextra -Wpedantic -Werror -Wvla -Wmissing-prototypes -Wredundant-decls -Wconversion
 
 HASH = shake256
