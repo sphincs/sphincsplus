@@ -13,6 +13,8 @@
 
 AES256_CTR_DRBG_struct  DRBG_ctx;
 
+void handleErrors(void);
+
 void    AES256_ECB(unsigned char *key, unsigned char *ctr, unsigned char *buffer);
 
 /*
@@ -73,15 +75,15 @@ seedexpander(AES_XOF_struct *ctx, unsigned char *x, unsigned long xlen)
     while ( xlen > 0 ) {
         if ( (int)xlen <= (16-ctx->buffer_pos) ) { // buffer has what we need
             memcpy(x+offset, ctx->buffer+ctx->buffer_pos, xlen);
-            ctx->buffer_pos += xlen;
+            ctx->buffer_pos += (int) xlen;
 
             return RNG_SUCCESS;
         }
 
         // take what's in the buffer
-        memcpy(x+offset, ctx->buffer+ctx->buffer_pos, 16-ctx->buffer_pos);
-        xlen -= 16-ctx->buffer_pos;
-        offset += 16-ctx->buffer_pos;
+        memcpy(x+offset, ctx->buffer+ctx->buffer_pos, (size_t)(16-(size_t)ctx->buffer_pos));
+        xlen -= (unsigned long)(16-ctx->buffer_pos);
+        offset += (unsigned long)(16-ctx->buffer_pos);
 
         AES256_ECB(ctx->key, ctx->ctr, ctx->buffer);
         ctx->buffer_pos = 0;
