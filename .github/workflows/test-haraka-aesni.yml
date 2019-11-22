@@ -30,5 +30,8 @@ jobs:
           make -C haraka-aesni THASH=${{ matrix.thash }} clean
           make -C haraka-aesni THASH=${{ matrix.thash }} tests
           make -C haraka-aesni THASH=${{ matrix.thash }} test
+          make -C haraka-aesni THASH=${{ matrix.thash }} PQCgenKAT_sign
+      - name: Run PQCgenKAT_sign
+        run: ./haraka-aesni/PQCgenKAT_sign
 
 #  vim: set ft=yaml ts=2 sw=2 et :

@@ -30,5 +30,8 @@ jobs:
           make -C sha256-avx2 THASH=${{ matrix.thash }} clean
           make -C sha256-avx2 THASH=${{ matrix.thash }} tests
           make -C sha256-avx2 THASH=${{ matrix.thash }} test
+          make -C sha256-avx2 THASH=${{ matrix.thash }} PQCgenKAT_sign
+      - name: Run PQCgenKAT_sign
+        run: ./sha256-avx2/PQCgenKAT_sign
 
 #  vim: set ft=yaml ts=2 sw=2 et :
