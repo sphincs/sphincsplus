@@ -1,6 +1,8 @@
 #ifndef SPX_SHA256X8_H
 #define SPX_SHA256X8_H
 
+#include "sha256avx.h"
+
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
 
@@ -9,7 +11,7 @@
 #endif
 
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
-void sha256x8(unsigned char *out0,
+void SPX_sha256x8(unsigned char *out0,
               unsigned char *out1,
               unsigned char *out2,
               unsigned char *out3,
@@ -31,7 +33,7 @@ void sha256x8(unsigned char *out0,
  * an array to be allocated on the stack. Typically 'in' is merely a seed.
  * Outputs outlen number of bytes
  */
-void mgf1x8(unsigned char *outx8, unsigned long outlen,
+void SPX_mgf1x8(unsigned char *outx8, unsigned long outlen,
             const unsigned char *in0,
             const unsigned char *in1,
             const unsigned char *in2,
@@ -41,4 +43,6 @@ void mgf1x8(unsigned char *outx8, unsigned long outlen,
             const unsigned char *in6,
             const unsigned char *in7,
             unsigned long inlen);
+
+void SPX_seed_statex8(sha256ctxx8 *ctx, const unsigned char *pub_seed);
 #endif

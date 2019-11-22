@@ -58,23 +58,23 @@ static const unsigned int RC[] = {
 #define WSIGMA0_AVX(x) XOR3(ROTR32(x, 7), ROTR32(x, 18), SHIFTR32(x, 3))
 
 #define SHA256ROUND_AVX(a, b, c, d, e, f, g, h, rc, w) \
-    T0 = ADD5_32(h, SIGMA1_AVX(e), CH_AVX(e, f, g), _mm256_set1_epi32(RC[rc]), w); \
+    T0 = ADD5_32(h, SIGMA1_AVX(e), CH_AVX(e, f, g), _mm256_set1_epi32((int)RC[rc]), w); \
     d = ADD32(d, T0); \
     T1 = ADD32(SIGMA0_AVX(a), MAJ_AVX(a, b, c)); \
     h = ADD32(T0, T1);
 
 typedef struct SHA256state {
     u256 s[8];
-    unsigned char msgblocks[8*64];
-    int datalen;
-    unsigned long long msglen;
-} sha256ctx;
+    uint8_t msgblocks[8*64];
+    unsigned int datalen;
+    uint64_t msglen;
+} sha256ctxx8;
 
 
-void transpose(u256 s[8]);
-void sha256_init_frombytes_x8(sha256ctx *ctx, uint8_t *s, unsigned long long msglen);
-void sha256_init8x(sha256ctx *ctx);
-void sha256_update8x(sha256ctx *ctx, 
+void SPX_transpose(u256 s[8]);
+void SPX_sha256_init_frombytes_x8(sha256ctxx8 *ctx, const uint8_t *s, unsigned long long msglen);
+void SPX_sha256_init8x(sha256ctxx8 *ctx);
+void SPX_sha256_update8x(sha256ctxx8 *ctx,
                      const unsigned char *d0,
                      const unsigned char *d1,
                      const unsigned char *d2,
@@ -84,7 +84,7 @@ void sha256_update8x(sha256ctx *ctx,
                      const unsigned char *d6,
                      const unsigned char *d7,
                      unsigned long long len);
-void sha256_final8x(sha256ctx *ctx,
+void SPX_sha256_final8x(sha256ctxx8 *ctx,
                     unsigned char *out0,
                     unsigned char *out1,
                     unsigned char *out2,
@@ -94,7 +94,9 @@ void sha256_final8x(sha256ctx *ctx,
                     unsigned char *out6,
                     unsigned char *out7);
 
-void sha256_transform8x(sha256ctx *ctx, const unsigned char *data);
+void SPX_sha256_transform8x(sha256ctxx8 *ctx, const unsigned char *data);
+
+void SPX_sha256_clone_statex8(sha256ctxx8 *outctx, const sha256ctxx8 *inctx);
 
 
 #endif

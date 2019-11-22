@@ -132,38 +132,30 @@ void SPX_fors_pk_from_sig(
     uint32_t idx_offset;
     unsigned int i;
 
-    SPX_copy_keypair_addr(
-        fors_tree_addr, fors_addr);
-    SPX_copy_keypair_addr(
-        fors_pk_addr, fors_addr);
+    SPX_copy_keypair_addr(fors_tree_addr, fors_addr);
+    SPX_copy_keypair_addr(fors_pk_addr, fors_addr);
 
-    SPX_set_type(
-        fors_tree_addr, SPX_ADDR_TYPE_FORSTREE);
-    SPX_set_type(
-        fors_pk_addr, SPX_ADDR_TYPE_FORSPK);
+    SPX_set_type(fors_tree_addr, SPX_ADDR_TYPE_FORSTREE);
+    SPX_set_type(fors_pk_addr, SPX_ADDR_TYPE_FORSPK);
 
     message_to_indices(indices, m);
 
     for (i = 0; i < SPX_FORS_TREES; i++) {
         idx_offset = i * (1 << SPX_FORS_HEIGHT);
 
-        SPX_set_tree_height(
-            fors_tree_addr, 0);
-        SPX_set_tree_index(
-            fors_tree_addr, indices[i] + idx_offset);
+        SPX_set_tree_height(fors_tree_addr, 0);
+        SPX_set_tree_index(fors_tree_addr, indices[i] + idx_offset);
 
         /* Derive the leaf from the included secret key part. */
         fors_sk_to_leaf(leaf, sig, pub_seed, fors_tree_addr, hash_state_seeded);
         sig += SPX_N;
 
         /* Derive the corresponding root node of this tree. */
-        SPX_compute_root(
-            roots + i * SPX_N, leaf, indices[i], idx_offset, sig,
+        SPX_compute_root(roots + i * SPX_N, leaf, indices[i], idx_offset, sig,
             SPX_FORS_HEIGHT, pub_seed, fors_tree_addr, hash_state_seeded);
         sig += SPX_N * SPX_FORS_HEIGHT;
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
-    SPX_thash_FORS_TREES(
-        pk, roots, pub_seed, fors_pk_addr, hash_state_seeded);
+    SPX_thash_FORS_TREES(pk, roots, pub_seed, fors_pk_addr, hash_state_seeded);
 }

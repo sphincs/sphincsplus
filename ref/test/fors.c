@@ -21,6 +21,8 @@ int main()
 
     randombytes(sk_seed, SPX_N);
     randombytes(pub_seed, SPX_N);
+    randombytes(pk1, SPX_FORS_PK_BYTES);
+    randombytes(pk2, SPX_FORS_PK_BYTES);
     randombytes(m, SPX_FORS_MSG_BYTES);
     randombytes((uint8_t *)addr, 8 * sizeof(uint32_t));
 
