@@ -5,6 +5,7 @@
 #include "../thash.h"
 #include "../randombytes.h"
 #include "../params.h"
+#include "../hash.h"
 
 int main()
 {
@@ -21,6 +22,8 @@ int main()
     randombytes(seed, SPX_N);
     randombytes(input, 8*SPX_N);
     randombytes((unsigned char *)addr, 8 * 8 * sizeof(uint32_t));
+
+    initialize_hash_function(seed, seed);
 
     printf("Testing if thash matches thashx8.. ");
 
