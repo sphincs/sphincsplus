@@ -2,6 +2,7 @@ name: Tests for ref implementation
 
 on:
   - push
+  - pull_request
 
 jobs:
   build:

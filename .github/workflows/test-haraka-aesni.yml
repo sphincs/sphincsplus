@@ -2,6 +2,7 @@ name: Tests for haraka-aesni implementation
 
 on:
   - push
+  - pull_request
 
 jobs:
   build:

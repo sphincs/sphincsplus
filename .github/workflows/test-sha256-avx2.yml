@@ -2,6 +2,7 @@ name: Tests for sha256-avx2 implementation
 
 on:
   - push
+  - pull_request
 
 jobs:
   build:
