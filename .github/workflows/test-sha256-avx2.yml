@@ -1,0 +1,33 @@
+name: Tests for sha256-avx2 implementation
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        size:
+          - 128
+          - 192
+          - 256
+        option:
+          - s
+          - f
+        thash:
+          - simple
+          - robust
+    steps:
+      - uses: actions/checkout@v1
+      - name: Put params file in place
+        run: |
+          rm sha256-avx2/params.h
+          cp ref/params/params-sphincs-sha256-${{ matrix.size }}${{ matrix.option }}.h sha256-avx2/params.h
+      - name: Run make
+        run: |
+          make -C sha256-avx2 THASH=${{ matrix.thash }} clean
+          make -C sha256-avx2 THASH=${{ matrix.thash }} tests
+          make -C sha256-avx2 THASH=${{ matrix.thash }} test
+
+#  vim: set ft=yaml ts=2 sw=2 et :
