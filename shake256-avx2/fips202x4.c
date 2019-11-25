@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "fips202.h"
+#include "fips202x4.h"
 
 #define NROUNDS 24
 #define ROL(a, offset) ((a << offset) ^ (a >> (64-offset)))
@@ -21,7 +22,7 @@ static void store64(uint8_t *x, uint64_t u)
   unsigned int i;
 
   for(i=0; i<8; ++i) {
-    x[i] = u;
+    x[i] = (uint8_t)u;
     u >>= 8;
   }
 }
@@ -133,14 +134,16 @@ static void keccak_squeezeblocks4x(unsigned char *h0,
 
 
 
-void shake128x4(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3, unsigned long long outlen,
-                unsigned char *in0,
-                unsigned char *in1,
-                unsigned char *in2,
-                unsigned char *in3, unsigned long long inlen)
+void SPX_shake128x4(unsigned char *out0,
+                    unsigned char *out1,
+                    unsigned char *out2,
+                    unsigned char *out3,
+                    unsigned long long outlen,
+                    unsigned char *in0,
+                    unsigned char *in1,
+                    unsigned char *in2,
+                    unsigned char *in3,
+                    unsigned long long inlen)
 {
   __m256i s[25];
   unsigned char t0[SHAKE128_RATE];
@@ -178,14 +181,16 @@ void shake128x4(unsigned char *out0,
 }
 
 
-void shake256x4(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3, unsigned long long outlen,
-                unsigned char *in0,
-                unsigned char *in1,
-                unsigned char *in2,
-                unsigned char *in3, unsigned long long inlen)
+void SPX_shake256x4(unsigned char *out0,
+                    unsigned char *out1,
+                    unsigned char *out2,
+                    unsigned char *out3,
+                    unsigned long long outlen,
+                    unsigned char *in0,
+                    unsigned char *in1,
+                    unsigned char *in2,
+                    unsigned char *in3,
+                    unsigned long long inlen)
 {
   __m256i s[25];
   unsigned char t0[SHAKE256_RATE];

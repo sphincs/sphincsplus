@@ -3,14 +3,20 @@
 
 #include <stdint.h>
 
-void thashx4(unsigned char *out0,
-             unsigned char *out1,
-             unsigned char *out2,
-             unsigned char *out3,
-             const unsigned char *in0,
-             const unsigned char *in1,
-             const unsigned char *in2,
-             const unsigned char *in3, unsigned int inblocks,
-             const unsigned char *pub_seed, uint32_t addrx4[4*8]);
+#define thashx4_header(inblocks)                                    \
+void SPX_thashx4_##inblocks(unsigned char *out0,                    \
+             unsigned char *out1,                                   \
+             unsigned char *out2,                                   \
+             unsigned char *out3,                                   \
+             const unsigned char *in0,                              \
+             const unsigned char *in1,                              \
+             const unsigned char *in2,                              \
+             const unsigned char *in3,                              \
+             const unsigned char *pub_seed, uint32_t addrx4[4*8])
+
+thashx4_header(1);
+thashx4_header(2);
+thashx4_header(WOTS_LEN);
+thashx4_header(FORS_TREES);
 
 #endif
