@@ -1,17 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../thashx8.h"
-#include "../thash.h"
-#include "../randombytes.h"
-#include "../params.h"
-<<<<<<< HEAD
 #include "../hash.h"
-=======
 #include "../hash_state.h"
-#include "../hash.h"
 #include "../hashx8.h"
->>>>>>> Clean up sha256-avx2
+#include "../params.h"
+#include "../randombytes.h"
+#include "../thash.h"
+#include "../thashx8.h"
+
 
 int main()
 {
