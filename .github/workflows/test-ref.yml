@@ -29,6 +29,10 @@ jobs:
         run: |
           rm ref/params.h
           cp ref/params/params-sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }}.h ref/params.h
+      - name: Setup hash_state.h
+        run: |
+          rm ref/hash_state.h
+          cp ref/hash_states/${{ matrix.hash }}.h ref/hash_state.h
       - name: Run make
         run: |
           make -C ref HASH=${{ matrix.hash }} THASH=${{ matrix.thash }} clean
