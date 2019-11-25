@@ -6,10 +6,11 @@
 
 #define NIST_COMPATIBLE 1
 
+#include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "rng.h"
 #include "api.h"
 
@@ -82,7 +83,7 @@ main()
     done = 0;
     do {
         if ( FindMarker(fp_req, "count = ") )
-            fscanf(fp_req, "%d", &count);
+            assert(fscanf(fp_req, "%d", &count) > 0);
         else {
             done = 1;
             break;
@@ -98,7 +99,7 @@ main()
         randombytes_init(seed, NULL, 256);
 
         if ( FindMarker(fp_req, "mlen = ") )
-            fscanf(fp_req, "%zu", &mlen);
+            assert(fscanf(fp_req, "%zu", &mlen) > 0);
         else {
             printf("ERROR: unable to read 'mlen' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
