@@ -1,7 +1,9 @@
 #ifndef SPX_UTILSX4_H
 #define SPX_UTILSX4_H
 
+#include "hash_state.h"
 #include "params.h"
+
 #include <stdint.h>
 
 /**
@@ -28,7 +30,9 @@ void SPX_treehashx4_FORS_HEIGHT(unsigned char *rootx4,
                                                   uint32_t /* addr_idx1 */,
                                                   uint32_t /* addr_idx2 */,
                                                   uint32_t /* addr_idx3 */,
-                                                  const uint32_t[8] /* tree_addr */),
-                               uint32_t tree_addrx4[4 * 8]);
+                                                  const uint32_t[8] /* tree_addr */,
+                                                  const hash_state * /* state_seeded */),
+                               uint32_t tree_addrx4[4 * 8],
+                               const hash_state *state_seeded);
 
 #endif

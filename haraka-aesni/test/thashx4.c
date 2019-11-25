@@ -1,0 +1,1 @@
+../../shake256-avx2/test/thashx4.c

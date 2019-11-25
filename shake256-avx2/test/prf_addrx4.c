@@ -6,7 +6,6 @@
 #include "../hash_state.h"
 #include "../hash.h"
 #include "../hashx4.h"
-#include "../fips202x4.h"
 
 int main()
 {
@@ -24,6 +23,7 @@ int main()
     randombytes(seed, SPX_N);
     randombytes(key, SPX_N);
     randombytes((unsigned char *)addr, 4 * 8 * sizeof(uint32_t));
+    SPX_initialize_hash_function(&state_seeded, seed, seed);
 
     printf("Testing if prf_addr matches prf_addrx4.. ");
 
@@ -41,7 +41,8 @@ int main()
             output + 2*SPX_N,
             output + 3*SPX_N,
             key,
-            addr);
+            addr,
+            &state_seeded);
 
     if (memcmp(out4, output, 4 * SPX_N)) {
         printf("failed!\n");

@@ -19,7 +19,8 @@ void SPX_thashx4_##name(unsigned char *out0,                                    
              const unsigned char *in1,                                                  \
              const unsigned char *in2,                                                  \
              const unsigned char *in3,                                                  \
-             const unsigned char *pub_seed, uint32_t addrx4[4*8])                       \
+             const unsigned char *pub_seed, uint32_t addrx4[4*8],                       \
+             const hash_state *state_seeded)                                            \
 {                                                                                       \
     unsigned char buf0[SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N];                      \
     unsigned char buf1[SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N];                      \
@@ -53,8 +54,13 @@ void SPX_thashx4_##name(unsigned char *out0,                                    
     SPX_shake256x4(                                                                     \
         out0, out1, out2, out3, SPX_N,                                                  \
         buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);               \
+                                                                                        \
+    /* avoid unused parameter warning */                                                \
+    (void)state_seeded;                                                                 \
 }
 
 
 thash_variant(1, 1)
 thash_variant(2, 2)
+thash_variant(WOTS_LEN, SPX_WOTS_LEN)
+thash_variant(FORS_TREES, SPX_FORS_TREES)

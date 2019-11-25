@@ -25,7 +25,7 @@
  * purpose.
  */
 
-#include "sha2.h"
-#define hash_state sha256ctx
+#include "haraka.h"
+#define hash_state harakactx
 
 #endif

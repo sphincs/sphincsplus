@@ -14,7 +14,8 @@
     void SPX_thashx4_##name(                                                                       \
         unsigned char *out0, unsigned char *out1, unsigned char *out2, unsigned char *out3,        \
         const unsigned char *in0, const unsigned char *in1, const unsigned char *in2,              \
-        const unsigned char *in3, const unsigned char *pub_seed, uint32_t addrx4[4 * 8]) {         \
+        const unsigned char *in3, const unsigned char *pub_seed, uint32_t addrx4[4 * 8],           \
+        const hash_state *state_seeded) {                                                          \
         unsigned char buf0[SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N];                             \
         unsigned char buf1[SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N];                             \
         unsigned char buf2[SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N];                             \
@@ -35,7 +36,12 @@
                                                                                                    \
         SPX_shake256x4(out0, out1, out2, out3, SPX_N, buf0, buf1, buf2, buf3,                      \
                        SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N);                                 \
+                                                                                                   \
+        /* Avoid unused parameter warning */                                                       \
+        (void)state_seeded;                                                                        \
     }
 
-thashx4_variant(1, 1) thashx4_variant(2, 2) thashx4_variant(WOTS_LEN, SPX_WOTS_LEN)
-    thashx4_variant(FORS_TREES, SPX_FORS_TREES)
+thashx4_variant(1, 1)
+thashx4_variant(2, 2)
+thashx4_variant(WOTS_LEN, SPX_WOTS_LEN)
+thashx4_variant(FORS_TREES, SPX_FORS_TREES)

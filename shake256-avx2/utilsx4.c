@@ -1,10 +1,10 @@
-#include <string.h>
-
 #include "address.h"
 #include "params.h"
 #include "thashx4.h"
 #include "utils.h"
 #include "utilsx4.h"
+
+#include <string.h>
 
 /**
  * For a given leaf index, computes the authentication path and the resulting
@@ -23,8 +23,9 @@
                            const unsigned char * /* sk_seed */,                                    \
                            const unsigned char * /* pub_seed */, uint32_t /* addr_idx0 */,         \
                            uint32_t /* addr_idx1 */, uint32_t /* addr_idx2 */,                     \
-                           uint32_t /* addr_idx3 */, const uint32_t[8] /* tree_addr */),           \
-        uint32_t tree_addrx4[4 * 8]) {                                                             \
+                           uint32_t /* addr_idx3 */, const uint32_t[8] /* tree_addr */,            \
+                           const hash_state * /* state_seeded */),                                 \
+        uint32_t tree_addrx4[4 * 8], const hash_state *state_seeded) {                             \
         unsigned char stackx4[4 * ((tree_height) + 1) * SPX_N];                                    \
         unsigned int heights[(tree_height) + 1];                                                   \
         unsigned int offset = 0;                                                                   \
@@ -39,7 +40,7 @@
                        stackx4 + 2 * ((tree_height) + 1) * SPX_N + offset * SPX_N,                 \
                        stackx4 + 3 * ((tree_height) + 1) * SPX_N + offset * SPX_N, sk_seed,        \
                        pub_seed, idx + idx_offset[0], idx + idx_offset[1], idx + idx_offset[2],    \
-                       idx + idx_offset[3], tree_addrx4);                                          \
+                       idx + idx_offset[3], tree_addrx4, state_seeded);                            \
             offset++;                                                                              \
             heights[offset - 1] = 0;                                                               \
                                                                                                    \
@@ -72,7 +73,7 @@
                               stackx4 + 1 * ((tree_height) + 1) * SPX_N + (offset - 2) * SPX_N,    \
                               stackx4 + 2 * ((tree_height) + 1) * SPX_N + (offset - 2) * SPX_N,    \
                               stackx4 + 3 * ((tree_height) + 1) * SPX_N + (offset - 2) * SPX_N,    \
-                              pub_seed, tree_addrx4);                                              \
+                              pub_seed, tree_addrx4, state_seeded);                                \
                 offset--;                                                                          \
                 /* Note that the top-most node is now one layer higher. */                         \
                 heights[offset - 1]++;                                                             \

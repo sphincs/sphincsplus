@@ -14,7 +14,8 @@ void SPX_prf_addrx4(unsigned char *out0,
                     unsigned char *out2,
                     unsigned char *out3,
                     const unsigned char *key,
-                    const uint32_t addrx4[4*8])
+                    const uint32_t addrx4[4*8],
+                    const hash_state *state_seeded)
 {
     unsigned char bufx4[4 * (SPX_N + SPX_ADDR_BYTES)];
     unsigned int j;
@@ -32,4 +33,7 @@ void SPX_prf_addrx4(unsigned char *out0,
                    bufx4 + 1*(SPX_N + SPX_ADDR_BYTES),
                    bufx4 + 2*(SPX_N + SPX_ADDR_BYTES),
                    bufx4 + 3*(SPX_N + SPX_ADDR_BYTES), SPX_N + SPX_ADDR_BYTES);
+
+    /* Avoid unused parameter warning */
+    (void)state_seeded;
 }
