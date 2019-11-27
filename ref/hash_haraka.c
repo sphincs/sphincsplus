@@ -2,11 +2,10 @@
 #include <string.h>
 
 #include "address.h"
+#include "haraka.h"
 #include "hash.h"
 #include "params.h"
 #include "utils.h"
-
-#include "haraka.h"
 
 void SPX_initialize_hash_function(
     hash_state *hash_state_seeded,

@@ -1,13 +1,13 @@
 /*
 Plain C implementation of the Haraka256 and Haraka512 permutations.
 */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <immintrin.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "haraka.h"
-#include "immintrin.h"
 
 #define HARAKAS_RATE 32
 
@@ -20,53 +20,53 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
 #define XOR128(a, b) _mm_xor_si128(a, b)
 
 #define AES2(s0, s1, rci) \
-  s0 = _mm_aesenc_si128(s0, *(rci)); \
-  s1 = _mm_aesenc_si128(s1, *(rci + 1)); \
-  s0 = _mm_aesenc_si128(s0, *(rci + 2)); \
-  s1 = _mm_aesenc_si128(s1, *(rci + 3));
+  (s0) = _mm_aesenc_si128(s0, *(rci)); \
+  (s1) = _mm_aesenc_si128(s1, *((rci) + 1)); \
+  (s0) = _mm_aesenc_si128(s0, *((rci) + 2)); \
+  (s1) = _mm_aesenc_si128(s1, *((rci) + 3));
 
 #define AES2_4x(s0, s1, s2, s3, rci) \
-  AES2(s0[0], s0[1], rci); \
-  AES2(s1[0], s1[1], rci); \
-  AES2(s2[0], s2[1], rci); \
-  AES2(s3[0], s3[1], rci);
+  AES2((s0)[0], (s0)[1], rci); \
+  AES2((s1)[0], (s1)[1], rci); \
+  AES2((s2)[0], (s2)[1], rci); \
+  AES2((s3)[0], (s3)[1], rci);
 
 #define AES4(s0, s1, s2, s3, rci) \
-  s0 = _mm_aesenc_si128(s0, *(rci)); \
-  s1 = _mm_aesenc_si128(s1, *(rci + 1)); \
-  s2 = _mm_aesenc_si128(s2, *(rci + 2)); \
-  s3 = _mm_aesenc_si128(s3, *(rci + 3)); \
-  s0 = _mm_aesenc_si128(s0, *(rci + 4)); \
-  s1 = _mm_aesenc_si128(s1, *(rci + 5)); \
-  s2 = _mm_aesenc_si128(s2, *(rci + 6)); \
-  s3 = _mm_aesenc_si128(s3, *(rci + 7));
+  (s0) = _mm_aesenc_si128(s0, *(rci)); \
+  (s1) = _mm_aesenc_si128(s1, *((rci) + 1)); \
+  (s2) = _mm_aesenc_si128(s2, *((rci) + 2)); \
+  (s3) = _mm_aesenc_si128(s3, *((rci) + 3)); \
+  (s0) = _mm_aesenc_si128(s0, *((rci) + 4)); \
+  (s1) = _mm_aesenc_si128(s1, *((rci) + 5)); \
+  (s2) = _mm_aesenc_si128(s2, *((rci) + 6)); \
+  (s3) = _mm_aesenc_si128(s3, *((rci) + 7));
 
 #define AES4_4x(s0, s1, s2, s3, rci) \
-  AES4(s0[0], s0[1], s0[2], s0[3], rci); \
-  AES4(s1[0], s1[1], s1[2], s1[3], rci); \
-  AES4(s2[0], s2[1], s2[2], s2[3], rci); \
-  AES4(s3[0], s3[1], s3[2], s3[3], rci);
+  AES4((s0)[0], (s0)[1], (s0)[2], (s0)[3], rci); \
+  AES4((s1)[0], (s1)[1], (s1)[2], (s1)[3], rci); \
+  AES4((s2)[0], (s2)[1], (s2)[2], (s2)[3], rci); \
+  AES4((s3)[0], (s3)[1], (s3)[2], (s3)[3], rci);
 
 #define MIX2(s0, s1) \
   tmp = _mm_unpacklo_epi32(s0, s1); \
-  s1 = _mm_unpackhi_epi32(s0, s1); \
-  s0 = tmp;
+  (s1) = _mm_unpackhi_epi32(s0, s1); \
+  (s0) = tmp;
 
 #define MIX4(s0, s1, s2, s3) \
   tmp  = _mm_unpacklo_epi32(s0, s1); \
-  s0 = _mm_unpackhi_epi32(s0, s1); \
-  s1 = _mm_unpacklo_epi32(s2, s3); \
-  s2 = _mm_unpackhi_epi32(s2, s3); \
-  s3 = _mm_unpacklo_epi32(s0, s2); \
-  s0 = _mm_unpackhi_epi32(s0, s2); \
-  s2 = _mm_unpackhi_epi32(s1, tmp); \
-  s1 = _mm_unpacklo_epi32(s1, tmp);
+  (s0) = _mm_unpackhi_epi32(s0, s1); \
+  (s1) = _mm_unpacklo_epi32(s2, s3); \
+  (s2) = _mm_unpackhi_epi32(s2, s3); \
+  (s3) = _mm_unpacklo_epi32(s0, s2); \
+  (s0) = _mm_unpackhi_epi32(s0, s2); \
+  (s2) = _mm_unpackhi_epi32(s1, tmp); \
+  (s1) = _mm_unpacklo_epi32(s1, tmp);
 
 #define TRUNCSTORE(out, s0, s1, s2, s3) \
-  _mm_storeu_si128((u128 *)out, \
-                   (__m128i)_mm_shuffle_pd((__m128d)s0, (__m128d)s1, 3)); \
-  _mm_storeu_si128((u128 *)(out + 16), \
-                   (__m128i)_mm_shuffle_pd((__m128d)s2, (__m128d)s3, 0));
+  _mm_storeu_si128((u128 *)(out), \
+                   (__m128i)_mm_shuffle_pd((__m128d)(s0), (__m128d)(s1), 3)); \
+  _mm_storeu_si128((u128 *)((out) + 16), \
+                   (__m128i)_mm_shuffle_pd((__m128d)(s2), (__m128d)(s3), 0));
 
 static void load_haraka_constants(u128 rc[40])
 {

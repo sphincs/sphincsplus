@@ -2,6 +2,7 @@
 #define SPX_THASHX4_H
 
 #include <stdint.h>
+
 #include "hash_state.h"
 
 #define thashx4_header(inblocks)                                    \

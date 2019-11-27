@@ -1,15 +1,15 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "utils.h"
+#include "address.h"
 #include "hash.h"
+#include "hash_state.h"
 #include "hashx4.h"
+#include "params.h"
 #include "thash.h"
 #include "thashx4.h"
+#include "utils.h"
 #include "wots.h"
-#include "address.h"
-#include "params.h"
-#include "hash_state.h"
 
 // TODO clarify address expectations, and make them more uniform.
 // TODO i.e. do we expect types to be set already?
@@ -128,7 +128,7 @@ static void base_w(unsigned int *output, const int out_len, const unsigned char 
             bits += 8;
         }
         bits -= SPX_WOTS_LOGW;
-        output[out] = (total >> bits) & (SPX_WOTS_W - 1);
+        output[out] = (unsigned int)(total >> bits) & (SPX_WOTS_W - 1);
         out++;
     }
 }

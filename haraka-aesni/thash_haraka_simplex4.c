@@ -2,10 +2,9 @@
 #include <string.h>
 
 #include "address.h"
+#include "haraka.h"
 #include "params.h"
 #include "thashx4.h"
-
-#include "haraka.h"
 
 /**
  * 4-way parallel version of thash; takes 4x as much input and output

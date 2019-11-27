@@ -1,9 +1,9 @@
 #ifndef SPX_HARAKA_H
 #define SPX_HARAKA_H
 
+#include <immintrin.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <immintrin.h>
 
 typedef struct {
     __m128i rc[40];

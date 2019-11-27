@@ -2,6 +2,7 @@
 #define SPX_THASH_H
 
 #include "hash_state.h"
+
 #include <stdint.h>
 
 void SPX_thash_1(

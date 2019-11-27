@@ -17,7 +17,7 @@
 #define treehashx4_variant(name, tree_height)                                                      \
     void SPX_treehashx4_##name(                                                                    \
         unsigned char *rootx4, unsigned char *auth_pathx4, const unsigned char *sk_seed,           \
-        const unsigned char *pub_seed, uint32_t leaf_idx[4], uint32_t idx_offset[4],               \
+        const unsigned char *pub_seed, const uint32_t leaf_idx[4], uint32_t idx_offset[4],         \
         void (*gen_leafx4)(unsigned char * /* leaf0 */, unsigned char * /* leaf1 */,               \
                            unsigned char * /* leaf2 */, unsigned char * /* leaf3 */,               \
                            const unsigned char * /* sk_seed */,                                    \

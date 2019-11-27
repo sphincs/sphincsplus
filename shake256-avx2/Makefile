@@ -1,5 +1,5 @@
 CC = /usr/bin/gcc
-CFLAGS = -O3 -std=c99 -march=native -fomit-frame-pointer -flto \
+CFLAGS = -O3 -std=c99 -mavx2 -fomit-frame-pointer -flto \
 		 -Wall -Wextra -Wpedantic -Werror -Wvla -Wmissing-prototypes -Wredundant-decls -Wconversion
 
 THASH = robust
