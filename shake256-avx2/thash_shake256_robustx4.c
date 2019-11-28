@@ -41,10 +41,10 @@ void SPX_thashx4_##name(unsigned char *out0,                                    
     SPX_addr_to_bytes(buf2 + SPX_N, addrx4 + 2*8);                                      \
     SPX_addr_to_bytes(buf3 + SPX_N, addrx4 + 3*8);                                      \
                                                                                         \
-    SPX_shake256x4(bitmask0, bitmask1, bitmask2, bitmask3, inblocks * SPX_N,            \
+    SPX_shake256x4(bitmask0, bitmask1, bitmask2, bitmask3, (inblocks) * SPX_N,          \
                    buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES);                     \
                                                                                         \
-    for (i = 0; i < inblocks * SPX_N; i++) {                                            \
+    for (i = 0; i < (inblocks) * SPX_N; i++) {                                          \
         buf0[SPX_N + SPX_ADDR_BYTES + i] = in0[i] ^ bitmask0[i];                        \
         buf1[SPX_N + SPX_ADDR_BYTES + i] = in1[i] ^ bitmask1[i];                        \
         buf2[SPX_N + SPX_ADDR_BYTES + i] = in2[i] ^ bitmask2[i];                        \
@@ -53,7 +53,7 @@ void SPX_thashx4_##name(unsigned char *out0,                                    
                                                                                         \
     SPX_shake256x4(                                                                     \
         out0, out1, out2, out3, SPX_N,                                                  \
-        buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);               \
+        buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES + (inblocks)*SPX_N);             \
                                                                                         \
     /* avoid unused parameter warning */                                                \
     (void)state_seeded;                                                                 \

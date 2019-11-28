@@ -21,6 +21,13 @@ void SPX_initialize_hash_function(
     (void)sk_seed; /* Suppress an 'unused parameter' warning. */
 }
 
+/**
+ * Cleans up the hash function states
+ */
+void SPX_destroy_hash_function(hash_state *hash_state_seeded) {
+    sha256_inc_destroy(&hash_state_seeded->x1);
+}
+
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */
@@ -80,6 +87,8 @@ void SPX_gen_message_random(
         mlen -= SPX_SHA256_BLOCK_BYTES - SPX_N;
         sha256_inc_finalize(buf + SPX_SHA256_BLOCK_BYTES, &state, m, mlen);
     }
+    // Clean up SHA2 state.
+    sha256_inc_destroy(&state);
 
     for (i = 0; i < SPX_N; i++) {
         buf[i] = 0x5c ^ sk_prf[i];
@@ -139,6 +148,8 @@ void SPX_hash_message(
         mlen -= SPX_INBLOCKS * SPX_SHA256_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
         sha256_inc_finalize(seed, &state, m, mlen);
     }
+    // Clean up SHA2 state
+    sha256_inc_destroy(&state);
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */

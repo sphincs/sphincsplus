@@ -6,10 +6,6 @@
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
 
-#if SPX_SHA256_OUTPUT_BYTES < SPX_N
-    #error Linking against SHA-256 with N larger than 32 bytes is not supported
-#endif
-
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
 void SPX_sha256x8(unsigned char *out0,
               unsigned char *out1,

@@ -18,6 +18,12 @@ void SPX_initialize_hash_function(
     (void)sk_seed; /* Suppress an 'unused parameter' warning. */
 }
 
+/* This is not necessary for SHAKE256, so we don't do anything */
+void SPX_destroy_hash_function(
+    hash_state *hash_state_seeded) { // NOLINT(readability-non-const-parameter)
+    (void)hash_state_seeded;
+}
+
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */

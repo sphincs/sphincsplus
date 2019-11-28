@@ -545,6 +545,22 @@ void sha512_inc_clone_state(sha512ctx *stateout, const sha512ctx *statein) {
     memcpy(stateout, statein, sizeof(sha512ctx));
 }
 
+void sha224_inc_destroy(sha224ctx *state) {
+    (void)state;
+}
+
+void sha256_inc_destroy(sha256ctx *state) {
+    (void)state;
+}
+
+void sha384_inc_destroy(sha384ctx *state) {
+    (void)state;
+}
+
+void sha512_inc_destroy(sha512ctx *state) {
+    (void)state;
+}
+
 void sha256_inc_blocks(sha256ctx *state, const uint8_t *in, size_t inblocks) {
     uint64_t bytes = load_bigendian_64(state->ctx + 32);
 

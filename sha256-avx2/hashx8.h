@@ -2,6 +2,7 @@
 #define SPX_HASHX8_H
 
 #include <stdint.h>
+
 #include "params.h"
 
 void SPX_prf_addrx8(unsigned char *out0,

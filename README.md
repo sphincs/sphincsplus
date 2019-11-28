@@ -23,3 +23,9 @@ The [SPHINCS+ specification](https://sphincs.org/data/sphincs+-specification.pdf
 ### License
 
 All included code is available under the CC0 1.0 Universal Public Domain Dedication, with the exception of `rng.c`, `rng.h` and `PQCgenKAT_sign.c`, which were provided by NIST.
+
+### Scripts
+
+The script ``all-the-sphincs.py`` can be used to generate implementations for specific instances of SPHINCS+.
+It can set a namespace for the implementations, and it can set up everything necessary to merge code into PQClean.
+Templates for supporting files for PQClean can be found in the pqclean subdirectory.

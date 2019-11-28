@@ -10,6 +10,8 @@ void SPX_initialize_hash_function(
     hash_state *hash_state_seeded,
     const unsigned char *pub_seed, const unsigned char *sk_seed);
 
+void SPX_destroy_hash_function(hash_state *hash_state_seeded);
+
 void SPX_prf_addr(
     unsigned char *out, const unsigned char *key, const uint32_t addr[8],
     const hash_state *hash_state_seeded);

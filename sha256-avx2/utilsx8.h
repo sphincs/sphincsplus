@@ -18,7 +18,7 @@
 void SPX_treehashx8_FORS_HEIGHT(
                 unsigned char *rootx8, unsigned char *auth_pathx8,
                 const unsigned char *sk_seed, const unsigned char *pub_seed,
-                uint32_t leaf_idx[8], uint32_t idx_offset[8],
+                const uint32_t leaf_idx[8], uint32_t idx_offset[8],
                 void (*gen_leafx8)(
                    unsigned char* /* leaf0 */,
                    unsigned char* /* leaf1 */,

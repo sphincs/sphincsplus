@@ -1,0 +1,115 @@
+consistency_checks:
+  - source:
+      scheme: sphincs-{% if func == 'shake256'%}sha256{% else %}shake256{% endif %}-256s-robust
+      implementation: {{ impl }}
+    files:
+      - address.c
+      - address.h
+      - fors.c
+      - fors.h
+      - hash.h
+      - sign.c
+      - thash.h
+      - utils.c
+      - utils.h
+      - wots.c
+      - wots.h
+{% for alt in ['128s', '128f', '192s', '192f', '256s', '256f'] %}{% if alt != (size + opt) %}
+  - source:
+      scheme: sphincs-{{ func }}-{{ alt }}-{{ variant }}
+      implementation: {{ impl }}
+    files:
+      - hash_state.h
+      - {{ func }}.c
+      - {{ func }}.h
+      - hash_{{ func }}.c
+      - thash_{{ func }}_{{ variant }}.c
+{% if func == 'sha256' and impl == 'avx2' %}
+      - thashx8.h
+      - thash_sha256_{{ variant}}x8.c
+      - utilsx8.c
+      - utilsx8.h
+{% elif impl == 'avx2' or impl == 'aesni' %}
+{% if func == 'shake256' %}
+      - fips202x4.c
+      - fips202x4.h
+{% endif %}
+      - hashx4.h
+      - hash_{{ func }}x4.c
+      - thashx4.c
+      - thash_{{ func }}_{{ variant }}.c
+      - utilsx4.c
+      - utilsx4.c
+{% endif %}
+{% endif %}{% endfor %}
+{% if func == 'sha256' and impl == 'avx2' %}
+  - source:
+      scheme: {{ varname }}
+      implementation: clean
+    files:
+      - address.c
+      - address.h
+      - api.h
+      - fors.h
+      - hash.h
+      - hash_state.h
+      - params.h
+      - sha256.c
+      - sha256.h
+      - sign.c
+      - thash.h
+      - thash_sha256_{{ variant }}.c
+      - utils.c
+      - utils.h
+      - wots.h
+{% elif func == 'shake256' and impl == 'avx2' %}
+  - source:
+      scheme: {{ varname }}
+      implementation: clean
+    files:
+      - address.c
+      - address.h
+      - api.h
+      - fors.h
+      - fips202.c
+      - fips202.h
+      - hash.h
+      - hash_shake256.c
+      - hash_state.h
+      - params.h
+      - thash.h
+      - thash_shake256_{{ variant }}.c
+      - utils.c
+      - utils.h
+      - wots.h
+{% elif func == 'haraka' and impl == 'aesni' %}
+  - source:
+      scheme: sphincs-shake256-{{ size }}{{ opt }}-{{ variant }}
+      implementation: avx2
+    files:
+      - fors.c
+      - hashx4.h
+      - sign.c
+      - thashx4.h
+      - utilsx4.c
+      - utilsx4.h
+      - wots.c
+  - source:
+      scheme: {{ varname }}
+      implementation: clean
+    files:
+      - address.c
+      - address.h
+      - api.h
+      - fors.h
+      - hash.h
+      - hash_haraka.h
+      - hash_state.h
+      - params.h
+      - thash.h
+      - thash_haraka_{{ variant }}.c
+      - utils.c
+      - utils.h
+      - wots.h
+{% endif %}
+{# vim: set ft=jinja2 ts=2 sw=2 tw=0 et #}

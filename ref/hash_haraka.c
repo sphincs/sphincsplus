@@ -13,6 +13,13 @@ void SPX_initialize_hash_function(
     SPX_tweak_constants(hash_state_seeded, pub_seed, sk_seed, SPX_N);
 }
 
+/* The haraka implementation is stack based and won't be replaced in PQClean/OQS,
+   so we don't need to do anything */
+void SPX_destroy_hash_function(
+    hash_state *hash_state_seeded) { // NOLINT(readability-non-const-parameter)
+    (void)hash_state_seeded;
+}
+
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */

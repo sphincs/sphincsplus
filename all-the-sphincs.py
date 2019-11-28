@@ -7,20 +7,31 @@ import itertools
 import subprocess
 import re
 import jinja2
+import glob
 
-TARGET_DIR = '../PQClean-sphincs/crypto_sign'
+# Output here
+TARGET_DIR = './crypto_sign'
+# Rename implementations?
 IMPLEMENTATION_NAME_MAP = {
     'ref': 'clean',
     'haraka-aesni': 'aesni',
     'shake256-avx2': 'avx2',
     'sha256-avx2': 'avx2',
 }
+# Enable me if you want the PQClean/SUPERCOP layout (target_dir/variant/impl)
+# Also enables astyle and disables NIST_COMPATIBLE – though setting an empty
+# namespace will then get the NIST API after all.
+#
+# This switch will also create the PQClean duplicate_consistency files.
 PQCLEAN_LAYOUT = True
 
 
+# Change me to generate a different namespace.
 def generate_namespace(func, size, opt, variant, impl):
     return f"PQCLEAN_SPHINCS{func}{size}{opt}{variant}_{impl}_".upper()
 
+
+# You shouldn't have to change anything below this line.
 
 def replace_in_file(path, text_to_search, replacement_text):
     with fileinput.FileInput(path, inplace=True) as file:
@@ -223,7 +234,11 @@ for (func, size, opt, variant, impl) in sphincs_variants:
     varname = f'sphincs-{func}-{size}{opt}-{variant}'
     target_impl = (IMPLEMENTATION_NAME_MAP[impl]
                    if impl in IMPLEMENTATION_NAME_MAP else impl)
-    instpath = os.path.join(TARGET_DIR, varname, target_impl)
+    print(f"Generating {varname} {target_impl}")
+    if PQCLEAN_LAYOUT:
+        instpath = os.path.join(TARGET_DIR, varname, target_impl)
+    else:
+        instpath = os.path.join(TARGET_DIR, f"{varname}_{target_impl}")
     target_namespace = generate_namespace(
         func, size, opt, variant, target_impl)
     canonical_path = impl
@@ -240,9 +255,11 @@ for (func, size, opt, variant, impl) in sphincs_variants:
             + ([f'thash_{func}_{variant}x8.c']
                if impl in X8_IMPLS else [])):
         shutil.copy(os.path.join(canonical_path, filename), instpath)
-    shutil.copy(os.path.join('makefiles', impl, 'Makefile'), instpath)
-    shutil.copy(os.path.join('makefiles', impl, 'Makefile.Microsoft_nmake'),
+    shutil.copy(os.path.join('pqclean', 'makefiles', impl, 'Makefile'),
                 instpath)
+    shutil.copy(
+        os.path.join('pqclean', 'makefiles', impl, 'Makefile.Microsoft_nmake'),
+        instpath)
     shutil.copy('LICENSE', instpath)
 
     OBJS = f" hash_{func}.o thash_{func}_{variant}.o"
@@ -293,7 +310,7 @@ for (func, size, opt, variant, impl) in sphincs_variants:
         shutil.copy(os.path.join(canonical_path, 'hash_states', f'{func}.h'),
                     os.path.join(instpath, 'hash_state.h'))
 
-    with open('META.yml.j2') as f:
+    with open('pqclean/META.yml.j2') as f:
         tmpl = jinja2.Template(f.read(), trim_blocks=True)
     tmpl.stream(
         nist_level=size // 64 * 2 - 3,
@@ -324,3 +341,22 @@ for (func, size, opt, variant, impl) in sphincs_variants:
     if PQCLEAN_LAYOUT:
         subprocess.run(
             ['unifdef', '-UNIST_COMPATIBLE', '-o', apifile, apifile])
+        cfiles = glob.glob(os.path.join(instpath, '*.c'))
+        hfiles = glob.glob(os.path.join(instpath, '*.h'))
+        subprocess.run(
+            ['astyle', '--options=pqclean/.astylerc', *cfiles, *hfiles],
+            capture_output=True)
+
+        with open('pqclean/duplicate-consistency.yml.j2') as f:
+            tmpl = jinja2.Template(f.read(), trim_blocks=True)
+        duplicatefile = os.path.join(
+            instpath, '..', '..', '..', 'test', 'duplicate_consistency',
+            f'{varname}-{target_impl}.yml')
+        tmpl.stream(
+            impl=target_impl,
+            size=str(size),
+            opt=opt,
+            func=func,
+            varname=varname,
+            variant=variant,
+        ).dump(duplicatefile)

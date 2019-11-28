@@ -1,15 +1,15 @@
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "address.h"
 #include "fors.h"
-#include "utils.h"
-#include "utilsx8.h"
 #include "hash.h"
 #include "hashx8.h"
 #include "thash.h"
 #include "thashx8.h"
-#include "address.h"
+#include "utils.h"
+#include "utilsx8.h"
 
 static void fors_gen_skx8(unsigned char *sk0,
                           unsigned char *sk1,

@@ -1,9 +1,9 @@
 #include <string.h>
 
-#include "utils.h"
+#include "address.h"
 #include "params.h"
 #include "thashx8.h"
-#include "address.h"
+#include "utils.h"
 
 #include "utilsx8.h"
 
@@ -18,7 +18,7 @@
 static void treehashx8(unsigned char *rootx8, unsigned char *auth_pathx8,
                 unsigned char* stackx8, unsigned int *heights,
                 const unsigned char *sk_seed, const unsigned char *pub_seed,
-                uint32_t leaf_idx[8], uint32_t idx_offset[8],
+                const uint32_t leaf_idx[8], uint32_t idx_offset[8],
                 uint32_t tree_height,
                 void (*gen_leafx8)(
                    unsigned char* /* leaf0 */,
@@ -136,7 +136,7 @@ static void treehashx8(unsigned char *rootx8, unsigned char *auth_pathx8,
     void SPX_treehashx8_##name(                                                                     \
                     unsigned char *rootx8, unsigned char *auth_pathx8,                              \
                     const unsigned char *sk_seed, const unsigned char *pub_seed,                    \
-                    uint32_t leaf_idx[8], uint32_t idx_offset[8],                                   \
+                    const uint32_t leaf_idx[8], uint32_t idx_offset[8],                             \
                     void (*gen_leafx8)(                                                             \
                        unsigned char* /* leaf0 */,                                                  \
                        unsigned char* /* leaf1 */,                                                  \

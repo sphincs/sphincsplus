@@ -18,6 +18,11 @@ void SPX_initialize_hash_function(
     (void)sk_seed; /* Suppress an 'unused parameter' warning. */
 }
 
+/* Clean up hash state */
+void SPX_destroy_hash_function(hash_state *hash_state_seeded) {
+    sha256_inc_destroy(hash_state_seeded);
+}
+
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */

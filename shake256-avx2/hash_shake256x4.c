@@ -2,9 +2,9 @@
 #include <string.h>
 
 #include "address.h"
-#include "params.h"
 #include "fips202x4.h"
 #include "hashx4.h"
+#include "params.h"
 
 /*
  * 4-way parallel version of prf_addr; takes 4x as much input and output

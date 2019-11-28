@@ -1,8 +1,8 @@
 #include <string.h>
 
 #include "sha256.h"
-#include "sha256x8.h"
 #include "sha256avx.h"
+#include "sha256x8.h"
 #include "utils.h"
 
 void SPX_seed_statex8(sha256ctxx8 *ctx, const unsigned char *pub_seed) {

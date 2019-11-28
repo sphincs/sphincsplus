@@ -2,12 +2,12 @@
 #include <string.h>
 
 #include "address.h"
-#include "utils.h"
 #include "params.h"
-#include "thashx8.h"
 #include "sha256.h"
-#include "sha256x8.h"
 #include "sha256avx.h"
+#include "sha256x8.h"
+#include "thashx8.h"
+#include "utils.h"
 
 /**
  * 8-way parallel version of thash; takes 8x as much input and output

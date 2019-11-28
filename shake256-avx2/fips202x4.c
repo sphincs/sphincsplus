@@ -1,11 +1,12 @@
 #include <immintrin.h>
 #include <stdint.h>
-#include <assert.h>
+#include <string.h>
+
 #include "fips202.h"
 #include "fips202x4.h"
 
 #define NROUNDS 24
-#define ROL(a, offset) ((a << offset) ^ (a >> (64-offset)))
+#define ROL(a, offset) (((a) << (offset)) ^ ((a) >> (64-(offset))))
 
 static uint64_t load64(const unsigned char *x)
 {
@@ -40,18 +41,17 @@ static void keccak_absorb4x(__m256i *s,
                           unsigned long long int mlen,
                           unsigned char p)
 {
-  unsigned long long i;
-  unsigned char t0[200];
-  unsigned char t1[200];
-  unsigned char t2[200];
-  unsigned char t3[200];
+  unsigned char t0[200] = {0};
+  unsigned char t1[200] = {0};
+  unsigned char t2[200] = {0};
+  unsigned char t3[200] = {0};
 
   unsigned long long *ss = (unsigned long long *)s;
 
 
   while (mlen >= r)
   {
-    for (i = 0; i < r / 8; ++i)
+    for (size_t i = 0; i < r / 8; ++i)
     {
       ss[4*i+0] ^= load64(m0 + 8 * i);
       ss[4*i+1] ^= load64(m1 + 8 * i);
@@ -67,32 +67,22 @@ static void keccak_absorb4x(__m256i *s,
     m3 += r;
   }
 
-  for (i = 0; i < r; ++i)
-  {
-    t0[i] = 0;
-    t1[i] = 0;
-    t2[i] = 0;
-    t3[i] = 0;
-  }
-  for (i = 0; i < mlen; ++i)
-  {
-    t0[i] = m0[i];
-    t1[i] = m1[i];
-    t2[i] = m2[i];
-    t3[i] = m3[i];
-  }
+  memcpy(t0, m0, mlen);
+  memcpy(t1, m1, mlen);
+  memcpy(t2, m2, mlen);
+  memcpy(t3, m3, mlen);
 
-  t0[i] = p;
-  t1[i] = p;
-  t2[i] = p;
-  t3[i] = p;
+  t0[mlen] = p;
+  t1[mlen] = p;
+  t2[mlen] = p;
+  t3[mlen] = p;
 
   t0[r - 1] |= 128;
   t1[r - 1] |= 128;
   t2[r - 1] |= 128;
   t3[r - 1] |= 128;
 
-  for (i = 0; i < r / 8; ++i)
+  for (size_t i = 0; i < r / 8; ++i)
   {
     ss[4*i+0] ^= load64(t0 + 8 * i);
     ss[4*i+1] ^= load64(t1 + 8 * i);

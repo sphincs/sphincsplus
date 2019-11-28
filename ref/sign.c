@@ -106,6 +106,7 @@ int SPX_crypto_sign_seed_keypair(
 
     memcpy(pk + SPX_N, sk + 3 * SPX_N, SPX_N);
 
+    SPX_destroy_hash_function(&hash_state_seeded);
     return 0;
 }
 
@@ -206,6 +207,7 @@ int SPX_crypto_sign_signature(
 
     *siglen = SPX_BYTES;
 
+    SPX_destroy_hash_function(&hash_state_seeded);
     return 0;
 }
 
@@ -297,6 +299,7 @@ int SPX_crypto_sign_verify(
         tree = tree >> SPX_TREE_HEIGHT;
     }
 
+    SPX_destroy_hash_function(&hash_state_seeded);
     /* Check if the root node equals the root node in the public key. */
     if (memcmp(root, pub_root, SPX_N) != 0) {
         return -1;

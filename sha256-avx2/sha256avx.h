@@ -1,6 +1,7 @@
 #ifndef SHA256AVX_H
 #define SHA256AVX_H
-#include "immintrin.h"
+
+#include <immintrin.h>
 #include <stdint.h>
 
 static const unsigned int RC[] = {
@@ -39,8 +40,8 @@ static const unsigned int RC[] = {
 #define SHIFTR32(x, y) _mm256_srli_epi32(x, y)
 #define SHIFTL32(x, y) _mm256_slli_epi32(x, y)
 
-#define ROTR32(x, y) OR(SHIFTR32(x, y), SHIFTL32(x, 32 - y))
-#define ROTL32(x, y) OR(SHIFTL32(x, y), SHIFTR32(x, 32 - y))
+#define ROTR32(x, y) OR(SHIFTR32(x, y), SHIFTL32(x, 32 - (y)))
+#define ROTL32(x, y) OR(SHIFTL32(x, y), SHIFTR32(x, 32 - (y)))
 
 #define XOR3(a, b, c) XOR(XOR(a, b), c)
 
@@ -59,9 +60,9 @@ static const unsigned int RC[] = {
 
 #define SHA256ROUND_AVX(a, b, c, d, e, f, g, h, rc, w) \
     T0 = ADD5_32(h, SIGMA1_AVX(e), CH_AVX(e, f, g), _mm256_set1_epi32((int)RC[rc]), w); \
-    d = ADD32(d, T0); \
+    (d) = ADD32(d, T0); \
     T1 = ADD32(SIGMA0_AVX(a), MAJ_AVX(a, b, c)); \
-    h = ADD32(T0, T1);
+    (h) = ADD32(T0, T1);
 
 typedef struct SHA256state {
     u256 s[8];
