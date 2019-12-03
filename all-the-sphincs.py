@@ -33,6 +33,10 @@ def generate_namespace(func, size, opt, variant, impl):
 
 # You shouldn't have to change anything below this line.
 
+
+TARGET_DIR = os.path.realpath(TARGET_DIR)
+
+
 def replace_in_file(path, text_to_search, replacement_text):
     with fileinput.FileInput(path, inplace=True) as file:
         for line in file:
