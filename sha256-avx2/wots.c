@@ -127,7 +127,7 @@ static void base_w(unsigned int *output, const int out_len, const unsigned char 
 {
     int in = 0;
     int out = 0;
-    unsigned char total;
+    unsigned char total = 0;
     int bits = 0;
     int consumed;
 
