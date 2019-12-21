@@ -1,4 +1,9 @@
-## SPHINCS+ [![Build Status](https://travis-ci.org/sphincs/sphincsplus.svg?branch=master)](https://travis-ci.org/sphincs/sphincsplus)
+## SPHINCS+ ![][test-ref] ![][test-sha256-avx2] ![][test-shake256-avx2] ![][test-haraka-aesni]
+
+[test-ref]: https://github.com/sphincs/sphincsplus/workflows/test-ref/badge.svg
+[test-sha256-avx2]: https://github.com/sphincs/sphincsplus/workflows/test-sha256-avx2/badge.svg
+[test-shake256-avx2]: https://github.com/sphincs/sphincsplus/workflows/test-shake256-avx2/badge.svg
+[test-haraka-aesni]: https://github.com/sphincs/sphincsplus/workflows/test-haraka-aesni/badge.svg
 
 This repository contains the software that accompanies the [SPHINCS+ submission](https://sphincs.org/) to [NIST's Post-Quantum Cryptography](https://csrc.nist.gov/Projects/Post-Quantum-Cryptography) project.
 
