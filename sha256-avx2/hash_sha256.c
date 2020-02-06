@@ -88,7 +88,7 @@ void SPX_gen_message_random(
         sha256_inc_finalize(buf + SPX_SHA256_BLOCK_BYTES, &state, m, mlen);
     }
     // Clean up SHA2 state.
-    sha256_inc_destroy(&state);
+    sha256_inc_ctx_release(&state);
 
     for (i = 0; i < SPX_N; i++) {
         buf[i] = 0x5c ^ sk_prf[i];
