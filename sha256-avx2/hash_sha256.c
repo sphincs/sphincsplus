@@ -87,8 +87,6 @@ void SPX_gen_message_random(
         mlen -= SPX_SHA256_BLOCK_BYTES - SPX_N;
         sha256_inc_finalize(buf + SPX_SHA256_BLOCK_BYTES, &state, m, mlen);
     }
-    // Clean up SHA2 state.
-    sha256_inc_ctx_release(&state);
 
     for (i = 0; i < SPX_N; i++) {
         buf[i] = 0x5c ^ sk_prf[i];
@@ -148,8 +146,6 @@ void SPX_hash_message(
         mlen -= SPX_INBLOCKS * SPX_SHA256_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
         sha256_inc_finalize(seed, &state, m, mlen);
     }
-    // Clean up SHA2 state
-    sha256_inc_ctx_release(&state);
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
