@@ -529,35 +529,39 @@ void sha512_inc_init(sha512ctx *state) {
     }
 }
 
-void sha224_inc_clone_state(sha224ctx *stateout, const sha224ctx *statein) {
-    memcpy(stateout, statein, sizeof(sha224ctx));
+void sha224_inc_ctx_clone(sha224ctx *stateout, const sha224ctx *statein) {
+    memcpy(stateout->ctx, statein->ctx, PQC_SHA256CTX_BYTES);
 }
 
-void sha256_inc_clone_state(sha256ctx *stateout, const sha256ctx *statein) {
-    memcpy(stateout, statein, sizeof(sha256ctx));
+void sha256_inc_ctx_clone(sha256ctx *stateout, const sha256ctx *statein) {
+    memcpy(stateout->ctx, statein->ctx, PQC_SHA256CTX_BYTES);
 }
 
-void sha384_inc_clone_state(sha384ctx *stateout, const sha384ctx *statein) {
-    memcpy(stateout, statein, sizeof(sha384ctx));
+void sha384_inc_ctx_clone(sha384ctx *stateout, const sha384ctx *statein) {
+    memcpy(stateout->ctx, statein->ctx, PQC_SHA512CTX_BYTES);
 }
 
-void sha512_inc_clone_state(sha512ctx *stateout, const sha512ctx *statein) {
-    memcpy(stateout, statein, sizeof(sha512ctx));
+void sha512_inc_ctx_clone(sha512ctx *stateout, const sha512ctx *statein) {
+    memcpy(stateout->ctx, statein->ctx, PQC_SHA512CTX_BYTES);
 }
 
-void sha224_inc_destroy(sha224ctx *state) {
+/* Destroy the hash state. */
+void sha224_inc_ctx_release(sha224ctx *state) {
     (void)state;
 }
 
-void sha256_inc_destroy(sha256ctx *state) {
+/* Destroy the hash state. */
+void sha256_inc_ctx_release(sha256ctx *state) {
     (void)state;
 }
 
-void sha384_inc_destroy(sha384ctx *state) {
+/* Destroy the hash state. */
+void sha384_inc_ctx_release(sha384ctx *state) {
     (void)state;
 }
 
-void sha512_inc_destroy(sha512ctx *state) {
+/* Destroy the hash state. */
+void sha512_inc_ctx_release(sha512ctx *state) {
     (void)state;
 }
 
@@ -632,13 +636,15 @@ void sha256_inc_finalize(uint8_t *out, sha256ctx *state, const uint8_t *in, size
     for (size_t i = 0; i < 32; ++i) {
         out[i] = state->ctx[i];
     }
+    sha256_inc_ctx_release(state);
 }
 
 void sha224_inc_finalize(uint8_t *out, sha224ctx *state, const uint8_t *in, size_t inlen) {
-    sha256_inc_finalize(state->ctx, (sha256ctx*)state, in, inlen);
+    uint8_t tmp[32];
+    sha256_inc_finalize(tmp, (sha256ctx*)state, in, inlen);
 
     for (size_t i = 0; i < 28; ++i) {
-        out[i] = state->ctx[i];
+        out[i] = tmp[i];
     }
 }
 
@@ -689,13 +695,15 @@ void sha512_inc_finalize(uint8_t *out, sha512ctx *state, const uint8_t *in, size
     for (size_t i = 0; i < 64; ++i) {
         out[i] = state->ctx[i];
     }
+    sha512_inc_ctx_release(state);
 }
 
 void sha384_inc_finalize(uint8_t *out, sha384ctx *state, const uint8_t *in, size_t inlen) {
-    sha512_inc_finalize(state->ctx, (sha512ctx*)state, in, inlen);
+    uint8_t tmp[64];
+    sha512_inc_finalize(tmp, (sha512ctx*)state, in, inlen);
 
     for (size_t i = 0; i < 48; ++i) {
-        out[i] = state->ctx[i];
+        out[i] = tmp[i];
     }
 }
 

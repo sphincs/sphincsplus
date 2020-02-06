@@ -23,7 +23,7 @@ static void SPX_thash(
     (void)pub_seed; /* Suppress an 'unused parameter' warning. */
 
     /* Retrieve precomputed state containing pub_seed */
-    sha256_inc_clone_state(&sha2_state, hash_state_seeded);
+    sha256_inc_ctx_clone(&sha2_state, hash_state_seeded);
 
     SPX_compress_address(buf, addr);
     memcpy(buf + SPX_SHA256_ADDR_BYTES, in, inblocks * SPX_N);

@@ -28,7 +28,7 @@ static void thash(
     SPX_mgf1(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
 
     /* Retrieve precomputed state containing pub_seed */
-    sha256_inc_clone_state(&sha2_state, &hash_state_seeded->x1);
+    sha256_inc_ctx_clone(&sha2_state, &hash_state_seeded->x1);
 
     for (i = 0; i < inblocks * SPX_N; i++) {
         buf[SPX_N + SPX_SHA256_ADDR_BYTES + i] = in[i] ^ bitmask[i];

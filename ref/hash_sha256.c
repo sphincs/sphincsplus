@@ -20,7 +20,7 @@ void SPX_initialize_hash_function(
 
 /* Clean up hash state */
 void SPX_destroy_hash_function(hash_state *hash_state_seeded) {
-    sha256_inc_destroy(hash_state_seeded);
+    sha256_inc_ctx_release(hash_state_seeded);
 }
 
 /*
