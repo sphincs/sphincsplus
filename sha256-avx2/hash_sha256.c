@@ -25,7 +25,7 @@ void SPX_initialize_hash_function(
  * Cleans up the hash function states
  */
 void SPX_destroy_hash_function(hash_state *hash_state_seeded) {
-    sha256_inc_destroy(&hash_state_seeded->x1);
+    sha256_inc_ctx_release(&hash_state_seeded->x1);
 }
 
 /*
@@ -149,7 +149,7 @@ void SPX_hash_message(
         sha256_inc_finalize(seed, &state, m, mlen);
     }
     // Clean up SHA2 state
-    sha256_inc_destroy(&state);
+    sha256_inc_ctx_release(&state);
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
