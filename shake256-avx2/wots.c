@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "utils.h"
@@ -71,6 +72,93 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
         thash(out, out, 1, pub_seed, addr);
     }
 }
+
+struct chain {
+    uint32_t idx;
+    uint32_t start;
+    uint32_t steps;
+};
+
+static int cmp_chain(const void* a, const void* b) {
+    return ((struct chain*)(b))->steps - ((struct chain*)(a))->steps;
+}
+
+/**
+ * Computes up the chains
+ */
+static void gen_chains(
+        unsigned char *out,
+        const unsigned char *in,
+        unsigned int start[SPX_WOTS_LEN],
+        unsigned int steps[SPX_WOTS_LEN],
+        const unsigned char *pub_seed,
+        uint32_t addr[8])
+{
+    uint32_t i, j, k, idx, watching;
+    int done;
+    struct chain chains[SPX_WOTS_LEN];
+    unsigned char empty[SPX_N];
+    uint32_t addrs[8*4];
+    unsigned char *bufs[4];
+
+    /* set addrs = {addr, addr, addr, addr} */
+    for (j = 0; j < 4; j++) {
+        memcpy(addrs+j*8, addr, sizeof(uint32_t) * 8);
+    }
+
+    /* Initialize out with the value at position 'start'. */
+    memcpy(out, in, SPX_WOTS_LEN*SPX_N);
+
+    /* Sort the chains in reverse order by steps.
+     * TODO use AVX2 sorting network. */
+    for (i = 0; i < SPX_WOTS_LEN; i++) {
+        chains[i].idx = i;
+        chains[i].start = start[i];
+        chains[i].steps = steps[i];
+    }
+    qsort((void*)(chains), SPX_WOTS_LEN, sizeof(struct chain), &cmp_chain);
+
+    /* We got our work cut out for us: do it! */
+    for (i = 0; i < SPX_WOTS_LEN; i += 4) {
+        for (j = 0; j < 4 && i+j < SPX_WOTS_LEN; j++) {
+            idx = chains[i+j].idx;
+            set_chain_addr(addrs+j*8, idx);
+            bufs[j] = out + SPX_N * idx;
+        }
+
+        /* As the chains are sorted in reverse order, we know that the first
+         * chain is the longest and the last one is the shortest.  We keep
+         * an eye on whether the last chain is done and then on the one before,
+         * et cetera. */
+        watching = 3;
+        done = 0;
+        while (i + watching >= SPX_WOTS_LEN) {
+            bufs[watching] = &empty[0];
+            watching--;
+        }
+
+        for (k = 0;; k++) {
+            while (k == chains[i+watching].steps) {
+                bufs[watching] = &empty[0];
+                if (watching == 0) {
+                    done = 1;
+                    break;
+                }
+                watching--;
+            }
+            if (done) {
+                break;
+            }
+            for (j = 0; j < watching + 1; j++) {
+                set_hash_addr(addrs+j*8, k + chains[i+j].start);
+            }
+
+            thashx4(bufs[0], bufs[1], bufs[2], bufs[3],
+                    bufs[0], bufs[1], bufs[2], bufs[3], 1, pub_seed, addrs);
+        }
+    }
+}
+
 
 /**
  * 4-way parallel version of gen_chain; expects 4x as much space in out, and
@@ -198,16 +286,18 @@ void wots_sign(unsigned char *sig, const unsigned char *msg,
                const unsigned char *sk_seed, const unsigned char *pub_seed,
                uint32_t addr[8])
 {
-    int lengths[SPX_WOTS_LEN];
+    unsigned int steps[SPX_WOTS_LEN];
+    unsigned int start[SPX_WOTS_LEN];
     uint32_t i;
 
-    chain_lengths(lengths, msg);
-
     for (i = 0; i < SPX_WOTS_LEN; i++) {
+        start[i] = 0;
         set_chain_addr(addr, i);
         wots_gen_sk(sig + i*SPX_N, sk_seed, addr);
-        gen_chain(sig + i*SPX_N, sig + i*SPX_N, 0, lengths[i], pub_seed, addr);
     }
+
+    chain_lengths(steps, msg);
+    gen_chains(sig, sig, start, steps, pub_seed, addr);
 }
 
 /**
@@ -219,14 +309,15 @@ void wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
                       const unsigned char *pub_seed, uint32_t addr[8])
 {
-    int lengths[SPX_WOTS_LEN];
+    unsigned int steps[SPX_WOTS_LEN];
+    unsigned int start[SPX_WOTS_LEN];
     uint32_t i;
 
-    chain_lengths(lengths, msg);
+    chain_lengths(start, msg);
 
     for (i = 0; i < SPX_WOTS_LEN; i++) {
-        set_chain_addr(addr, i);
-        gen_chain(pk + i*SPX_N, sig + i*SPX_N,
-                  lengths[i], SPX_WOTS_W - 1 - lengths[i], pub_seed, addr);
+        steps[i] = SPX_WOTS_W - 1 - start[i];
     }
+
+    gen_chains(pk, sig, start, steps, pub_seed, addr);
 }
