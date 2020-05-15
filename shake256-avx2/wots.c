@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "utils.h"
@@ -73,16 +72,6 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
     }
 }
 
-struct chain {
-    uint32_t idx;
-    uint32_t start;
-    uint32_t steps;
-};
-
-static int cmp_chain(const void* a, const void* b) {
-    return ((struct chain*)(b))->steps - ((struct chain*)(a))->steps;
-}
-
 /**
  * Computes up the chains
  */
@@ -96,10 +85,14 @@ static void gen_chains(
 {
     uint32_t i, j, k, idx, watching;
     int done;
-    struct chain chains[SPX_WOTS_LEN];
     unsigned char empty[SPX_N];
-    uint32_t addrs[8*4];
     unsigned char *bufs[4];
+    uint32_t addrs[8*4];
+
+    int l;
+    uint16_t counts[SPX_WOTS_W] = { 0 };
+    uint16_t idxs[SPX_WOTS_LEN];
+    uint16_t total, newTotal;
 
     /* set addrs = {addr, addr, addr, addr} */
     for (j = 0; j < 4; j++) {
@@ -109,19 +102,25 @@ static void gen_chains(
     /* Initialize out with the value at position 'start'. */
     memcpy(out, in, SPX_WOTS_LEN*SPX_N);
 
-    /* Sort the chains in reverse order by steps.
-     * TODO use AVX2 sorting network. */
+    /* Sort the chains in reverse order by steps using counting sort. */
     for (i = 0; i < SPX_WOTS_LEN; i++) {
-        chains[i].idx = i;
-        chains[i].start = start[i];
-        chains[i].steps = steps[i];
+        counts[steps[i]]++;
     }
-    qsort((void*)(chains), SPX_WOTS_LEN, sizeof(struct chain), &cmp_chain);
+    total = 0;
+    for (l = SPX_WOTS_W - 1; l >= 0; l--) {
+        newTotal = counts[l] + total;
+        counts[l] = total;
+        total = newTotal;
+    }
+    for (i = 0; i < SPX_WOTS_LEN; i++) {
+        idxs[counts[steps[i]]] = i;
+        counts[steps[i]]++;
+    }
 
     /* We got our work cut out for us: do it! */
     for (i = 0; i < SPX_WOTS_LEN; i += 4) {
         for (j = 0; j < 4 && i+j < SPX_WOTS_LEN; j++) {
-            idx = chains[i+j].idx;
+            idx = idxs[i+j];
             set_chain_addr(addrs+j*8, idx);
             bufs[j] = out + SPX_N * idx;
         }
@@ -138,7 +137,7 @@ static void gen_chains(
         }
 
         for (k = 0;; k++) {
-            while (k == chains[i+watching].steps) {
+            while (k == steps[idxs[i+watching]]) {
                 bufs[watching] = &empty[0];
                 if (watching == 0) {
                     done = 1;
@@ -150,7 +149,7 @@ static void gen_chains(
                 break;
             }
             for (j = 0; j < watching + 1; j++) {
-                set_hash_addr(addrs+j*8, k + chains[i+j].start);
+                set_hash_addr(addrs+j*8, k + start[idxs[i+j]]);
             }
 
             thashx4(bufs[0], bufs[1], bufs[2], bufs[3],
