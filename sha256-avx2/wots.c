@@ -119,7 +119,8 @@ static void gen_chainx8(unsigned char *outx8, const unsigned char *inx8,
  * Interprets an array of bytes as integers in base w.
  * This only works when log_w is a divisor of 8.
  */
-static void base_w(int *output, const int out_len, const unsigned char *input)
+static void base_w(unsigned int *output, const int out_len,
+                   const unsigned char *input)
 {
     int in = 0;
     int out = 0;
@@ -140,9 +141,10 @@ static void base_w(int *output, const int out_len, const unsigned char *input)
 }
 
 /* Computes the WOTS+ checksum over a message (in base_w). */
-static void wots_checksum(int *csum_base_w, const int *msg_base_w)
+static void wots_checksum(unsigned int *csum_base_w,
+                          const unsigned int *msg_base_w)
 {
-    int csum = 0;
+    unsigned int csum = 0;
     unsigned char csum_bytes[(SPX_WOTS_LEN2 * SPX_WOTS_LOGW + 7) / 8];
     unsigned int i;
 
@@ -159,7 +161,7 @@ static void wots_checksum(int *csum_base_w, const int *msg_base_w)
 }
 
 /* Takes a message and derives the matching chain lengths. */
-static void chain_lengths(int *lengths, const unsigned char *msg)
+static void chain_lengths(unsigned int *lengths, const unsigned char *msg)
 {
     base_w(lengths, SPX_WOTS_LEN1, msg);
     wots_checksum(lengths + SPX_WOTS_LEN1, lengths);
@@ -210,7 +212,7 @@ void wots_sign(unsigned char *sig, const unsigned char *msg,
                const unsigned char *sk_seed, const unsigned char *pub_seed,
                uint32_t addr[8])
 {
-    int lengths[SPX_WOTS_LEN];
+    unsigned int lengths[SPX_WOTS_LEN];
     uint32_t i;
 
     chain_lengths(lengths, msg);
@@ -231,7 +233,7 @@ void wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
                       const unsigned char *pub_seed, uint32_t addr[8])
 {
-    int lengths[SPX_WOTS_LEN];
+    unsigned int lengths[SPX_WOTS_LEN];
     uint32_t i;
 
     chain_lengths(lengths, msg);
