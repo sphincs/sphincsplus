@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 import fileinput
-import os
-from subprocess import run, DEVNULL
-import sys
 import itertools
+import os
+import sys
+from subprocess import DEVNULL, run
 
 implementations = [
                    ('ref', ['shake256', 'sha256', 'haraka']),
@@ -26,7 +26,7 @@ try:
             for opt, size, thash in itertools.product(options, sizes, thashes):
                 paramset = "sphincs-{}-{}{}".format(fn, size, opt)
                 paramfile = "params-{}.h".format(paramset)
-                print("Benchmarking", paramset, thash, "using", impl)
+                print("Benchmarking", paramset, thash, "using", impl, flush=True)
                 hashf = 'HASH={}'.format(fn)  # overrides Makefile var
                 thash = 'THASH={}'.format(thash)  # overrides Makefile var
                 run(["ln", "-fs", os.path.join(PARAMDIR, paramfile), params],
@@ -37,10 +37,10 @@ try:
                     stdout=DEVNULL, stderr=sys.stderr)
                 run(["make", "-C", impl, "benchmark", thash, hashf],
                     stdout=sys.stdout, stderr=sys.stderr)
-                print()
+                print(flush=True)
 
 finally:
-    print("Cleaning up..")
+    print("Cleaning up..", flush=True)
     for impl, fns in implementations:
         params = os.path.join(impl, "params.h")
         run(["mv", params+'.keep', params], stdout=DEVNULL, stderr=DEVNULL)
