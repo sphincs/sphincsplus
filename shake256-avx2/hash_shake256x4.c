@@ -6,6 +6,15 @@
 #include "fips202x4.h"
 #include "hashx4.h"
 
+extern void KeccakP1600times4_PermuteAll_24rounds(__m256i *s);
+
+/* Swap endianess */
+static uint32_t swap32(uint32_t val) {
+    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
+    return (val << 16) | (val >> 16);
+}
+
+
 /*
  * 4-way parallel version of prf_addr; takes 4x as much input and output
  */
@@ -14,22 +23,44 @@ void prf_addrx4(unsigned char *out0,
                 unsigned char *out2,
                 unsigned char *out3,
                 const unsigned char *key,
-                const uint32_t addrx4[4*8])
-{
-    unsigned char bufx4[4 * (SPX_N + SPX_ADDR_BYTES)];
-    unsigned int j;
-
-    for (j = 0; j < 4; j++) {
-        memcpy(bufx4 + j*(SPX_N + SPX_ADDR_BYTES), key, SPX_N);
-        addr_to_bytes(bufx4 + SPX_N + j*(SPX_N + SPX_ADDR_BYTES), addrx4 + j*8);
+                const uint32_t addrx4[4*8]) {
+    /* As we write and read only a few quadwords, it is more efficient to
+     * build and extract from the fourway SHAKE256 state by hand. */
+    __m256i state[25];
+    
+    for (int i = 0; i < SPX_N/8; i++) {
+        state[i] = _mm256_set1_epi64x(((int64_t*)key)[i]);
+    }
+    for (int i = 0; i < 4; i++) {
+        state[SPX_N/8+i] = _mm256_set_epi32(
+            swap32(addrx4[3*8+1+2*i]),
+            swap32(addrx4[3*8+2*i]),
+            swap32(addrx4[2*8+1+2*i]),
+            swap32(addrx4[2*8+2*i]),
+            swap32(addrx4[8+1+2*i]),
+            swap32(addrx4[8+2*i]),
+            swap32(addrx4[1+2*i]),
+            swap32(addrx4[2*i])
+        );
     }
 
-    shake256x4(out0,
-               out1,
-               out2,
-               out3, SPX_N,
-               bufx4 + 0*(SPX_N + SPX_ADDR_BYTES),
-               bufx4 + 1*(SPX_N + SPX_ADDR_BYTES),
-               bufx4 + 2*(SPX_N + SPX_ADDR_BYTES),
-               bufx4 + 3*(SPX_N + SPX_ADDR_BYTES), SPX_N + SPX_ADDR_BYTES);
+    /* SHAKE domain separator and padding. */
+    state[SPX_N/8+4] = _mm256_set1_epi64x(0x1f);
+    for (int i = SPX_N/8+5; i < 16; i++) {
+        state[i] = _mm256_set1_epi64x(0);
+    }
+    state[16] = _mm256_set1_epi64x(0x80ll << 56); 
+
+    for (int i = 17; i < 25; i++) {
+        state[i] = _mm256_set1_epi64x(0);
+    }
+
+    KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+
+    for (int i = 0; i < SPX_N/8; i++) {
+        ((int64_t*)out0)[i] = _mm256_extract_epi64(state[i], 0);
+        ((int64_t*)out1)[i] = _mm256_extract_epi64(state[i], 1);
+        ((int64_t*)out2)[i] = _mm256_extract_epi64(state[i], 2);
+        ((int64_t*)out3)[i] = _mm256_extract_epi64(state[i], 3);
+    }
 }
