@@ -8,7 +8,10 @@ void addr_to_bytes(unsigned char *bytes, const uint32_t addr[8])
     int i;
 
     for (i = 0; i < 8; i++) {
-        ull_to_bytes(bytes + i*4, 4, addr[i]);
+        bytes[i*4] = (unsigned char)(addr[i] >> 24);
+        bytes[i*4+1] = (unsigned char)(addr[i] >> 16);
+        bytes[i*4+2] = (unsigned char)(addr[i] >> 8);
+        bytes[i*4+3] = (unsigned char)addr[i];
     }
 }
 
