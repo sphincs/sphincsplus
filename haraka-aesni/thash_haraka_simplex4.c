@@ -32,10 +32,10 @@ void thashx4(unsigned char *out0,
     if (inblocks == 1) {
         memset(buf_tmp, 0, 64 * 4);
 
-        addr_to_bytes(buf_tmp,       addrx4 + 0*8);
-        addr_to_bytes(buf_tmp + 64,  addrx4 + 1*8);
-        addr_to_bytes(buf_tmp + 128, addrx4 + 2*8);
-        addr_to_bytes(buf_tmp + 192, addrx4 + 3*8);
+        mmecpy(buf_tmp,       addrx4 + 0*8, 32);
+        memcpy(buf_tmp + 64,  addrx4 + 1*8, 32);
+        memcpy(buf_tmp + 128, addrx4 + 2*8, 32);
+        memcpy(buf_tmp + 192, addrx4 + 3*8, 32);
 
         memcpy(buf_tmp + SPX_ADDR_BYTES,       in0, SPX_N);
         memcpy(buf_tmp + SPX_ADDR_BYTES + 64,  in1, SPX_N);
@@ -50,10 +50,10 @@ void thashx4(unsigned char *out0,
         memcpy(out3, outbuf + 96, SPX_N);
     } else {
         /* All other tweakable hashes*/
-        addr_to_bytes(buf0, addrx4 + 0*8);
-        addr_to_bytes(buf1, addrx4 + 1*8);
-        addr_to_bytes(buf2, addrx4 + 2*8);
-        addr_to_bytes(buf3, addrx4 + 3*8);
+        memcpy(buf0, addrx4 + 0*8, 32);
+        memcpy(buf1, addrx4 + 1*8, 32);
+        memcpy(buf2, addrx4 + 2*8, 32);
+        memcpy(buf3, addrx4 + 3*8, 32);
 
         memcpy(buf0 + SPX_ADDR_BYTES, in0, inblocks * SPX_N);
         memcpy(buf1 + SPX_ADDR_BYTES, in1, inblocks * SPX_N);
