@@ -29,8 +29,8 @@ void prf_addrx8(unsigned char *out0,
 
     for (j = 0; j < 8; j++) {
         memcpy(bufx8 + j*(SPX_N + SPX_SHA256_ADDR_BYTES), key, SPX_N);
-        compress_address(bufx8 + SPX_N + j*(SPX_N + SPX_SHA256_ADDR_BYTES),
-                         addrx8 + j*8);
+        memcpy(bufx8 + SPX_N + j*(SPX_N + SPX_SHA256_ADDR_BYTES),
+                         addrx8 + j*8, SPX_SHA256_ADDR_BYTES);
     }
 
     sha256x8(outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES,
