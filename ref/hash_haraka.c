@@ -20,14 +20,12 @@ void initialize_hash_function(const unsigned char *pk_seed,
 void prf_addr(unsigned char *out, const unsigned char *key,
               const uint32_t addr[8])
 {
-    unsigned char buf[SPX_ADDR_BYTES];
     /* Since SPX_N may be smaller than 32, we need a temporary buffer. */
     unsigned char outbuf[32];
 
     (void)key; /* Suppress an 'unused parameter' warning. */
 
-    addr_to_bytes(buf, addr);
-    haraka256_sk(outbuf, buf);
+    haraka256_sk(outbuf, (const void *)addr);
     memcpy(out, outbuf, SPX_N);
 }
 

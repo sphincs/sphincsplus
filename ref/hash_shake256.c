@@ -25,7 +25,7 @@ void prf_addr(unsigned char *out, const unsigned char *key,
     unsigned char buf[SPX_N + SPX_ADDR_BYTES];
 
     memcpy(buf, key, SPX_N);
-    addr_to_bytes(buf + SPX_N, addr);
+    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
 
     shake256(out, SPX_N, buf, SPX_N + SPX_ADDR_BYTES);
 }

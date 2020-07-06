@@ -18,7 +18,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     unsigned int i;
 
     memcpy(buf, pub_seed, SPX_N);
-    addr_to_bytes(buf + SPX_N, addr);
+    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
 
     shake256(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_ADDR_BYTES);
 

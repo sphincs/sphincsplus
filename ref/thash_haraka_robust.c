@@ -25,7 +25,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
         /* F function */
         /* Since SPX_N may be smaller than 32, we need a temporary buffer. */
         memset(buf_tmp, 0, 64);
-        addr_to_bytes(buf_tmp, addr);
+        memcpy(buf_tmp, addr, 32);
 
         haraka256(outbuf, buf_tmp);
         for (i = 0; i < inblocks * SPX_N; i++) {
@@ -35,7 +35,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
         memcpy(out, outbuf, SPX_N);
     } else {
         /* All other tweakable hashes*/
-        addr_to_bytes(buf, addr);
+        memcpy(buf, addr, 32);
         haraka_S(bitmask, inblocks * SPX_N, buf, SPX_ADDR_BYTES);
 
         for (i = 0; i < inblocks * SPX_N; i++) {
