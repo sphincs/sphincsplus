@@ -21,7 +21,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     /* Retrieve precomputed state containing pub_seed */
     memcpy(sha2_state, state_seeded, 40 * sizeof(uint8_t));
 
-    compress_address(buf, addr);
+    memcpy(buf, addr, SPX_SHA256_ADDR_BYTES);
     memcpy(buf + SPX_SHA256_ADDR_BYTES, in, inblocks * SPX_N);
 
     sha256_inc_finalize(outbuf, sha2_state, buf, SPX_SHA256_ADDR_BYTES + inblocks*SPX_N);
