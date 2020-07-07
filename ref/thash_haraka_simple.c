@@ -30,7 +30,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
         memcpy(out, outbuf, SPX_N);
     } else {
         /* All other tweakable hashes*/
-        memcy(buf, addr, 32);
+        memcpy(buf, addr, 32);
         memcpy(buf + SPX_ADDR_BYTES, in, inblocks * SPX_N);
 
         haraka_S(out, SPX_N, buf, SPX_ADDR_BYTES + inblocks*SPX_N);
