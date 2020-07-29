@@ -61,7 +61,7 @@ void mgf1x8(unsigned char *outx8, unsigned long outlen,
     /* While we can fit in at least another full block of SHA256 output.. */
     for (i = 0; (i+1)*SPX_SHA256_OUTPUT_BYTES <= outlen; i++) {
         for (j = 0; j < 8; j++) {
-            ull_to_bytes(inbufx8 + inlen + j*(inlen + 4), 4, i);
+            u32_to_bytes(inbufx8 + inlen + j*(inlen + 4), i);
         }
 
         sha256x8(outx8 + 0*outlen,
@@ -84,7 +84,7 @@ void mgf1x8(unsigned char *outx8, unsigned long outlen,
     }
     /* Until we cannot anymore, and we fill the remainder. */
     for (j = 0; j < 8; j++) {
-        ull_to_bytes(inbufx8 + inlen + j*(inlen + 4), 4, i);
+        u32_to_bytes(inbufx8 + inlen + j*(inlen + 4), i);
     }
     sha256x8(outbufx8 + 0*SPX_SHA256_OUTPUT_BYTES,
              outbufx8 + 1*SPX_SHA256_OUTPUT_BYTES,

@@ -21,6 +21,14 @@ void ull_to_bytes(unsigned char *out, unsigned int outlen,
     }
 }
 
+void u32_to_bytes(unsigned char *out, uint32_t in)
+{
+    out[0] = (unsigned char)(in >> 24);
+    out[1] = (unsigned char)(in >> 16);
+    out[2] = (unsigned char)(in >> 8);
+    out[3] = (unsigned char)in;
+}
+
 /**
  * Converts the inlen bytes in 'in' from big-endian byte order to an integer.
  */

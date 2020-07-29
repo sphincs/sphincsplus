@@ -336,13 +336,13 @@ void sha256(uint8_t *out, const uint8_t *in, size_t inlen) {
  */
 void compress_address(unsigned char *out, const uint32_t addr[8])
 {
-    ull_to_bytes(out,      1, addr[0]); /* drop 3 bytes of the layer field */
-    ull_to_bytes(out + 1,  4, addr[2]); /* drop the highest tree address word */
-    ull_to_bytes(out + 5,  4, addr[3]);
-    ull_to_bytes(out + 9,  1, addr[4]); /* drop 3 bytes of the type field */
-    ull_to_bytes(out + 10, 4, addr[5]);
-    ull_to_bytes(out + 14, 4, addr[6]);
-    ull_to_bytes(out + 18, 4, addr[7]);
+    out[0] = (unsigned char)addr[0]; /* drop 3 bytes of the layer field */
+    u32_to_bytes(out + 1,  addr[2]); /* drop the highest tree address word */
+    u32_to_bytes(out + 5,  addr[3]);
+    out[9] = (unsigned char)addr[4]; /* drop 3 byres of the type field */
+    u32_to_bytes(out + 10, addr[5]);
+    u32_to_bytes(out + 14, addr[6]);
+    u32_to_bytes(out + 18, addr[7]);
 }
 
 /**
@@ -361,13 +361,13 @@ void mgf1(unsigned char *out, unsigned long outlen,
 
     /* While we can fit in at least another full block of SHA256 output.. */
     for (i = 0; (i+1)*SPX_SHA256_OUTPUT_BYTES <= outlen; i++) {
-        ull_to_bytes(inbuf + inlen, 4, i);
+        u32_to_bytes(inbuf + inlen, i);
         sha256(out, inbuf, inlen + 4);
         out += SPX_SHA256_OUTPUT_BYTES;
     }
     /* Until we cannot anymore, and we fill the remainder. */
     if (outlen > i*SPX_SHA256_OUTPUT_BYTES) {
-        ull_to_bytes(inbuf + inlen, 4, i);
+        u32_to_bytes(inbuf + inlen, i);
         sha256(outbuf, inbuf, inlen + 4);
         memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
     }
