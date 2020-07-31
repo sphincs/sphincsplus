@@ -345,13 +345,13 @@ void mgf1(unsigned char *out, unsigned long outlen,
 
     /* While we can fit in at least another full block of SHA256 output.. */
     for (i = 0; (i+1)*SPX_SHA256_OUTPUT_BYTES <= outlen; i++) {
-        ull_to_bytes(inbuf + inlen, 4, i);
+        u32_to_bytes(inbuf + inlen, i);
         sha256(out, inbuf, inlen + 4);
         out += SPX_SHA256_OUTPUT_BYTES;
     }
     /* Until we cannot anymore, and we fill the remainder. */
     if (outlen > i*SPX_SHA256_OUTPUT_BYTES) {
-        ull_to_bytes(inbuf + inlen, 4, i);
+        u32_to_bytes(inbuf + inlen, i);
         sha256(outbuf, inbuf, inlen + 4);
         memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
     }
