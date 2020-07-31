@@ -1,13 +1,14 @@
 #include <stdint.h>
+#include <assert.h>
 #include <string.h>
+#include <immintrin.h>
 
 #include "thashx4.h"
 #include "address.h"
 #include "params.h"
 
-#include "fips202x4.h"
+#include "f1600x4.h"
 
-extern void KeccakP1600times4_PermuteAll_24rounds(__m256i *s);
 
 static uint32_t swap32(uint32_t val) {
     val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
@@ -64,7 +65,7 @@ void thashx4(unsigned char *out0,
         __m256i state2[25];
         memcpy(state2, state, 800);
 
-        KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+        f1600x4AVX2((uint64_t*)&state[0], &keccak_rc[0]);
 
         /* By copying from state, state2 already contains the pub_seed
          * and addres.  We just need to copy in the input blocks xorred with
@@ -91,7 +92,7 @@ void thashx4(unsigned char *out0,
             _mm256_set1_epi64x(0x1f)
         );
 
-        KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
+        f1600x4AVX2((uint64_t*)&state2[0], &keccak_rc[0]);
 
         for (int i = 0; i < SPX_N/8; i++) {
             ((int64_t*)out0)[i] = _mm256_extract_epi64(state2[i], 0);
@@ -136,7 +137,7 @@ void thashx4(unsigned char *out0,
         __m256i state2[25];
         memcpy(state2, state, 800);
 
-        KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+        f1600x4AVX2((uint64_t*)&state[0], &keccak_rc[0]);
 
         /* We will won't be able to fit all input in on go.
          * By copying from state, state2 already contains the pub_seed
@@ -154,7 +155,7 @@ void thashx4(unsigned char *out0,
                 );
         }
 
-        KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
+        f1600x4AVX2((uint64_t*)&state2[0], &keccak_rc[0]);
 
         /* Final input. */
         for (unsigned int i = 0; i < 3+8*(inblocks-1); i++) {
@@ -177,7 +178,7 @@ void thashx4(unsigned char *out0,
                 _mm256_set1_epi64x(0x1f));
         state2[16] = _mm256_xor_si256(state2[16], _mm256_set1_epi64x(0x80ll << 56));
 
-        KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
+        f1600x4AVX2((uint64_t*)&state2[0], &keccak_rc[0]);
 
         for (int i = 0; i < 8; i++) {
             ((int64_t*)out0)[i] = _mm256_extract_epi64(state2[i], 0);
@@ -186,36 +187,6 @@ void thashx4(unsigned char *out0,
             ((int64_t*)out3)[i] = _mm256_extract_epi64(state2[i], 3);
         }
     } else {
-        unsigned char buf0[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf1[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf2[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf3[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char bitmask0[inblocks * SPX_N];
-        unsigned char bitmask1[inblocks * SPX_N];
-        unsigned char bitmask2[inblocks * SPX_N];
-        unsigned char bitmask3[inblocks * SPX_N];
-        unsigned int i;
-
-        memcpy(buf0, pub_seed, SPX_N);
-        memcpy(buf1, pub_seed, SPX_N);
-        memcpy(buf2, pub_seed, SPX_N);
-        memcpy(buf3, pub_seed, SPX_N);
-        addr_to_bytes(buf0 + SPX_N, addrx4 + 0*8);
-        addr_to_bytes(buf1 + SPX_N, addrx4 + 1*8);
-        addr_to_bytes(buf2 + SPX_N, addrx4 + 2*8);
-        addr_to_bytes(buf3 + SPX_N, addrx4 + 3*8);
-
-        shake256x4(bitmask0, bitmask1, bitmask2, bitmask3, inblocks * SPX_N,
-                   buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES);
-
-        for (i = 0; i < inblocks * SPX_N; i++) {
-            buf0[SPX_N + SPX_ADDR_BYTES + i] = in0[i] ^ bitmask0[i];
-            buf1[SPX_N + SPX_ADDR_BYTES + i] = in1[i] ^ bitmask1[i];
-            buf2[SPX_N + SPX_ADDR_BYTES + i] = in2[i] ^ bitmask2[i];
-            buf3[SPX_N + SPX_ADDR_BYTES + i] = in3[i] ^ bitmask3[i];
-        }
-
-        shake256x4(out0, out1, out2, out3, SPX_N,
-                   buf0, buf1, buf2, buf3, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
+        assert(0);
     }
 }

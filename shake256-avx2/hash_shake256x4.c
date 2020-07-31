@@ -1,12 +1,10 @@
 #include <stdint.h>
 #include <string.h>
+#include <immintrin.h>
 
 #include "address.h"
 #include "params.h"
-#include "fips202x4.h"
-#include "hashx4.h"
-
-extern void KeccakP1600times4_PermuteAll_24rounds(__m256i *s);
+#include "f1600x4.h"
 
 /* Swap endianess */
 static uint32_t swap32(uint32_t val) {
@@ -55,7 +53,7 @@ void prf_addrx4(unsigned char *out0,
         state[i] = _mm256_set1_epi64x(0);
     }
 
-    KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+    f1600x4AVX2((uint64_t*)&state[0], &keccak_rc[0]);
 
     for (int i = 0; i < SPX_N/8; i++) {
         ((int64_t*)out0)[i] = _mm256_extract_epi64(state[i], 0);
