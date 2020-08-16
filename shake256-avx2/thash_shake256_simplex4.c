@@ -9,12 +9,6 @@
 
 extern void KeccakP1600times4_PermuteAll_24rounds(__m256i *s);
 
-static uint32_t swap32(uint32_t val) {
-    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
-    return (val << 16) | (val >> 16);
-}
-
-
 /**
  * 4-way parallel version of thash; takes 4x as much input and output
  */
@@ -37,14 +31,14 @@ void thashx4(unsigned char *out0,
         }
         for (int i = 0; i < 4; i++) {
             state[SPX_N/8+i] = _mm256_set_epi32(
-                swap32(addrx4[3*8+1+2*i]),
-                swap32(addrx4[3*8+2*i]),
-                swap32(addrx4[2*8+1+2*i]),
-                swap32(addrx4[2*8+2*i]),
-                swap32(addrx4[8+1+2*i]),
-                swap32(addrx4[8+2*i]),
-                swap32(addrx4[1+2*i]),
-                swap32(addrx4[2*i])
+                addrx4[3*8+1+2*i],
+                addrx4[3*8+2*i],
+                addrx4[2*8+1+2*i],
+                addrx4[2*8+2*i],
+                addrx4[8+1+2*i],
+                addrx4[8+2*i],
+                addrx4[1+2*i],
+                addrx4[2*i]
             );
         }
 
@@ -87,14 +81,14 @@ void thashx4(unsigned char *out0,
         }
         for (int i = 0; i < 4; i++) {
             state[8+i] = _mm256_set_epi32(
-                swap32(addrx4[3*8+1+2*i]),
-                swap32(addrx4[3*8+2*i]),
-                swap32(addrx4[2*8+1+2*i]),
-                swap32(addrx4[2*8+2*i]),
-                swap32(addrx4[8+1+2*i]),
-                swap32(addrx4[8+2*i]),
-                swap32(addrx4[1+2*i]),
-                swap32(addrx4[2*i])
+                addrx4[3*8+1+2*i],
+                addrx4[3*8+2*i],
+                addrx4[2*8+1+2*i],
+                addrx4[2*8+2*i],
+                addrx4[8+1+2*i],
+                addrx4[8+2*i],
+                addrx4[1+2*i],
+                addrx4[2*i]
             );
         }
 
