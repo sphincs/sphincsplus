@@ -38,10 +38,10 @@ void thashx4(unsigned char *out0,
         memset(buf_tmp, 0, 64 * 4);
 
         // Generate masks first in buffer
-        addr_to_bytes(buf_tmp,      addrx4 + 0*8);
-        addr_to_bytes(buf_tmp + 32, addrx4 + 1*8);
-        addr_to_bytes(buf_tmp + 64, addrx4 + 2*8);
-        addr_to_bytes(buf_tmp + 96, addrx4 + 3*8);
+        memcpy(buf_tmp,      addrx4 + 0*8, 32);
+        memcpy(buf_tmp + 32, addrx4 + 1*8, 32);
+        memcpy(buf_tmp + 64, addrx4 + 2*8, 32);
+        memcpy(buf_tmp + 96, addrx4 + 3*8, 32);
 
         haraka256x4(outbuf, buf_tmp);
 
@@ -71,10 +71,10 @@ void thashx4(unsigned char *out0,
         memcpy(out3, outbuf + 96, SPX_N);
     } else {
         /* All other tweakable hashes*/
-        addr_to_bytes(buf0, addrx4 + 0*8);
-        addr_to_bytes(buf1, addrx4 + 1*8);
-        addr_to_bytes(buf2, addrx4 + 2*8);
-        addr_to_bytes(buf3, addrx4 + 3*8);
+        memcpy(buf0, addrx4 + 0*8, 32);
+        memcpy(buf1, addrx4 + 1*8, 32);
+        memcpy(buf2, addrx4 + 2*8, 32);
+        memcpy(buf3, addrx4 + 3*8, 32);
 
         haraka_Sx4(bitmask0, bitmask1, bitmask2, bitmask3, inblocks * SPX_N,
                    buf0, buf1, buf2, buf3, SPX_ADDR_BYTES);
