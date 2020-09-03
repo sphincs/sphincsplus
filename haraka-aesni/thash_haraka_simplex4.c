@@ -32,7 +32,7 @@ void thashx4(unsigned char *out0,
     if (inblocks == 1) {
         memset(buf_tmp, 0, 64 * 4);
 
-        mmecpy(buf_tmp,       addrx4 + 0*8, 32);
+        memcpy(buf_tmp,       addrx4 + 0*8, 32);
         memcpy(buf_tmp + 64,  addrx4 + 1*8, 32);
         memcpy(buf_tmp + 128, addrx4 + 2*8, 32);
         memcpy(buf_tmp + 192, addrx4 + 3*8, 32);
