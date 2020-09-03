@@ -107,5 +107,5 @@ void set_tree_height(uint32_t addr[8], uint32_t tree_height)
  */
 void set_tree_index(uint32_t addr[8], uint32_t tree_index)
 {
-    ull_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_TREE_INDEX], 4, tree_index );
+    u32_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_TREE_INDEX], tree_index );
 }
