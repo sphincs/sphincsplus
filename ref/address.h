@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+/* The hash types that are passed to set_type */
 #define SPX_ADDR_TYPE_WOTS 0
 #define SPX_ADDR_TYPE_WOTSPK 1
 #define SPX_ADDR_TYPE_HASHTREE 2
