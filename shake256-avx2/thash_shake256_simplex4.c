@@ -9,12 +9,6 @@
 
 extern void KeccakP1600times4_PermuteAll_24rounds(__m256i *s);
 
-static uint32_t swap32(uint32_t val) {
-    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
-    return (val << 16) | (val >> 16);
-}
-
-
 /**
  * 4-way parallel version of thash; takes 4x as much input and output
  */
@@ -37,14 +31,14 @@ void thashx4(unsigned char *out0,
         }
         for (int i = 0; i < 4; i++) {
             state[SPX_N/8+i] = _mm256_set_epi32(
-                swap32(addrx4[3*8+1+2*i]),
-                swap32(addrx4[3*8+2*i]),
-                swap32(addrx4[2*8+1+2*i]),
-                swap32(addrx4[2*8+2*i]),
-                swap32(addrx4[8+1+2*i]),
-                swap32(addrx4[8+2*i]),
-                swap32(addrx4[1+2*i]),
-                swap32(addrx4[2*i])
+                addrx4[3*8+1+2*i],
+                addrx4[3*8+2*i],
+                addrx4[2*8+1+2*i],
+                addrx4[2*8+2*i],
+                addrx4[8+1+2*i],
+                addrx4[8+2*i],
+                addrx4[1+2*i],
+                addrx4[2*i]
             );
         }
 
@@ -87,14 +81,14 @@ void thashx4(unsigned char *out0,
         }
         for (int i = 0; i < 4; i++) {
             state[8+i] = _mm256_set_epi32(
-                swap32(addrx4[3*8+1+2*i]),
-                swap32(addrx4[3*8+2*i]),
-                swap32(addrx4[2*8+1+2*i]),
-                swap32(addrx4[2*8+2*i]),
-                swap32(addrx4[8+1+2*i]),
-                swap32(addrx4[8+2*i]),
-                swap32(addrx4[1+2*i]),
-                swap32(addrx4[2*i])
+                addrx4[3*8+1+2*i],
+                addrx4[3*8+2*i],
+                addrx4[2*8+1+2*i],
+                addrx4[2*8+2*i],
+                addrx4[8+1+2*i],
+                addrx4[8+2*i],
+                addrx4[1+2*i],
+                addrx4[2*i]
             );
         }
 
@@ -150,10 +144,10 @@ void thashx4(unsigned char *out0,
         memcpy(buf1, pub_seed, SPX_N);
         memcpy(buf2, pub_seed, SPX_N);
         memcpy(buf3, pub_seed, SPX_N);
-        addr_to_bytes(buf0 + SPX_N, addrx4 + 0*8);
-        addr_to_bytes(buf1 + SPX_N, addrx4 + 1*8);
-        addr_to_bytes(buf2 + SPX_N, addrx4 + 2*8);
-        addr_to_bytes(buf3 + SPX_N, addrx4 + 3*8);
+        memcpy(buf0 + SPX_N, addrx4 + 0*8, SPX_ADDR_BYTES);
+        memcpy(buf1 + SPX_N, addrx4 + 1*8, SPX_ADDR_BYTES);
+        memcpy(buf2 + SPX_N, addrx4 + 2*8, SPX_ADDR_BYTES);
+        memcpy(buf3 + SPX_N, addrx4 + 3*8, SPX_ADDR_BYTES);
         memcpy(buf0 + SPX_N + SPX_ADDR_BYTES, in0, inblocks * SPX_N);
         memcpy(buf1 + SPX_N + SPX_ADDR_BYTES, in1, inblocks * SPX_N);
         memcpy(buf2 + SPX_N + SPX_ADDR_BYTES, in2, inblocks * SPX_N);

@@ -19,7 +19,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     unsigned int i;
 
     memcpy(buf, pub_seed, SPX_N);
-    compress_address(buf + SPX_N, addr);
+    memcpy(buf + SPX_N, addr, SPX_SHA256_ADDR_BYTES);
     mgf1(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
 
     /* Retrieve precomputed state containing pub_seed */

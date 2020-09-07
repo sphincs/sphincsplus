@@ -18,8 +18,6 @@ void sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
 void sha256_inc_finalize(uint8_t *out, uint8_t *state, const uint8_t *in, size_t inlen);
 void sha256(uint8_t *out, const uint8_t *in, size_t inlen);
 
-void compress_address(unsigned char *out, const uint32_t addr[8]);
-
 void mgf1(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 

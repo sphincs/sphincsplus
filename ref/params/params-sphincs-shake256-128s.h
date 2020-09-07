@@ -78,4 +78,6 @@
    getting a large number of traces when the signer uses the same nodes. */
 #define SPX_OPTRAND_BYTES 32
 
+#include "shake256_offsets.h"
+
 #endif

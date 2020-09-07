@@ -329,22 +329,6 @@ void sha256(uint8_t *out, const uint8_t *in, size_t inlen) {
     sha256_inc_finalize(out, state, in, inlen);
 }
 
-/*
- * Compresses an address to a 22-byte sequence.
- * This reduces the number of required SHA256 compression calls, as the last
- * block of input is padded with at least 65 bits.
- */
-void compress_address(unsigned char *out, const uint32_t addr[8])
-{
-    out[0] = (unsigned char)addr[0]; /* drop 3 bytes of the layer field */
-    u32_to_bytes(out + 1,  addr[2]); /* drop the highest tree address word */
-    u32_to_bytes(out + 5,  addr[3]);
-    out[9] = (unsigned char)addr[4]; /* drop 3 byres of the type field */
-    u32_to_bytes(out + 10, addr[5]);
-    u32_to_bytes(out + 14, addr[6]);
-    u32_to_bytes(out + 18, addr[7]);
-}
-
 /**
  * Note that inlen should be sufficiently small that it still allows for
  * an array to be allocated on the stack. Typically 'in' is merely a seed.

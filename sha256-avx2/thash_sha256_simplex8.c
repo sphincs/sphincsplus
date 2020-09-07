@@ -40,8 +40,8 @@ void thashx8(unsigned char *out0,
     sha256_init_frombytes_x8(&ctx, state_seeded, 512);
 
     for (i = 0; i < 8; i++) {
-        compress_address(bufx8 + i*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-                         addrx8 + i*8);
+        memcpy(bufx8 + i*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+                         addrx8 + i*8, SPX_SHA256_ADDR_BYTES);
     }
 
     memcpy(bufx8 + SPX_SHA256_ADDR_BYTES +
