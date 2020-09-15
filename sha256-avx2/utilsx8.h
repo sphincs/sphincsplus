@@ -11,31 +11,18 @@
  * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_FORSTREE).
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
+ *
+ * This implementation uses AVX to compute internal nodes 8 at a time (in
+ * parallel)
  */
-void treehashx8(unsigned char *rootx8, unsigned char *auth_pathx8,
+void treehashx8(unsigned char *root, unsigned char *auth_path,
                 const unsigned char *sk_seed, const unsigned char *pub_seed,
-                uint32_t leaf_idx[8], uint32_t idx_offset[8],
-                uint32_t tree_height,
+                uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
                 void (*gen_leafx8)(
-                   unsigned char* /* leaf0 */,
-                   unsigned char* /* leaf1 */,
-                   unsigned char* /* leaf2 */,
-                   unsigned char* /* leaf3 */,
-                   unsigned char* /* leaf4 */,
-                   unsigned char* /* leaf5 */,
-                   unsigned char* /* leaf6 */,
-                   unsigned char* /* leaf7 */,
+                   unsigned char* /* Where to write the leaves */,
                    const unsigned char* /* sk_seed */,
                    const unsigned char* /* pub_seed */,
-                   uint32_t /* addr_idx0 */,
-                   uint32_t /* addr_idx1 */,
-                   uint32_t /* addr_idx2 */,
-                   uint32_t /* addr_idx3 */,
-                   uint32_t /* addr_idx4 */,
-                   uint32_t /* addr_idx5 */,
-                   uint32_t /* addr_idx6 */,
-                   uint32_t /* addr_idx7 */,
-                   const uint32_t[8] /* tree_addr */),
-                uint32_t tree_addrx8[8*8]);
+                   uint32_t addr_idx, void *info),
+                uint32_t tree_addrx8[8*8], void *info);
 
 #endif

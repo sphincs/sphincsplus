@@ -9,8 +9,7 @@ HEADERS = params.h hash.h        hashx8.h        thash.h                 thashx8
 DET_SOURCES = $(SOURCES:randombytes.%=rng.%)
 DET_HEADERS = $(HEADERS:randombytes.%=rng.%)
 
-TESTS = test/wots \
-		test/fors \
+TESTS = test/fors \
 		test/spx \
 		test/thashx8 \
 

@@ -2,56 +2,19 @@
 #include <string.h>
 
 #include "utils.h"
+#include "utilsx8.h"
 #include "hash.h"
 #include "hashx8.h"
 #include "thash.h"
 #include "thashx8.h"
 #include "wots.h"
+#include "wotsx8.h"
 #include "address.h"
 #include "params.h"
 
 // TODO clarify address expectations, and make them more uniform.
 // TODO i.e. do we expect types to be set already?
 // TODO and do we expect modifications or copies?
-
-/**
- * Computes the starting value for a chain, i.e. the secret key.
- * Expects the address to be complete up to the chain address.
- */
-static void wots_gen_sk(unsigned char *sk, const unsigned char *sk_seed,
-                        uint32_t wots_addr[8])
-{
-    /* Make sure that the hash address is actually zeroed. */
-    set_hash_addr(wots_addr, 0);
-
-    /* Generate sk element. */
-    prf_addr(sk, sk_seed, wots_addr);
-}
-
-/**
- * 8-way parallel version of wots_gen_sk; expects 8x as much space in sk
- */
-static void wots_gen_skx8(unsigned char *skx8, const unsigned char *sk_seed,
-                          uint32_t wots_addrx8[8*8])
-{
-    unsigned int j;
-
-    /* Make sure that the hash address is actually zeroed. */
-    for (j = 0; j < 8; j++) {
-        set_hash_addr(wots_addrx8 + j*8, 0);
-    }
-
-    /* Generate sk element. */
-    prf_addrx8(skx8 + 0*SPX_N,
-               skx8 + 1*SPX_N,
-               skx8 + 2*SPX_N,
-               skx8 + 3*SPX_N,
-               skx8 + 4*SPX_N,
-               skx8 + 5*SPX_N,
-               skx8 + 6*SPX_N,
-               skx8 + 7*SPX_N,
-               sk_seed, wots_addrx8);
-}
 
 /**
  * Computes up the chains
@@ -142,44 +105,6 @@ static void gen_chains(
 }
 
 /**
- * 8-way parallel version of gen_chain; expects 8x as much space in out, and
- * 8x as much space in inx8. Assumes start and step identical across chains.
- */
-static void gen_chainx8(unsigned char *outx8, const unsigned char *inx8,
-                        unsigned int start, unsigned int steps,
-                        const unsigned char *pub_seed, uint32_t addrx8[8*8])
-{
-    uint32_t i;
-    unsigned int j;
-
-    /* Initialize outx8 with the value at position 'start'. */
-    memcpy(outx8, inx8, 8*SPX_N);
-
-    /* Iterate 'steps' calls to the hash function. */
-    for (i = start; i < (start+steps) && i < SPX_WOTS_W; i++) {
-        for (j = 0; j < 8; j++) {
-            set_hash_addr(addrx8 + j*8, i);
-        }
-        thashx8(outx8 + 0*SPX_N,
-                outx8 + 1*SPX_N,
-                outx8 + 2*SPX_N,
-                outx8 + 3*SPX_N,
-                outx8 + 4*SPX_N,
-                outx8 + 5*SPX_N,
-                outx8 + 6*SPX_N,
-                outx8 + 7*SPX_N,
-                outx8 + 0*SPX_N,
-                outx8 + 1*SPX_N,
-                outx8 + 2*SPX_N,
-                outx8 + 3*SPX_N,
-                outx8 + 4*SPX_N,
-                outx8 + 5*SPX_N,
-                outx8 + 6*SPX_N,
-                outx8 + 7*SPX_N, 1, pub_seed, addrx8);
-    }
-}
-
-/**
  * base_w algorithm as described in draft.
  * Interprets an array of bytes as integers in base w.
  * This only works when log_w is a divisor of 8.
@@ -233,65 +158,6 @@ static void chain_lengths(unsigned int *lengths, const unsigned char *msg)
 }
 
 /**
- * WOTS key generation. Takes a 32 byte sk_seed, expands it to WOTS private key
- * elements and computes the corresponding public key.
- * It requires the seed pub_seed (used to generate bitmasks and hash keys)
- * and the address of this WOTS key pair.
- *
- * Writes the computed public key to 'pk'.
- */
-void wots_gen_pk(unsigned char *pk, const unsigned char *sk_seed,
-                 const unsigned char *pub_seed, uint32_t addr[8])
-{
-    uint32_t i;
-    unsigned int j;
-
-    uint32_t addrx8[8 * 8];
-    unsigned char pkbuf[8 * SPX_N];
-
-    for (j = 0; j < 8; j++) {
-        memcpy(addrx8 + j*8, addr, sizeof(uint32_t) * 8);
-    }
-
-    /* The last iteration typically does not have complete set of 4 chains,
-       but because we use pkbuf, this is not an issue -- we still do as many
-       in parallel as possible. */
-    for (i = 0; i < ((SPX_WOTS_LEN + 7) & ~0x7); i += 8) {
-        for (j = 0; j < 8; j++) {
-            set_chain_addr(addrx8 + j*8, i + j);
-        }
-        wots_gen_skx8(pkbuf, sk_seed, addrx8);
-        gen_chainx8(pkbuf, pkbuf, 0, SPX_WOTS_W - 1, pub_seed, addrx8);
-        for (j = 0; j < 8; j++) {
-            if (i + j < SPX_WOTS_LEN) {
-                memcpy(pk + (i + j)*SPX_N, pkbuf + j*SPX_N, SPX_N);
-            }
-        }
-    }
-}
-
-/**
- * Takes a n-byte message and the 32-byte sk_see to compute a signature 'sig'.
- */
-void wots_sign(unsigned char *sig, const unsigned char *msg,
-               const unsigned char *sk_seed, const unsigned char *pub_seed,
-               uint32_t addr[8])
-{
-    unsigned int steps[SPX_WOTS_LEN];
-    unsigned int start[SPX_WOTS_LEN];
-    uint32_t i;
-
-    for (i = 0; i < SPX_WOTS_LEN; i++) {
-        start[i] = 0;
-        set_chain_addr(addr, i);
-        wots_gen_sk(sig + i*SPX_N, sk_seed, addr);
-    }
-
-    chain_lengths(steps, msg);
-    gen_chains(sig, sig, start, steps, pub_seed, addr);
-}
-
-/**
  * Takes a WOTS signature and an n-byte message, computes a WOTS public key.
  *
  * Writes the computed public key to 'pk'.
@@ -311,4 +177,172 @@ void wots_pk_from_sig(unsigned char *pk,
     }
 
     gen_chains(pk, sig, start, steps, pub_seed, addr);
+}
+
+/*
+ * This generates 8 sequential WOTS public keys
+ * It also generates the WOTS signature if leaf_info indicates
+ * that one of the 8 WOTS keys is the one we're using for signing
+ */
+void wots_gen_leafx8(unsigned char *dest,
+                   const unsigned char *sk_seed,
+                   const unsigned char *pub_seed,
+                   uint32_t leaf_idx, void *v_info) {
+    struct leaf_info_x8 *info = v_info;
+    uint32_t *leaf_addr = info->leaf_addr;
+    uint32_t *pk_addr = info->pk_addr;
+    int i, j, k;
+    unsigned char pk_buffer[ 8 * SPX_WOTS_BYTES ];
+    unsigned wots_offset = SPX_WOTS_BYTES;
+    unsigned char *buffer;
+    unsigned wots_k_mask;
+    unsigned wots_sign_index;
+
+    if (((leaf_idx ^ info->wots_sign_leaf) & ~7) == 0) {
+        /* We're traversing the leaf that's signing; generate the WOTS */
+        /* signature */
+        wots_k_mask = 0;
+        wots_sign_index = info->wots_sign_leaf & 7; /* Which of of the 8 */
+                                  /* slots do the signatures come from */
+    } else {
+        /* Nope, we're just generating pk's; turn off the signature logic */
+        wots_k_mask = ~0;
+	wots_sign_index = 0;
+    }
+
+    for (j = 0; j < 8; j++) {
+        set_keypair_addr( leaf_addr + j*8, leaf_idx + j );
+        set_keypair_addr( pk_addr + j*8, leaf_idx + j );
+    }
+
+    for (i = 0, buffer = pk_buffer; i < SPX_WOTS_LEN; i++, buffer += SPX_N) {
+        int wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
+            /* the step if we're generating a signature, -1 if we're not */
+
+        /* Start with the secret seed */
+        for (j = 0; j < 8; j++) {
+            set_chain_addr(leaf_addr + j*8, i);
+            set_hash_addr(leaf_addr + j*8, 0);
+        }
+        prf_addrx8(buffer + 0*wots_offset,
+                   buffer + 1*wots_offset,
+                   buffer + 2*wots_offset,
+                   buffer + 3*wots_offset,
+                   buffer + 4*wots_offset,
+                   buffer + 5*wots_offset,
+                   buffer + 6*wots_offset,
+                   buffer + 7*wots_offset,
+                   sk_seed, leaf_addr);
+
+        /* Iterate down the WOTS chain */
+        for (k=0;; k++) {
+            /* Check if one of the values we have needs to be saved as a */
+            /* part of the WOTS signature */
+            if (k == wots_k) {
+                memcpy( info->wots_sig + i * SPX_N,
+                        buffer + wots_sign_index*wots_offset, SPX_N );
+            }
+
+            /* Check if we hit the top of the chain */
+            if (k == SPX_WOTS_W - 1) break;
+
+            /* Iterate one step on all 8 chains */
+            for (j = 0; j < 8; j++) {
+                set_hash_addr(leaf_addr + j*8, k);
+            }
+            thashx8(buffer + 0*wots_offset,
+                    buffer + 1*wots_offset,
+                    buffer + 2*wots_offset,
+                    buffer + 3*wots_offset,
+                    buffer + 4*wots_offset,
+                    buffer + 5*wots_offset,
+                    buffer + 6*wots_offset,
+                    buffer + 7*wots_offset,
+                    buffer + 0*wots_offset,
+                    buffer + 1*wots_offset,
+                    buffer + 2*wots_offset,
+                    buffer + 3*wots_offset,
+                    buffer + 4*wots_offset,
+                    buffer + 5*wots_offset,
+                    buffer + 6*wots_offset,
+                    buffer + 7*wots_offset, 1, pub_seed, leaf_addr);
+        }
+    }
+
+    /* Do the final thash to generate the public keys */
+    thashx8(dest + 0*SPX_N,
+            dest + 1*SPX_N,
+            dest + 2*SPX_N,
+            dest + 3*SPX_N,
+            dest + 4*SPX_N,
+            dest + 5*SPX_N,
+            dest + 6*SPX_N,
+            dest + 7*SPX_N,
+            pk_buffer + 0*wots_offset,
+            pk_buffer + 1*wots_offset,
+            pk_buffer + 2*wots_offset,
+            pk_buffer + 3*wots_offset,
+            pk_buffer + 4*wots_offset,
+            pk_buffer + 5*wots_offset,
+            pk_buffer + 6*wots_offset,
+            pk_buffer + 7*wots_offset, SPX_WOTS_LEN, pub_seed, pk_addr);
+}
+
+/*
+ * This generates a Merkle signature (WOTS signature followed by the Merkle
+ * authentication path).  This is in this file because most of the complexity
+ * is involved with the WOTS signature; the Merkle authentication path logic
+ * is mostly hidden in treehashx8
+ */ 
+void merkle_sign(uint8_t *sig, unsigned char *root,
+                 const unsigned char *sk_seed, const unsigned char *pub_seed,
+                 uint32_t wots_addr[8], uint32_t tree_addr[8],
+                 uint32_t idx_leaf)
+{
+    unsigned char *auth_path = sig + SPX_WOTS_BYTES;
+    uint32_t tree_addrx8[8*8] = { 0 };
+    int j;
+    struct leaf_info_x8 info = { 0 };
+    unsigned steps[ SPX_WOTS_LEN ];
+
+    info.wots_sig = sig;
+    chain_lengths(steps, root);
+    info.wots_steps = steps;
+
+    for (j=0; j<8; j++) {
+        set_type(&tree_addrx8[8*j], SPX_ADDR_TYPE_HASHTREE);
+        set_type(&info.leaf_addr[8*j], SPX_ADDR_TYPE_WOTS);
+        set_type(&info.pk_addr[8*j], SPX_ADDR_TYPE_WOTSPK);
+        copy_subtree_addr(&tree_addrx8[8*j], tree_addr);
+        copy_subtree_addr(&info.leaf_addr[8*j], wots_addr);
+        copy_subtree_addr(&info.pk_addr[8*j], wots_addr);
+    }
+
+    info.wots_sign_leaf = idx_leaf;
+
+    treehashx8(root, auth_path, sk_seed, pub_seed,
+                idx_leaf, 0,
+                SPX_TREE_HEIGHT,
+                wots_gen_leafx8,
+                tree_addrx8, &info);
+}
+
+/* Compute root node of the top-most subtree. */
+/* Again, in this file because wots_gen_leaf is most of the work */
+void merkle_gen_root(unsigned char *root,
+           const unsigned char *sk_seed, const unsigned char *pub_seed)
+{
+    /* We do not need the auth path in key generation, but it simplifies the
+       code to have just one treehash routine that computes both root and path
+       in one function. */
+    unsigned char auth_path[SPX_TREE_HEIGHT * SPX_N + SPX_WOTS_BYTES];
+    uint32_t top_tree_addr[8] = {0};
+    uint32_t wots_addr[8] = {0};
+
+    set_layer_addr(top_tree_addr, SPX_D - 1);
+    set_layer_addr(wots_addr, SPX_D - 1);
+
+    merkle_sign(auth_path, root, sk_seed, pub_seed,
+                wots_addr, top_tree_addr,
+                ~0 /* ~0 means "don't bother generating an auth path */ );
 }

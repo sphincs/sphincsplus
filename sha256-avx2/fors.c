@@ -11,6 +11,12 @@
 #include "thashx8.h"
 #include "address.h"
 
+static void fors_gen_sk(unsigned char *sk, const unsigned char *sk_seed,
+                        uint32_t fors_leaf_addr[8])
+{
+    prf_addr(sk, sk_seed, fors_leaf_addr);
+}
+
 static void fors_gen_skx8(unsigned char *sk0,
                           unsigned char *sk1,
                           unsigned char *sk2,
@@ -56,49 +62,50 @@ static void fors_sk_to_leafx8(unsigned char *leaf0,
             1, pub_seed, fors_leaf_addrx8);
 }
 
-static void fors_gen_leafx8(unsigned char *leaf0,
-                            unsigned char *leaf1,
-                            unsigned char *leaf2,
-                            unsigned char *leaf3,
-                            unsigned char *leaf4,
-                            unsigned char *leaf5,
-                            unsigned char *leaf6,
-                            unsigned char *leaf7,
+struct fors_gen_leaf_info {
+    uint32_t leaf_addrx[8*8];
+};
+
+static void fors_gen_leafx8(unsigned char *leaf,
                             const unsigned char *sk_seed,
                             const unsigned char *pub_seed,
-                            uint32_t addr_idx0,
-                            uint32_t addr_idx1,
-                            uint32_t addr_idx2,
-                            uint32_t addr_idx3,
-                            uint32_t addr_idx4,
-                            uint32_t addr_idx5,
-                            uint32_t addr_idx6,
-                            uint32_t addr_idx7,
-                            const uint32_t fors_tree_addr[8])
+                            uint32_t addr_idx, void *info)
 {
-    uint32_t fors_leaf_addrx8[8*8] = {0};
+    struct fors_gen_leaf_info *fors_info = info;
+    uint32_t *fors_leaf_addrx8 = fors_info->leaf_addrx;
     unsigned int j;
 
-    /* Only copy the parts that must be kept in fors_leaf_addrx8. */
+    /* Only set the parts that the caller doesn't set */
     for (j = 0; j < 8; j++) {
-        copy_keypair_addr(fors_leaf_addrx8 + j*8, fors_tree_addr);
-        set_type(fors_leaf_addrx8 + j*8, SPX_ADDR_TYPE_FORSTREE);
+        set_tree_index(fors_leaf_addrx8 + j*8, addr_idx + j);
     }
 
-    set_tree_index(fors_leaf_addrx8 + 0*8, addr_idx0);
-    set_tree_index(fors_leaf_addrx8 + 1*8, addr_idx1);
-    set_tree_index(fors_leaf_addrx8 + 2*8, addr_idx2);
-    set_tree_index(fors_leaf_addrx8 + 3*8, addr_idx3);
-    set_tree_index(fors_leaf_addrx8 + 4*8, addr_idx4);
-    set_tree_index(fors_leaf_addrx8 + 5*8, addr_idx5);
-    set_tree_index(fors_leaf_addrx8 + 6*8, addr_idx6);
-    set_tree_index(fors_leaf_addrx8 + 7*8, addr_idx7);
-
-    fors_gen_skx8(leaf0, leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7,
+    fors_gen_skx8(leaf + 0*SPX_N,
+                  leaf + 1*SPX_N,
+                  leaf + 2*SPX_N,
+                  leaf + 3*SPX_N,
+                  leaf + 4*SPX_N,
+                  leaf + 5*SPX_N,
+                  leaf + 6*SPX_N,
+                  leaf + 7*SPX_N,
                   sk_seed, fors_leaf_addrx8);
-    fors_sk_to_leafx8(leaf0, leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7,
-                      leaf0, leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7,
-                      pub_seed, fors_leaf_addrx8);
+    fors_sk_to_leafx8(leaf + 0*SPX_N,
+                  leaf + 1*SPX_N,
+                  leaf + 2*SPX_N,
+                  leaf + 3*SPX_N,
+                  leaf + 4*SPX_N,
+                  leaf + 5*SPX_N,
+                  leaf + 6*SPX_N,
+                  leaf + 7*SPX_N,
+                  leaf + 0*SPX_N,
+                  leaf + 1*SPX_N,
+                  leaf + 2*SPX_N,
+                  leaf + 3*SPX_N,
+                  leaf + 4*SPX_N,
+                  leaf + 5*SPX_N,
+                  leaf + 6*SPX_N,
+                  leaf + 7*SPX_N,
+                  pub_seed, fors_leaf_addrx8);
 }
 
 /**
@@ -129,62 +136,42 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *sk_seed, const unsigned char *pub_seed,
                const uint32_t fors_addr[8])
 {
-    /* Round up to multiple of 4 to prevent out-of-bounds for x4 parallelism */
-    uint32_t indices[(SPX_FORS_TREES + 7) & ~7] = {0};
-    unsigned char roots[((SPX_FORS_TREES + 7) & ~7) * SPX_N];
-    /* Sign to a buffer, since we may not have a nice multiple of 4 and would
-       otherwise overrun the signature. */
-    unsigned char sigbufx8[8 * SPX_N * (1 + SPX_FORS_HEIGHT)];
-    uint32_t fors_tree_addrx8[8*8] = {0};
+    uint32_t indices[SPX_FORS_TREES];
+    unsigned char roots[SPX_FORS_TREES * SPX_N];
+    uint32_t fors_tree_addr[8*8] = {0};
+    struct fors_gen_leaf_info fors_info = {0};
+    uint32_t *fors_leaf_addr = fors_info.leaf_addrx;
     uint32_t fors_pk_addr[8] = {0};
-    uint32_t idx_offset[8] = {0};
-    unsigned int i, j;
+    uint32_t idx_offset;
+    unsigned int i;
 
-    for (j = 0; j < 8; j++) {
-        copy_keypair_addr(fors_tree_addrx8 + j*8, fors_addr);
-        set_type(fors_tree_addrx8 + j*8, SPX_ADDR_TYPE_FORSTREE);
+    for (i=0; i<8; i++) {
+        copy_keypair_addr(fors_tree_addr + 8*i, fors_addr);
+        set_type(fors_tree_addr + 8*i, SPX_ADDR_TYPE_FORSTREE);
+        copy_keypair_addr(fors_leaf_addr + 8*i, fors_addr);
+        set_type(fors_leaf_addr + 8*i, SPX_ADDR_TYPE_FORSTREE);
     }
-
     copy_keypair_addr(fors_pk_addr, fors_addr);
     set_type(fors_pk_addr, SPX_ADDR_TYPE_FORSPK);
 
     message_to_indices(indices, m);
 
-    for (i = 0; i < ((SPX_FORS_TREES + 7) & ~0x7); i += 8) {
-        for (j = 0; j < 8; j++) {
-            if (i + j < SPX_FORS_TREES) {
-                idx_offset[j] = (i + j) * (1 << SPX_FORS_HEIGHT);
+    for (i = 0; i < SPX_FORS_TREES; i++) {
+        idx_offset = i * (1 << SPX_FORS_HEIGHT);
 
-                set_tree_height(fors_tree_addrx8 + j*8, 0);
-                set_tree_index(fors_tree_addrx8 + j*8,
-                               indices[i + j] + idx_offset[j]);
-            }
-        }
+        set_tree_height(fors_tree_addr, 0);
+        set_tree_index(fors_tree_addr, indices[i] + idx_offset);
 
-        /* Include the secret key part that produces the selected leaf nodes. */
-        fors_gen_skx8(sigbufx8 + 0*SPX_N,
-                      sigbufx8 + 1*SPX_N,
-                      sigbufx8 + 2*SPX_N,
-                      sigbufx8 + 3*SPX_N,
-                      sigbufx8 + 4*SPX_N,
-                      sigbufx8 + 5*SPX_N,
-                      sigbufx8 + 6*SPX_N,
-                      sigbufx8 + 7*SPX_N,
-                      sk_seed, fors_tree_addrx8);
+        /* Include the secret key part that produces the selected leaf node. */
+        fors_gen_sk(sig, sk_seed, fors_tree_addr);
+        sig += SPX_N;
 
-        treehashx8(roots + i*SPX_N, sigbufx8 + 8*SPX_N, sk_seed, pub_seed,
-                   &indices[i], idx_offset, SPX_FORS_HEIGHT, fors_gen_leafx8,
-                   fors_tree_addrx8);
+        /* Compute the authentication path for this leaf node. */
+        treehashx8(roots + i*SPX_N, sig, sk_seed, pub_seed,
+                 indices[i], idx_offset, SPX_FORS_HEIGHT, fors_gen_leafx8,
+                 fors_tree_addr, &fors_info);
 
-        for (j = 0; j < 8; j++) {
-            if (i + j < SPX_FORS_TREES) {
-                memcpy(sig, sigbufx8 + j*SPX_N, SPX_N);
-                memcpy(sig + SPX_N,
-                       sigbufx8 + 8*SPX_N + j*SPX_N*SPX_FORS_HEIGHT,
-                       SPX_N*SPX_FORS_HEIGHT);
-                sig += SPX_N * (1 + SPX_FORS_HEIGHT);
-            }
-        }
+        sig += SPX_N * SPX_FORS_HEIGHT;
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
