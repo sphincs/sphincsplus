@@ -8,8 +8,8 @@
 /* Number of subtree layer. */
 #define SPX_D 17
 /* FORS tree dimensions. */
-#define SPX_FORS_HEIGHT 10
-#define SPX_FORS_TREES 30
+#define SPX_FORS_HEIGHT 9
+#define SPX_FORS_TREES 35
 /* Winternitz parameter, */
 #define SPX_WOTS_W 16
 
