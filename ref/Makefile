@@ -4,8 +4,8 @@ CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99
 HASH = shake256
 THASH = robust
 
-SOURCES =          address.c randombytes.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c hash_$(HASH).c thash_$(HASH)_$(THASH).c
-HEADERS = params.h address.h randombytes.h wots.h wotsx1.h utils.h utilsx1.h fors.h api.h  hash.h thash.h
+SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c hash_$(HASH).c thash_$(HASH)_$(THASH).c
+HEADERS = params.h address.h randombytes.h merkle.h wots.h wotsx1.h utils.h utilsx1.h fors.h api.h  hash.h thash.h
 
 ifeq ($(HASH),shake256)
 	SOURCES += fips202.c

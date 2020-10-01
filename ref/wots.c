@@ -84,7 +84,7 @@ static void wots_checksum(unsigned int *csum_base_w,
 }
 
 /* Takes a message and derives the matching chain lengths. */
-static void chain_lengths(unsigned int *lengths, const unsigned char *msg)
+void chain_lengths(unsigned int *lengths, const unsigned char *msg)
 {
     base_w(lengths, SPX_WOTS_LEN1, msg);
     wots_checksum(lengths + SPX_WOTS_LEN1, lengths);
@@ -109,58 +109,4 @@ void wots_pk_from_sig(unsigned char *pk,
         gen_chain(pk + i*SPX_N, sig + i*SPX_N,
                   lengths[i], SPX_WOTS_W - 1 - lengths[i], pub_seed, addr);
     }
-}
-
-/*
- * This generates a Merkle signature (WOTS signature followed by the Merkle
- * authentication path).  This is in this file because most of the complexity
- * is involved with the WOTS signature; the Merkle authentication path logic
- * is mostly hidden in treehashx1
- */ 
-void merkle_sign(uint8_t *sig, unsigned char *root,
-                 const unsigned char *sk_seed, const unsigned char *pub_seed,
-                 uint32_t wots_addr[8], uint32_t tree_addr[8],
-                 uint32_t idx_leaf)
-{
-    unsigned char *auth_path = sig + SPX_WOTS_BYTES;
-    struct leaf_info_x1 info = { 0 };
-    unsigned steps[ SPX_WOTS_LEN ];
-
-    info.wots_sig = sig;
-    chain_lengths(steps, root);
-    info.wots_steps = steps;
-
-    set_type(&tree_addr[0], SPX_ADDR_TYPE_HASHTREE);
-    set_type(&info.leaf_addr[0], SPX_ADDR_TYPE_WOTS);
-    set_type(&info.pk_addr[0], SPX_ADDR_TYPE_WOTSPK);
-    copy_subtree_addr(&info.leaf_addr[0], wots_addr);
-    copy_subtree_addr(&info.pk_addr[0], wots_addr);
-
-    info.wots_sign_leaf = idx_leaf;
-
-    treehashx1(root, auth_path, sk_seed, pub_seed,
-                idx_leaf, 0,
-                SPX_TREE_HEIGHT,
-                wots_gen_leafx1,
-                tree_addr, &info);
-}
-
-/* Compute root node of the top-most subtree. */
-/* Again, in this file because wots_gen_leafx1 does most of the work */
-void merkle_gen_root(unsigned char *root,
-           const unsigned char *sk_seed, const unsigned char *pub_seed)
-{
-    /* We do not need the auth path in key generation, but it simplifies the
-       code to have just one treehash routine that computes both root and path
-       in one function. */
-    unsigned char auth_path[SPX_TREE_HEIGHT * SPX_N + SPX_WOTS_BYTES];
-    uint32_t top_tree_addr[8] = {0};
-    uint32_t wots_addr[8] = {0};
-
-    set_layer_addr(top_tree_addr, SPX_D - 1);
-    set_layer_addr(wots_addr, SPX_D - 1);
-
-    merkle_sign(auth_path, root, sk_seed, pub_seed,
-                wots_addr, top_tree_addr,
-                ~0 /* ~0 means "don't bother generating an auth path */ );
 }
