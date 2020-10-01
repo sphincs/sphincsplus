@@ -12,9 +12,7 @@
 
 /*
  * This generates a Merkle signature (WOTS signature followed by the Merkle
- * authentication path).  This is in this file because most of the complexity
- * is involved with the WOTS signature; the Merkle authentication path logic
- * is mostly hidden in treehashx8
+ * authentication path).
  */ 
 void merkle_sign(uint8_t *sig, unsigned char *root,
                  const unsigned char *sk_seed, const unsigned char *pub_seed,
