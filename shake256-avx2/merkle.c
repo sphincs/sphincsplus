@@ -47,7 +47,6 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
 }
 
 /* Compute root node of the top-most subtree. */
-/* Again, in this file because wots_gen_leaf is most of the work */
 void merkle_gen_root(unsigned char *root,
            const unsigned char *sk_seed, const unsigned char *pub_seed)
 {
