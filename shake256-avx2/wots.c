@@ -193,7 +193,7 @@ void wots_gen_leafx4(unsigned char *dest,
     unsigned char pk_buffer[ 4 * SPX_WOTS_BYTES ];
     unsigned wots_offset = SPX_WOTS_BYTES;
     unsigned char *buffer;
-    uint_32_t wots_k_mask;
+    uint32_t wots_k_mask;
     unsigned wots_sign_index;
 
     if (((leaf_idx ^ info->wots_sign_leaf) & ~3) == 0) {
