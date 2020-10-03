@@ -24,7 +24,7 @@ void wots_gen_leafx1(unsigned char *dest,
     int i, k;
     unsigned char pk_buffer[ SPX_WOTS_BYTES ];
     unsigned char *buffer;
-    uint_32_t wots_k_mask;
+    uint32_t wots_k_mask;
 
     if (leaf_idx == info->wots_sign_leaf) {
         /* We're traversing the leaf that's signing; generate the WOTS */
