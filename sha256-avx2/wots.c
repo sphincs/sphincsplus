@@ -195,7 +195,7 @@ void wots_gen_leafx8(unsigned char *dest,
     unsigned char pk_buffer[ 8 * SPX_WOTS_BYTES ];
     unsigned wots_offset = SPX_WOTS_BYTES;
     unsigned char *buffer;
-    unsigned wots_k_mask;
+    uint32_t wots_k_mask;
     unsigned wots_sign_index;
 
     if (((leaf_idx ^ info->wots_sign_leaf) & ~7) == 0) {
@@ -216,8 +216,8 @@ void wots_gen_leafx8(unsigned char *dest,
     }
 
     for (i = 0, buffer = pk_buffer; i < SPX_WOTS_LEN; i++, buffer += SPX_N) {
-        int wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
-            /* the step if we're generating a signature, -1 if we're not */
+        uint_32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k */
+            /* to the step if we're generating a signature, ~0 if we're not */
 
         /* Start with the secret seed */
         for (j = 0; j < 8; j++) {
