@@ -182,7 +182,7 @@ void wots_pk_from_sig(unsigned char *pk,
 /*
  * This generates 8 sequential WOTS public keys
  * It also generates the WOTS signature if leaf_info indicates
- * that we're signing with this WOTS key
+ * that we're signing with one of these WOTS keys
  */
 void wots_gen_leafx8(unsigned char *dest,
                    const unsigned char *sk_seed,
