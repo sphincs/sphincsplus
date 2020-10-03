@@ -12,7 +12,7 @@
 /*
  * This generates a WOTS public key
  * It also generates the WOTS signature if leaf_info indicates
- * that this is the WOTS keys is the one we're using for signing
+ * that we're signing with this WOTS key
  */
 void wots_gen_leafx1(unsigned char *dest,
                    const unsigned char *sk_seed,
