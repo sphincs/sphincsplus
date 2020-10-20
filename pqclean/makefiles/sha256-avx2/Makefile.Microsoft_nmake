@@ -2,7 +2,7 @@
 #    nmake /f Makefile.Microsoft_nmake
 
 LIBRARY=libsphincs_clean.lib
-OBJECTS=address.obj wots.obj utils.obj fors.obj sign.objHASHOBJECTS
+OBJECTS=address.obj wots.obj utils.obj utilsx8.obj sha256avx.obj sha256x8.obj fors.obj sign.objHASHOBJECTS
 
 CFLAGS=/nologo /arch:AVX2 /O2 /I ..\..\..\common /W4 /WX
 

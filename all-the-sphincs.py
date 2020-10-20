@@ -144,7 +144,6 @@ IMPLEMENTATION_FILES = {
         'fors.c',
         'fors.h',
         'hash.h',
-        'hash_state.h',
         'sign.c',
         'thash.h',
         'utils.c',
@@ -313,6 +312,8 @@ for (func, size, opt, variant, impl) in sphincs_variants:
     if impl == 'ref':
         shutil.copy(os.path.join(canonical_path, 'hash_states', f'{func}.h'),
                     os.path.join(instpath, 'hash_state.h'))
+        replace_in_file(os.path.join(instpath, 'hash_state.h'),
+                        "SPX_", target_namespace)
 
     with open('pqclean/META.yml.j2') as f:
         tmpl = jinja2.Template(f.read(), trim_blocks=True)
@@ -355,7 +356,7 @@ for (func, size, opt, variant, impl) in sphincs_variants:
             tmpl = jinja2.Template(f.read(), trim_blocks=True)
         duplicatefile = os.path.join(
             instpath, '..', '..', '..', 'test', 'duplicate_consistency',
-            f'{varname}-{target_impl}.yml')
+            f'{varname}_{target_impl}.yml')
         tmpl.stream(
             impl=target_impl,
             size=str(size),

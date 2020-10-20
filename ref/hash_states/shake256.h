@@ -25,6 +25,6 @@
  * purpose.
  */
 
-#define hash_state int
+typedef int hash_state;
 
 #endif

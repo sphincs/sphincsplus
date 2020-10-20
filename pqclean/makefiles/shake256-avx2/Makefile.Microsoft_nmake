@@ -2,7 +2,11 @@
 #    nmake /f Makefile.Microsoft_nmake
 
 LIBRARY=libsphincs_clean.lib
-OBJECTS=address.obj wots.obj utils.obj fors.obj sign.objHASHOBJECTS
+OBJECTS=address.obj wots.obj utils.obj utilsx4.obj fips202x4.obj fors.obj sign.objHASHOBJECTS
+
+KECCAK4XDIR=..\..\..\common\keccak4x
+KECCAK4XOBJ=KeccakP-1600-times4-SIMD256.obj
+KECCAK4X=$(KECCAK4XDIR)\$(KECCAK4XOBJ)
 
 CFLAGS=/nologo /arch:AVX2 /O2 /I ..\..\..\common /W4 /WX
 
@@ -11,9 +15,13 @@ all: $(LIBRARY)
 # Make sure objects are recompiled if headers change.
 $(OBJECTS): *.h
 
-$(LIBRARY): $(OBJECTS)
+$(LIBRARY): $(OBJECTS) $(KECCAK4X)
 	LIB.EXE /NOLOGO /WX /OUT:$@ $**
 
+$(KECCAK4X):
+	cd $(KECCAK4XDIR) && $(MAKE) /f Makefile.Microsoft_nmake $(KECCAK4XOBJ)
+
 clean:
-    -DEL $(OBJECTS)
-    -DEL $(LIBRARY)
+	-DEL $(OBJECTS)
+	-DEL $(LIBRARY)
+	-DEL $(KECCAK4X)
