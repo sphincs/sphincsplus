@@ -3,14 +3,13 @@ CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -march=native -fomit-frame-pointe
 
 THASH = robust
 
-SOURCES =          hash_sha256.c hash_sha256x8.c thash_sha256_$(THASH).c thash_sha256_$(THASH)x8.c sha256.c sha256x8.c sha256avx.c address.c randombytes.c wots.c utils.c utilsx8.c fors.c sign.c
-HEADERS = params.h hash.h        hashx8.h        thash.h                 thashx8.h               sha256.h sha256x8.h sha256avx.h address.h randombytes.h wots.h utils.h utilsx8.h fors.h api.h
+SOURCES =          hash_sha256.c hash_sha256x8.c thash_sha256_$(THASH).c thash_sha256_$(THASH)x8.c sha256.c sha256x8.c sha256avx.c address.c randombytes.c merkle.c wots.c utils.c utilsx8.c fors.c sign.c
+HEADERS = params.h hash.h        hashx8.h        thash.h                 thashx8.h               sha256.h sha256x8.h sha256avx.h address.h randombytes.h merkle.h wots.h utils.h utilsx8.h fors.h api.h
 
 DET_SOURCES = $(SOURCES:randombytes.%=rng.%)
 DET_HEADERS = $(HEADERS:randombytes.%=rng.%)
 
-TESTS = test/wots \
-		test/fors \
+TESTS = test/fors \
 		test/spx \
 		test/thashx8 \
 

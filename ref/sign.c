@@ -11,29 +11,7 @@
 #include "address.h"
 #include "randombytes.h"
 #include "utils.h"
-
-/**
- * Computes the leaf at a given address. First generates the WOTS key pair,
- * then computes leaf by hashing horizontally.
- */
-static void wots_gen_leaf(unsigned char *leaf, const unsigned char *sk_seed,
-                          const unsigned char *pub_seed,
-                          uint32_t addr_idx, const uint32_t tree_addr[8])
-{
-    unsigned char pk[SPX_WOTS_BYTES];
-    uint32_t wots_addr[8] = {0};
-    uint32_t wots_pk_addr[8] = {0};
-
-    set_type(wots_addr, SPX_ADDR_TYPE_WOTS);
-    set_type(wots_pk_addr, SPX_ADDR_TYPE_WOTSPK);
-
-    copy_subtree_addr(wots_addr, tree_addr);
-    set_keypair_addr(wots_addr, addr_idx);
-    wots_gen_pk(pk, sk_seed, pub_seed, wots_addr);
-
-    copy_keypair_addr(wots_pk_addr, wots_addr);
-    thash(leaf, pk, SPX_WOTS_LEN, pub_seed, wots_pk_addr);
-}
+#include "merkle.h"
 
 /*
  * Returns the length of a secret key, in bytes
@@ -75,15 +53,6 @@ unsigned long long crypto_sign_seedbytes(void)
 int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed)
 {
-    /* We do not need the auth path in key generation, but it simplifies the
-       code to have just one treehash routine that computes both root and path
-       in one function. */
-    unsigned char auth_path[SPX_TREE_HEIGHT * SPX_N];
-    uint32_t top_tree_addr[8] = {0};
-
-    set_layer_addr(top_tree_addr, SPX_D - 1);
-    set_type(top_tree_addr, SPX_ADDR_TYPE_HASHTREE);
-
     /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
     memcpy(sk, seed, CRYPTO_SEEDBYTES);
 
@@ -94,8 +63,7 @@ int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
     initialize_hash_function(pk, sk);
 
     /* Compute root node of the top-most subtree. */
-    treehash(sk + 3*SPX_N, auth_path, sk, sk + 2*SPX_N, 0, 0, SPX_TREE_HEIGHT,
-             wots_gen_leaf, top_tree_addr);
+    merkle_gen_root(sk + 3*SPX_N, sk, sk + 2*SPX_N);
 
     memcpy(pk + SPX_N, sk + 3*SPX_N, SPX_N);
 
@@ -168,14 +136,8 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
         copy_subtree_addr(wots_addr, tree_addr);
         set_keypair_addr(wots_addr, idx_leaf);
 
-        /* Compute a WOTS signature. */
-        wots_sign(sig, root, sk_seed, pub_seed, wots_addr);
-        sig += SPX_WOTS_BYTES;
-
-        /* Compute the authentication path for the used WOTS leaf. */
-        treehash(root, sig, sk_seed, pub_seed, idx_leaf, 0,
-                 SPX_TREE_HEIGHT, wots_gen_leaf, tree_addr);
-        sig += SPX_TREE_HEIGHT * SPX_N;
+        merkle_sign(sig, root, sk_seed, pub_seed, wots_addr, tree_addr, idx_leaf);
+        sig += SPX_WOTS_BYTES + SPX_TREE_HEIGHT * SPX_N;
 
         /* Update the indices for the next layer. */
         idx_leaf = (tree & ((1 << SPX_TREE_HEIGHT)-1));

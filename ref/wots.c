@@ -2,29 +2,17 @@
 #include <string.h>
 
 #include "utils.h"
+#include "utilsx1.h"
 #include "hash.h"
 #include "thash.h"
 #include "wots.h"
+#include "wotsx1.h"
 #include "address.h"
 #include "params.h"
 
 // TODO clarify address expectations, and make them more uniform.
 // TODO i.e. do we expect types to be set already?
 // TODO and do we expect modifications or copies?
-
-/**
- * Computes the starting value for a chain, i.e. the secret key.
- * Expects the address to be complete up to the chain address.
- */
-static void wots_gen_sk(unsigned char *sk, const unsigned char *sk_seed,
-                        uint32_t wots_addr[8])
-{
-    /* Make sure that the hash address is actually zeroed. */
-    set_hash_addr(wots_addr, 0);
-
-    /* Generate sk element. */
-    prf_addr(sk, sk_seed, wots_addr);
-}
 
 /**
  * Computes the chaining function.
@@ -96,50 +84,10 @@ static void wots_checksum(unsigned int *csum_base_w,
 }
 
 /* Takes a message and derives the matching chain lengths. */
-static void chain_lengths(unsigned int *lengths, const unsigned char *msg)
+void chain_lengths(unsigned int *lengths, const unsigned char *msg)
 {
     base_w(lengths, SPX_WOTS_LEN1, msg);
     wots_checksum(lengths + SPX_WOTS_LEN1, lengths);
-}
-
-/**
- * WOTS key generation. Takes a 32 byte sk_seed, expands it to WOTS private key
- * elements and computes the corresponding public key.
- * It requires the seed pub_seed (used to generate bitmasks and hash keys)
- * and the address of this WOTS key pair.
- *
- * Writes the computed public key to 'pk'.
- */
-void wots_gen_pk(unsigned char *pk, const unsigned char *sk_seed,
-                 const unsigned char *pub_seed, uint32_t addr[8])
-{
-    uint32_t i;
-
-    for (i = 0; i < SPX_WOTS_LEN; i++) {
-        set_chain_addr(addr, i);
-        wots_gen_sk(pk + i*SPX_N, sk_seed, addr);
-        gen_chain(pk + i*SPX_N, pk + i*SPX_N,
-                  0, SPX_WOTS_W - 1, pub_seed, addr);
-    }
-}
-
-/**
- * Takes a n-byte message and the 32-byte sk_see to compute a signature 'sig'.
- */
-void wots_sign(unsigned char *sig, const unsigned char *msg,
-               const unsigned char *sk_seed, const unsigned char *pub_seed,
-               uint32_t addr[8])
-{
-    unsigned int lengths[SPX_WOTS_LEN];
-    uint32_t i;
-
-    chain_lengths(lengths, msg);
-
-    for (i = 0; i < SPX_WOTS_LEN; i++) {
-        set_chain_addr(addr, i);
-        wots_gen_sk(sig + i*SPX_N, sk_seed, addr);
-        gen_chain(sig + i*SPX_N, sig + i*SPX_N, 0, lengths[i], pub_seed, addr);
-    }
 }
 
 /**
