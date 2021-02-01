@@ -21,7 +21,7 @@ void wots_gen_leafx1(unsigned char *dest,
     struct leaf_info_x1 *info = v_info;
     uint32_t *leaf_addr = info->leaf_addr;
     uint32_t *pk_addr = info->pk_addr;
-    int i, k;
+    unsigned int i, k;
     unsigned char pk_buffer[ SPX_WOTS_BYTES ];
     unsigned char *buffer;
     uint32_t wots_k_mask;

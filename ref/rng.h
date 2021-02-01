@@ -17,7 +17,7 @@
 
 typedef struct {
     unsigned char   buffer[16];
-    int             buffer_pos;
+    unsigned long   buffer_pos;
     unsigned long   length_remaining;
     unsigned char   key[32];
     unsigned char   ctr[16];
@@ -46,8 +46,7 @@ seedexpander(AES_XOF_struct *ctx, unsigned char *x, unsigned long xlen);
 
 void
 randombytes_init(unsigned char *entropy_input,
-                 unsigned char *personalization_string,
-                 int security_strength);
+                 unsigned char *personalization_string);
 
 int
 randombytes(unsigned char *x, unsigned long long xlen);

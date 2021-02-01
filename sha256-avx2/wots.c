@@ -191,7 +191,7 @@ void wots_gen_leafx8(unsigned char *dest,
     struct leaf_info_x8 *info = v_info;
     uint32_t *leaf_addr = info->leaf_addr;
     uint32_t *pk_addr = info->pk_addr;
-    int i, j, k;
+    unsigned int i, j, k;
     unsigned char pk_buffer[ 8 * SPX_WOTS_BYTES ];
     unsigned wots_offset = SPX_WOTS_BYTES;
     unsigned char *buffer;

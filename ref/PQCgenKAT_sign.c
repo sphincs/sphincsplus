@@ -55,7 +55,7 @@ main()
     for (int i=0; i<48; i++)
         entropy_input[i] = i;
 
-    randombytes_init(entropy_input, NULL, 256);
+    randombytes_init(entropy_input, NULL);
     for (int i=0; i<100; i++) {
         fprintf(fp_req, "count = %d\n", i);
         randombytes(seed, 48);
@@ -81,7 +81,7 @@ main()
     done = 0;
     do {
         if ( FindMarker(fp_req, "count = ") )
-            fscanf(fp_req, "%d", &count);
+            ret_val = fscanf(fp_req, "%d", &count);
         else {
             done = 1;
             break;
@@ -94,10 +94,10 @@ main()
         }
         fprintBstr(fp_rsp, "seed = ", seed, 48);
         
-        randombytes_init(seed, NULL, 256);
+        randombytes_init(seed, NULL);
         
         if ( FindMarker(fp_req, "mlen = ") )
-            fscanf(fp_req, "%llu", &mlen);
+            ret_val = fscanf(fp_req, "%llu", &mlen);
         else {
             printf("ERROR: unable to read 'mlen' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
