@@ -1,22 +1,22 @@
-CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99
-
-HASH = shake256
+PARAMS = sphincs-shake256-128f
 THASH = robust
 
-SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c hash_$(HASH).c thash_$(HASH)_$(THASH).c
+CC = /usr/bin/gcc
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -DPARAMS=$(PARAMS)
+
+SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c
 HEADERS = params.h address.h randombytes.h merkle.h wots.h wotsx1.h utils.h utilsx1.h fors.h api.h  hash.h thash.h
 
-ifeq ($(HASH),shake256)
-	SOURCES += fips202.c
+ifneq (,$(findstring shake256,$(PARAMS)))
+	SOURCES += fips202.c hash_shake256.c thash_shake256_$(THASH).c
 	HEADERS += fips202.h
 endif
-ifeq ($(HASH),haraka)
-	SOURCES += haraka.c
+ifneq (,$(findstring haraka,$(PARAMS)))
+	SOURCES += haraka.c hash_haraka.c thash_haraka_$(THASH).c
 	HEADERS += haraka.h
 endif
-ifeq ($(HASH),sha256)
-	SOURCES += sha256.c
+ifneq (,$(findstring sha256,$(PARAMS)))
+	SOURCES += sha256.c hash_sha256.c thash_sha256_$(THASH).c
 	HEADERS += sha256.h
 endif
 
