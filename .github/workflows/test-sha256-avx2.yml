@@ -21,16 +21,12 @@ jobs:
           - robust
     steps:
       - uses: actions/checkout@v1
-      - name: Put params file in place
-        run: |
-          rm sha256-avx2/params.h
-          cp ref/params/params-sphincs-sha256-${{ matrix.size }}${{ matrix.option }}.h sha256-avx2/params.h
       - name: Run make
         run: |
           make -C sha256-avx2 THASH=${{ matrix.thash }} clean
-          make -C sha256-avx2 THASH=${{ matrix.thash }} tests
-          make -C sha256-avx2 THASH=${{ matrix.thash }} test
-          make -C sha256-avx2 THASH=${{ matrix.thash }} PQCgenKAT_sign
+          make -C sha256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha256-${{ matrix.size }}${{ matrix.option }} tests
+          make -C sha256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha256-${{ matrix.size }}${{ matrix.option }} test
+          make -C sha256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha256-${{ matrix.size }}${{ matrix.option }} PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
         run: ./sha256-avx2/PQCgenKAT_sign
 
