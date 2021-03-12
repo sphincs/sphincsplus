@@ -10,6 +10,55 @@ static uint32_t load_bigendian_32(const uint8_t *x) {
            (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
 }
 
+// Performs sha256x8 on an initialized (and perhaps seeded) state.
+static void _sha256x8(
+              sha256ctx *ctx,
+              unsigned char *out0,
+              unsigned char *out1,
+              unsigned char *out2,
+              unsigned char *out3,
+              unsigned char *out4,
+              unsigned char *out5,
+              unsigned char *out6,
+              unsigned char *out7,
+              const unsigned char *in0,
+              const unsigned char *in1,
+              const unsigned char *in2,
+              const unsigned char *in3,
+              const unsigned char *in4,
+              const unsigned char *in5,
+              const unsigned char *in6,
+              const unsigned char *in7, unsigned long long inlen) {
+    unsigned long long i = 0;
+    while(inlen - i >= 64) {
+        sha256_transform8x(ctx,
+            in0 + i,
+            in1 + i,
+            in2 + i,
+            in3 + i,
+            in4 + i,
+            in5 + i,
+            in6 + i,
+            in7 + i
+        );
+        i += 64;
+        ctx->msglen += 512;
+    }
+
+    int bytes_to_copy = inlen - i;
+    memcpy(&ctx->msgblocks[64*0], in0 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*1], in1 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*2], in2 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*3], in3 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*4], in4 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*5], in5 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*6], in6 + i, bytes_to_copy);
+    memcpy(&ctx->msgblocks[64*7], in7 + i, bytes_to_copy);
+    ctx->datalen = bytes_to_copy;
+
+    sha256_final8x(ctx, out0, out1, out2, out3, out4, out5, out6, out7);
+}
+
 void sha256x8_seeded(
               unsigned char *out0,
               unsigned char *out1,
@@ -40,8 +89,9 @@ void sha256x8_seeded(
 
     ctx.datalen = 0;
     ctx.msglen = seedlen;
-    sha256_update8x(&ctx, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
-    sha256_final8x(&ctx, out0, out1, out2, out3, out4, out5, out6, out7);
+
+    _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7,
+            in0, in1, in2, in3, in4, in5, in6, in7, inlen);
 }
 
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
@@ -64,8 +114,9 @@ void sha256x8(unsigned char *out0,
 {
     sha256ctx ctx;
     sha256_init8x(&ctx);
-    sha256_update8x(&ctx, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
-    sha256_final8x(&ctx, out0, out1, out2, out3, out4, out5, out6, out7);
+
+    _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7,
+            in0, in1, in2, in3, in4, in5, in6, in7, inlen);
 }
 
 /**
