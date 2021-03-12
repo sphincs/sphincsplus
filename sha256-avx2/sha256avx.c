@@ -48,39 +48,6 @@ void sha256_init8x(sha256ctx *ctx) {
     ctx->msglen = 0;
 }
 
-void sha256_update8x(sha256ctx *ctx, 
-                     const unsigned char *d0,
-                     const unsigned char *d1,
-                     const unsigned char *d2,
-                     const unsigned char *d3,
-                     const unsigned char *d4,
-                     const unsigned char *d5,
-                     const unsigned char *d6,
-                     const unsigned char *d7,
-                     unsigned long long len) 
-{
-    unsigned long long i = 0;
-
-    while(i < len) {
-        int bytes_to_copy = (len - i) > 64 ? 64 : (len - i);
-        memcpy(&ctx->msgblocks[64*0], d0 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*1], d1 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*2], d2 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*3], d3 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*4], d4 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*5], d5 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*6], d6 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[64*7], d7 + i, bytes_to_copy);
-        ctx->datalen += bytes_to_copy;
-        i += bytes_to_copy;
-        if (ctx->datalen == 64) {
-            sha256_transform8x(ctx, ctx->msgblocks);
-            ctx->msglen += 512;
-            ctx->datalen = 0;
-        }        
-    }
-}
-
 void sha256_final8x(sha256ctx *ctx,
                     unsigned char *out0,
                     unsigned char *out1,
@@ -110,7 +77,16 @@ void sha256_final8x(sha256ctx *ctx,
                 ctx->msgblocks[64*i + curlen++] = 0x00;
             }
         }
-        sha256_transform8x(ctx, ctx->msgblocks);
+        sha256_transform8x(ctx,
+            &ctx->msgblocks[64*0],
+            &ctx->msgblocks[64*1],
+            &ctx->msgblocks[64*2],
+            &ctx->msgblocks[64*3],
+            &ctx->msgblocks[64*4],
+            &ctx->msgblocks[64*5],
+            &ctx->msgblocks[64*6],
+            &ctx->msgblocks[64*7]
+        );
         memset(ctx->msgblocks, 0, 8 * 64);
     }
 
@@ -126,7 +102,16 @@ void sha256_final8x(sha256ctx *ctx,
         ctx->msgblocks[64*i + 57] = ctx->msglen >> 48;
         ctx->msgblocks[64*i + 56] = ctx->msglen >> 56;
     }
-    sha256_transform8x(ctx, ctx->msgblocks);
+    sha256_transform8x(ctx,
+        &ctx->msgblocks[64*0],
+        &ctx->msgblocks[64*1],
+        &ctx->msgblocks[64*2],
+        &ctx->msgblocks[64*3],
+        &ctx->msgblocks[64*4],
+        &ctx->msgblocks[64*5],
+        &ctx->msgblocks[64*6],
+        &ctx->msgblocks[64*7]
+    );
 
     // Compute final hash output
     transpose(ctx->s);
@@ -142,15 +127,34 @@ void sha256_final8x(sha256ctx *ctx,
     STORE(out7, BYTESWAP(ctx->s[7]));
 }
 
-void sha256_transform8x(sha256ctx *ctx, const unsigned char *data) {
+void sha256_transform8x(sha256ctx *ctx,
+        const unsigned char* data0,
+        const unsigned char* data1,
+        const unsigned char* data2,
+        const unsigned char* data3,
+        const unsigned char* data4,
+        const unsigned char* data5,
+        const unsigned char* data6,
+        const unsigned char* data7) {
     u256 s[8], w[64], T0, T1;
-    int i;
 
     // Load words and transform data correctly
-    for(i = 0; i < 8; i++) {
-        w[i] = BYTESWAP(LOAD(data + 64*i));
-        w[i + 8] = BYTESWAP(LOAD(data + 32 + 64*i));
-    }
+    w[0] = BYTESWAP(LOAD(data0));
+    w[0 + 8] = BYTESWAP(LOAD(data0 + 32));
+    w[1] = BYTESWAP(LOAD(data1));
+    w[1 + 8] = BYTESWAP(LOAD(data1 + 32));
+    w[2] = BYTESWAP(LOAD(data2));
+    w[2 + 8] = BYTESWAP(LOAD(data2 + 32));
+    w[3] = BYTESWAP(LOAD(data3));
+    w[3 + 8] = BYTESWAP(LOAD(data3 + 32));
+    w[4] = BYTESWAP(LOAD(data4));
+    w[4 + 8] = BYTESWAP(LOAD(data4 + 32));
+    w[5] = BYTESWAP(LOAD(data5));
+    w[5 + 8] = BYTESWAP(LOAD(data5 + 32));
+    w[6] = BYTESWAP(LOAD(data6));
+    w[6 + 8] = BYTESWAP(LOAD(data6 + 32));
+    w[7] = BYTESWAP(LOAD(data7));
+    w[7 + 8] = BYTESWAP(LOAD(data7 + 32));
 
     transpose(w);
     transpose(w + 8);
