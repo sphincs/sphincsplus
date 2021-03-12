@@ -4,6 +4,46 @@
 #include "sha256avx.h"
 #include "utils.h"
 
+// TODO deduplicate
+static uint32_t load_bigendian_32(const uint8_t *x) {
+    return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) |
+           (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
+}
+
+void sha256x8_seeded(
+              unsigned char *out0,
+              unsigned char *out1,
+              unsigned char *out2,
+              unsigned char *out3,
+              unsigned char *out4,
+              unsigned char *out5,
+              unsigned char *out6,
+              unsigned char *out7,
+              const unsigned char *seed,
+              unsigned long long seedlen,
+              const unsigned char *in0,
+              const unsigned char *in1,
+              const unsigned char *in2,
+              const unsigned char *in3,
+              const unsigned char *in4,
+              const unsigned char *in5,
+              const unsigned char *in6,
+              const unsigned char *in7, unsigned long long inlen) {
+    uint32_t t;
+
+    sha256ctx ctx;
+
+    for (size_t i = 0; i < 8; i++) {
+        t = load_bigendian_32(seed + 4*i);
+        ctx.s[i] = _mm256_set_epi32(t, t, t, t, t, t, t, t);
+    }
+
+    ctx.datalen = 0;
+    ctx.msglen = seedlen;
+    sha256_update8x(&ctx, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
+    sha256_final8x(&ctx, out0, out1, out2, out3, out4, out5, out6, out7);
+}
+
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
 void sha256x8(unsigned char *out0,
               unsigned char *out1,

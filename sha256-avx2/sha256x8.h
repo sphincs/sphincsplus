@@ -8,6 +8,26 @@
     #error Linking against SHA-256 with N larger than 32 bytes is not supported
 #endif
 
+void sha256x8_seeded(
+              unsigned char *out0,
+              unsigned char *out1,
+              unsigned char *out2,
+              unsigned char *out3,
+              unsigned char *out4,
+              unsigned char *out5,
+              unsigned char *out6,
+              unsigned char *out7,
+              const unsigned char *seed,
+              unsigned long long seedlen,
+              const unsigned char *in0,
+              const unsigned char *in1,
+              const unsigned char *in2,
+              const unsigned char *in3,
+              const unsigned char *in4,
+              const unsigned char *in5,
+              const unsigned char *in6,
+              const unsigned char *in7, unsigned long long inlen);
+
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
 void sha256x8(unsigned char *out0,
               unsigned char *out1,
