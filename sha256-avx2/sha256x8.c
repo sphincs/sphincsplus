@@ -4,7 +4,6 @@
 #include "sha256avx.h"
 #include "utils.h"
 
-// TODO deduplicate
 static uint32_t load_bigendian_32(const uint8_t *x) {
     return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) |
            (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
