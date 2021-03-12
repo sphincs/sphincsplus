@@ -34,23 +34,6 @@ void transpose(u256 s[8]) {
     s[7] = _mm256_permute2x128_si256(tmp1[3], tmp1[7], 0x31);    
 }
 
-static uint32_t load_bigendian_32(const uint8_t *x) {
-    return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) |
-           (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
-}
-
-void sha256_init_frombytes_x8(sha256ctx *ctx, uint8_t *s, unsigned long long msglen) {
-    uint32_t t;
-
-    for (size_t i = 0; i < 8; i++) {
-        t = load_bigendian_32(s + 4*i);
-        ctx->s[i] = _mm256_set_epi32(t, t, t, t, t, t, t, t);
-    }
-
-    ctx->datalen = 0;
-    ctx->msglen = msglen;
-}
-
 void sha256_init8x(sha256ctx *ctx) {
     ctx->s[0] = _mm256_set_epi32(0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667);
     ctx->s[1] = _mm256_set_epi32(0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85);
