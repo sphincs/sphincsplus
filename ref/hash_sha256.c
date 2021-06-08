@@ -143,7 +143,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     /* If R + pk + message cannot fill up an entire block */
     if (SPX_N + SPX_PK_BYTES + mlen < SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES) {
         memcpy(inbuf + SPX_N + SPX_PK_BYTES, m, mlen);
-        shaX_inc_finalize(seed, state, inbuf, SPX_N + SPX_PK_BYTES + mlen);
+        shaX_inc_finalize(seed + 2*SPX_N, state, inbuf, SPX_N + SPX_PK_BYTES + mlen);
     }
     /* Otherwise first fill a block, so that finalize only uses the message */
     else {
