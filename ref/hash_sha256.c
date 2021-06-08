@@ -40,12 +40,12 @@ void prf_addr(unsigned char *out, const unsigned char *key,
               const uint32_t addr[8])
 {
     unsigned char buf[SPX_N + SPX_SHA256_ADDR_BYTES];
-    unsigned char outbuf[SPX_SHAX_OUTPUT_BYTES];
+    unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
     memcpy(buf, key, SPX_N);
     memcpy(buf + SPX_N, addr, SPX_SHA256_ADDR_BYTES);
 
-    shaX(outbuf, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
+    sha256(outbuf, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
     memcpy(out, outbuf, SPX_N);
 }
 
