@@ -14,6 +14,7 @@
 #define shaX_inc_blocks sha512_inc_blocks
 #define shaX_inc_finalize sha512_inc_finalize
 #define shaX sha512
+#define mgf1_X mgf1_512
 #else
 #define SPX_SHAX_OUTPUT_BYTES SPX_SHA256_OUTPUT_BYTES
 #define SPX_SHAX_BLOCK_BYTES SPX_SHA256_BLOCK_BYTES
@@ -21,6 +22,7 @@
 #define shaX_inc_blocks sha256_inc_blocks
 #define shaX_inc_finalize sha256_inc_finalize
 #define shaX sha256
+#define mgf1_X mgf1_256
 #endif
 
 
@@ -162,7 +164,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
-    mgf1(bufp, SPX_DGST_BYTES, seed, 2*SPX_N + SPX_SHAX_OUTPUT_BYTES);
+    mgf1_X(bufp, SPX_DGST_BYTES, seed, 2*SPX_N + SPX_SHAX_OUTPUT_BYTES);
 
     memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
     bufp += SPX_FORS_MSG_BYTES;
@@ -177,34 +179,6 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
-}
-
-/**
- * Note that inlen should be sufficiently small that it still allows for
- * an array to be allocated on the stack. Typically 'in' is merely a seed.
- * Outputs outlen number of bytes
- */
-void mgf1(unsigned char *out, unsigned long outlen,
-          const unsigned char *in, unsigned long inlen)
-{
-    unsigned char inbuf[inlen + 4];
-    unsigned char outbuf[SPX_SHAX_OUTPUT_BYTES];
-    unsigned long i;
-
-    memcpy(inbuf, in, inlen);
-
-    /* While we can fit in at least another full block of SHAX output.. */
-    for (i = 0; (i+1)*SPX_SHAX_OUTPUT_BYTES <= outlen; i++) {
-        u32_to_bytes(inbuf + inlen, i);
-        shaX(out, inbuf, inlen + 4);
-        out += SPX_SHAX_OUTPUT_BYTES;
-    }
-    /* Until we cannot anymore, and we fill the remainder. */
-    if (outlen > i*SPX_SHAX_OUTPUT_BYTES) {
-        u32_to_bytes(inbuf + inlen, i);
-        shaX(outbuf, inbuf, inlen + 4);
-        memcpy(out, outbuf, outlen - i*SPX_SHAX_OUTPUT_BYTES);
-    }
 }
 
 

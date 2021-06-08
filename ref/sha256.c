@@ -618,6 +618,58 @@ void sha512(uint8_t *out, const uint8_t *in, size_t inlen) {
     sha512_inc_finalize(out, state, in, inlen);
 }
 
+/**
+ * Note that inlen should be sufficiently small that it still allows for
+ * an array to be allocated on the stack. Typically 'in' is merely a seed.
+ * Outputs outlen number of bytes
+ */
+void mgf1_256(unsigned char *out, unsigned long outlen,
+          const unsigned char *in, unsigned long inlen)
+{
+    unsigned char inbuf[inlen + 4];
+    unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
+    unsigned long i;
+
+    memcpy(inbuf, in, inlen);
+
+    /* While we can fit in at least another full block of SHA256 output.. */
+    for (i = 0; (i+1)*SPX_SHA256_OUTPUT_BYTES <= outlen; i++) {
+        u32_to_bytes(inbuf + inlen, i);
+        sha256(out, inbuf, inlen + 4);
+        out += SPX_SHA256_OUTPUT_BYTES;
+    }
+    /* Until we cannot anymore, and we fill the remainder. */
+    if (outlen > i*SPX_SHA256_OUTPUT_BYTES) {
+        u32_to_bytes(inbuf + inlen, i);
+        sha256(outbuf, inbuf, inlen + 4);
+        memcpy(out, outbuf, outlen - i*SPX_SHA256_OUTPUT_BYTES);
+    }
+}
+
+void mgf1_512(unsigned char *out, unsigned long outlen,
+          const unsigned char *in, unsigned long inlen)
+{
+    unsigned char inbuf[inlen + 4];
+    unsigned char outbuf[SPX_SHA512_OUTPUT_BYTES];
+    unsigned long i;
+
+    memcpy(inbuf, in, inlen);
+
+    /* While we can fit in at least another full block of SHA512 output.. */
+    for (i = 0; (i+1)*SPX_SHA512_OUTPUT_BYTES <= outlen; i++) {
+        u32_to_bytes(inbuf + inlen, i);
+        sha512(out, inbuf, inlen + 4);
+        out += SPX_SHA512_OUTPUT_BYTES;
+    }
+    /* Until we cannot anymore, and we fill the remainder. */
+    if (outlen > i*SPX_SHA512_OUTPUT_BYTES) {
+        u32_to_bytes(inbuf + inlen, i);
+        sha512(outbuf, inbuf, inlen + 4);
+        memcpy(out, outbuf, outlen - i*SPX_SHA512_OUTPUT_BYTES);
+    }
+}
+
+
 uint8_t state_seeded[40];
 
 /**

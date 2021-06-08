@@ -26,7 +26,10 @@ void sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
 void sha512_inc_finalize(uint8_t *out, uint8_t *state, const uint8_t *in, size_t inlen);
 void sha512(uint8_t *out, const uint8_t *in, size_t inlen);
 
-void mgf1(unsigned char *out, unsigned long outlen,
+void mgf1_256(unsigned char *out, unsigned long outlen,
+          const unsigned char *in, unsigned long inlen);
+
+void mgf1_512(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 
 extern uint8_t state_seeded[40];
