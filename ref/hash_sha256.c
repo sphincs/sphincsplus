@@ -103,7 +103,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 #define SPX_LEAF_BYTES ((SPX_LEAF_BITS + 7) / 8)
 #define SPX_DGST_BYTES (SPX_FORS_MSG_BYTES + SPX_TREE_BYTES + SPX_LEAF_BYTES)
 
-    unsigned char seed[SPX_SHA256_OUTPUT_BYTES];
+    unsigned char seed[2*SPX_N + SPX_SHA256_OUTPUT_BYTES];
 
     /* Round to nearest multiple of SPX_SHA256_BLOCK_BYTES */
 #if (SPX_SHA256_BLOCK_BYTES & (SPX_SHA256_BLOCK_BYTES-1)) != 0
@@ -119,6 +119,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     sha256_inc_init(state);
 
+    // seed: SHA-256(R || PK.seed || PK.root || M)
     memcpy(inbuf, R, SPX_N);
     memcpy(inbuf + SPX_N, pk, SPX_PK_BYTES);
 
@@ -135,12 +136,16 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
         m += SPX_INBLOCKS * SPX_SHA256_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
         mlen -= SPX_INBLOCKS * SPX_SHA256_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
-        sha256_inc_finalize(seed, state, m, mlen);
+        sha256_inc_finalize(seed + 2*SPX_N, state, m, mlen);
     }
+
+    // H_msg: MGF1-SHA-256(R || PK.seed || seed)
+    memcpy(seed, R, SPX_N);
+    memcpy(seed + SPX_N, pk, SPX_N);
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
-    mgf1(bufp, SPX_DGST_BYTES, seed, SPX_SHA256_OUTPUT_BYTES);
+    mgf1(bufp, SPX_DGST_BYTES, seed, 2*SPX_N + SPX_SHA256_OUTPUT_BYTES);
 
     memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
     bufp += SPX_FORS_MSG_BYTES;
