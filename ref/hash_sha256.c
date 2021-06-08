@@ -62,7 +62,7 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *m, unsigned long long mlen)
 {
     unsigned char buf[SPX_SHAX_BLOCK_BYTES + SPX_SHAX_OUTPUT_BYTES];
-    uint8_t state[40];
+    uint8_t state[8 + SPX_SHAX_OUTPUT_BYTES];
     int i;
 
 #if SPX_N > SPX_SHAX_BLOCK_BYTES
@@ -132,7 +132,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
-    uint8_t state[40];
+    uint8_t state[8 + SPX_SHAX_OUTPUT_BYTES];
 
     shaX_inc_init(state);
 
