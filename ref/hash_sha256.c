@@ -178,3 +178,33 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
 }
+
+/**
+ * Note that inlen should be sufficiently small that it still allows for
+ * an array to be allocated on the stack. Typically 'in' is merely a seed.
+ * Outputs outlen number of bytes
+ */
+void mgf1(unsigned char *out, unsigned long outlen,
+          const unsigned char *in, unsigned long inlen)
+{
+    unsigned char inbuf[inlen + 4];
+    unsigned char outbuf[SPX_SHAX_OUTPUT_BYTES];
+    unsigned long i;
+
+    memcpy(inbuf, in, inlen);
+
+    /* While we can fit in at least another full block of SHAX output.. */
+    for (i = 0; (i+1)*SPX_SHAX_OUTPUT_BYTES <= outlen; i++) {
+        u32_to_bytes(inbuf + inlen, i);
+        shaX(out, inbuf, inlen + 4);
+        out += SPX_SHAX_OUTPUT_BYTES;
+    }
+    /* Until we cannot anymore, and we fill the remainder. */
+    if (outlen > i*SPX_SHAX_OUTPUT_BYTES) {
+        u32_to_bytes(inbuf + inlen, i);
+        shaX(outbuf, inbuf, inlen + 4);
+        memcpy(out, outbuf, outlen - i*SPX_SHAX_OUTPUT_BYTES);
+    }
+}
+
+
