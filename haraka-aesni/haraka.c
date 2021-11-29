@@ -69,10 +69,7 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
   _mm_storeu_si128((u128 *)(out + 16), \
                    (__m128i)_mm_shuffle_pd((__m128d)s2, (__m128d)s3, 0));
 
-u128 rc[40];
-u128 rc_sseed[40];
-
-void load_haraka_constants()
+void load_haraka_constants(u128 *rc)
 {
     rc[0] = _mm_set_epi32(0x0684704c,0xe620c00a,0xb2c5fef0,0x75817b9d);
     rc[1] = _mm_set_epi32(0x8b66b4e1,0x88f3a06b,0x640f6ba4,0x2f08f717);
@@ -116,36 +113,33 @@ void load_haraka_constants()
     rc[39] = _mm_set_epi32(0x756acc03,0x02288288,0x4ad6bdfd,0xe9c59da1);
 }
 
-void tweak_constants(const unsigned char *pk_seed, const unsigned char *sk_seed,
-                     unsigned long long seed_length)
+void tweak_constants(spx_ctx *ctx)
 {
     int i;
     unsigned char buf[40*16];
 
     /* Use the standard constants to generate tweaked ones. */
-    load_haraka_constants();
+    load_haraka_constants(ctx->rc);
 
     /* Constants for sk.seed */
-    if (sk_seed != NULL) {
-        haraka_S(buf, 40*16, sk_seed, seed_length);
-        /* Tweak constants with the pub_seed */
-        for (i = 0; i < 40; i++) {
-            rc_sseed[i] = LOAD(buf + i*16);
-        }
+    haraka_S(buf, 40*16, ctx->sk_seed, SPX_N, ctx);
+    /* Tweak constants with the pub_seed */
+    for (i = 0; i < 40; i++) {
+        ctx->rc_sseed[i] = LOAD(buf + i*16);
     }
 
     /* Constants for pk.seed */
-    haraka_S(buf, 40*16, pk_seed, seed_length);
+    haraka_S(buf, 40*16, ctx->pub_seed, SPX_N, ctx);
 
     /* Tweak constants with the pub_seed */
     for (i = 0; i < 40; i++) {
-        rc[i] = LOAD(buf + i*16);
+        ctx->rc[i] = LOAD(buf + i*16);
     }
 }
 
 static void haraka_S_absorb(unsigned char *s, unsigned int r,
                             const unsigned char *m, unsigned long long mlen,
-                            unsigned char p)
+                            unsigned char p, const spx_ctx *ctx)
 {
     unsigned long long i;
     unsigned char t[r];
@@ -154,7 +148,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
         // XOR block to state
         STORE(s, XOR128(LOAD(s), LOAD(m)));
         STORE(s + 16, XOR128(LOAD(s + 16), LOAD(m + 16)));
-        haraka512_perm(s, s);
+        haraka512_perm(s, s, ctx);
         mlen -= r;
         m += r;
     }
@@ -178,7 +172,8 @@ static void haraka_S_absorb4x(unsigned char *s,
                               const unsigned char *m2,
                               const unsigned char *m3,
                               unsigned long long int mlen,
-                              unsigned char p)
+                              unsigned char p,
+                              const spx_ctx *ctx)
 {
     unsigned long long i;
     unsigned char t0[r];
@@ -197,7 +192,7 @@ static void haraka_S_absorb4x(unsigned char *s,
         STORE(s + 192, XOR128(LOAD(s + 192), LOAD(m3)));
         STORE(s + 208, XOR128(LOAD(s + 208), LOAD(m3 + 16)));
 
-        haraka512_perm_x4(s, s);
+        haraka512_perm_x4(s, s, ctx);
         mlen -= r;
         m0 += r;
         m1 += r;
@@ -239,10 +234,11 @@ static void haraka_S_absorb4x(unsigned char *s,
 }
 
 static void haraka_S_squeezeblocks(unsigned char *h, unsigned long long nblocks,
-                                   unsigned char *s, unsigned int r)
+                                   unsigned char *s, unsigned int r,
+                                   const spx_ctx *ctx)
 {
     while (nblocks > 0) {
-        haraka512_perm(s, s);
+        haraka512_perm(s, s, ctx);
         STORE(h, LOAD(s));
         STORE(h + 16, LOAD(s + 16));
         h += r;
@@ -256,10 +252,11 @@ static void haraka_S_squeezeblocks4x(unsigned char *h0,
                                      unsigned char *h3,
                                      unsigned long long nblocks,
                                      unsigned char *s, 
-                                     unsigned int r)
+                                     unsigned int r,
+                                     const spx_ctx *ctx)
 {
     while (nblocks > 0) {
-        haraka512_perm_x4(s, s);
+        haraka512_perm_x4(s, s, ctx);
         STORE(h0, LOAD(s));
         STORE(h0 + 16, LOAD(s + 16));
         STORE(h1, LOAD(s + 64));
@@ -286,7 +283,8 @@ void haraka_S_inc_init(uint8_t *s_inc)
     s_inc[64] = 0;
 }
 
-void haraka_S_inc_absorb(uint8_t *s_inc, const uint8_t *m, size_t mlen)
+void haraka_S_inc_absorb(uint8_t *s_inc, const uint8_t *m, size_t mlen,
+        const spx_ctx *ctx)
 {
     size_t i;
 
@@ -301,7 +299,7 @@ void haraka_S_inc_absorb(uint8_t *s_inc, const uint8_t *m, size_t mlen)
         m += HARAKAS_RATE - s_inc[64];
         s_inc[64] = 0;
 
-        haraka512_perm(s_inc, s_inc);
+        haraka512_perm(s_inc, s_inc, ctx);
     }
 
     for (i = 0; i < mlen; i++) {
@@ -319,7 +317,8 @@ void haraka_S_inc_finalize(uint8_t *s_inc)
     s_inc[64] = 0;
 }
 
-void haraka_S_inc_squeeze(uint8_t *out, size_t outlen, uint8_t *s_inc)
+void haraka_S_inc_squeeze(uint8_t *out, size_t outlen, uint8_t *s_inc,
+        const spx_ctx *ctx)
 {
     size_t i;
 
@@ -335,7 +334,7 @@ void haraka_S_inc_squeeze(uint8_t *out, size_t outlen, uint8_t *s_inc)
 
     /* Then squeeze the remaining necessary blocks */
     while (outlen > 0) {
-        haraka512_perm(s_inc, s_inc);
+        haraka512_perm(s_inc, s_inc, ctx);
 
         for (i = 0; i < outlen && i < HARAKAS_RATE; i++) {
             out[i] = s_inc[i];
@@ -347,7 +346,8 @@ void haraka_S_inc_squeeze(uint8_t *out, size_t outlen, uint8_t *s_inc)
 }
 
 void haraka_S(unsigned char *out, unsigned long long outlen,
-              const unsigned char *in, unsigned long long inlen)
+              const unsigned char *in, unsigned long long inlen,
+              const spx_ctx *ctx)
 {
     unsigned long long i;
     unsigned char s[64];
@@ -356,13 +356,13 @@ void haraka_S(unsigned char *out, unsigned long long outlen,
     for (i = 0; i < 64; i++) {
         s[i] = 0;
     }
-    haraka_S_absorb(s, HARAKAS_RATE, in, inlen, 0x1F);
+    haraka_S_absorb(s, HARAKAS_RATE, in, inlen, 0x1F, ctx);
 
-    haraka_S_squeezeblocks(out, outlen / HARAKAS_RATE, s, HARAKAS_RATE);
+    haraka_S_squeezeblocks(out, outlen / HARAKAS_RATE, s, HARAKAS_RATE, ctx);
     out += (outlen / HARAKAS_RATE) * HARAKAS_RATE;
 
     if (outlen % HARAKAS_RATE) {
-        haraka_S_squeezeblocks(d, 1, s, HARAKAS_RATE);
+        haraka_S_squeezeblocks(d, 1, s, HARAKAS_RATE, ctx);
         for (i = 0; i < outlen % HARAKAS_RATE; i++) {
             out[i] = d[i];
         }
@@ -378,7 +378,8 @@ void haraka_Sx4(unsigned char *out0,
                 const unsigned char *in1,
                 const unsigned char *in2,
                 const unsigned char *in3, 
-                unsigned long long inlen)
+                unsigned long long inlen,
+                const spx_ctx *ctx)
 {
     unsigned long long i;
     unsigned char s[64 * 4];
@@ -390,16 +391,17 @@ void haraka_Sx4(unsigned char *out0,
     for (i = 0; i < 64 * 4; i++) {
         s[i] = 0;
     }
-    haraka_S_absorb4x(s, HARAKAS_RATE, in0, in1, in2, in3, inlen, 0x1F);
+    haraka_S_absorb4x(s, HARAKAS_RATE, in0, in1, in2, in3, inlen, 0x1F, ctx);
 
-    haraka_S_squeezeblocks4x(out0, out1, out2, out3, outlen / HARAKAS_RATE, s, HARAKAS_RATE);
+    haraka_S_squeezeblocks4x(out0, out1, out2, out3, outlen / HARAKAS_RATE, s,
+            HARAKAS_RATE, ctx);
     out0 += (outlen / HARAKAS_RATE) * HARAKAS_RATE;
     out1 += (outlen / HARAKAS_RATE) * HARAKAS_RATE;
     out2 += (outlen / HARAKAS_RATE) * HARAKAS_RATE;
     out3 += (outlen / HARAKAS_RATE) * HARAKAS_RATE;
 
     if (outlen % HARAKAS_RATE) {
-        haraka_S_squeezeblocks4x(d0, d1, d2, d3, 1, s, HARAKAS_RATE);
+        haraka_S_squeezeblocks4x(d0, d1, d2, d3, 1, s, HARAKAS_RATE, ctx);
         for (i = 0; i < outlen % HARAKAS_RATE; i++) {
             out0[i] = d0[i];
             out1[i] = d1[i];
@@ -409,7 +411,8 @@ void haraka_Sx4(unsigned char *out0,
     }
 }
 
-void haraka512_perm(unsigned char *out, const unsigned char *in) 
+void haraka512_perm(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx)
 {
     u128 s[4], tmp;
   
@@ -418,19 +421,19 @@ void haraka512_perm(unsigned char *out, const unsigned char *in)
     s[2] = LOAD(in + 32);
     s[3] = LOAD(in + 48);
   
-    AES4(s[0], s[1], s[2], s[3], rc);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc);
     MIX4(s[0], s[1], s[2], s[3]);
   
-    AES4(s[0], s[1], s[2], s[3], rc + 8);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 8);
     MIX4(s[0], s[1], s[2], s[3]);
   
-    AES4(s[0], s[1], s[2], s[3], rc + 16);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 16);
     MIX4(s[0], s[1], s[2], s[3]);
   
-    AES4(s[0], s[1], s[2], s[3], rc + 24);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 24);
     MIX4(s[0], s[1], s[2], s[3]);
   
-    AES4(s[0], s[1], s[2], s[3], rc + 32);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 32);
     MIX4(s[0], s[1], s[2], s[3]);
   
     STORE(out, s[0]);
@@ -439,7 +442,8 @@ void haraka512_perm(unsigned char *out, const unsigned char *in)
     STORE(out + 48, s[3]);
 }
 
-void haraka512_perm_x4(unsigned char *out, const unsigned char *in) 
+void haraka512_perm_x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) 
 {
     u128 s[4][4], tmp;
     
@@ -460,31 +464,31 @@ void haraka512_perm_x4(unsigned char *out, const unsigned char *in)
     s[3][2] = LOAD(in + 224);
     s[3][3] = LOAD(in + 240);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 8);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 8);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 16);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 16);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 24);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 24);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 32);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 32);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
@@ -508,7 +512,8 @@ void haraka512_perm_x4(unsigned char *out, const unsigned char *in)
     STORE(out + 240, s[3][3]);
 }
 
-void haraka512(unsigned char *out, const unsigned char *in)
+void haraka512(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx)
 {
     u128 s[4], tmp;
 
@@ -517,19 +522,19 @@ void haraka512(unsigned char *out, const unsigned char *in)
     s[2] = LOAD(in + 32);
     s[3] = LOAD(in + 48); 
 
-    AES4(s[0], s[1], s[2], s[3], rc);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc);
     MIX4(s[0], s[1], s[2], s[3]);
 
-    AES4(s[0], s[1], s[2], s[3], rc + 8);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 8);
     MIX4(s[0], s[1], s[2], s[3]);
 
-    AES4(s[0], s[1], s[2], s[3], rc + 16);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 16);
     MIX4(s[0], s[1], s[2], s[3]);
 
-    AES4(s[0], s[1], s[2], s[3], rc + 24);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 24);
     MIX4(s[0], s[1], s[2], s[3]);
 
-    AES4(s[0], s[1], s[2], s[3], rc + 32);
+    AES4(s[0], s[1], s[2], s[3], ctx->rc + 32);
     MIX4(s[0], s[1], s[2], s[3]);   
 
     s[0] = XOR128(s[0], LOAD(in));
@@ -541,7 +546,8 @@ void haraka512(unsigned char *out, const unsigned char *in)
     TRUNCSTORE(out, s[0], s[1], s[2], s[3]);  
 }
 
-void haraka512x4(unsigned char *out, const unsigned char *in) 
+void haraka512x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) 
 {  
     u128 s[4][4], tmp;
     
@@ -562,31 +568,31 @@ void haraka512x4(unsigned char *out, const unsigned char *in)
     s[3][2] = LOAD(in + 224);
     s[3][3] = LOAD(in + 240);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 8);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 8);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 16);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 16);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 24);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 24);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
     MIX4(s[3][0], s[3][1], s[3][2], s[3][3]);
     
-    AES4_4x(s[0], s[1], s[2], s[3], rc + 32);
+    AES4_4x(s[0], s[1], s[2], s[3], ctx->rc + 32);
     MIX4(s[0][0], s[0][1], s[0][2], s[0][3]);
     MIX4(s[1][0], s[1][1], s[1][2], s[1][3]);
     MIX4(s[2][0], s[2][1], s[2][2], s[2][3]);
@@ -615,26 +621,27 @@ void haraka512x4(unsigned char *out, const unsigned char *in)
     TRUNCSTORE((out + 96), s[3][0], s[3][1], s[3][2], s[3][3]);    
 }
 
-void haraka256(unsigned char *out, const unsigned char *in) 
+void haraka256(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) 
 {
     u128 s[2], tmp;
   
     s[0] = LOAD(in);
     s[1] = LOAD(in + 16);
   
-    AES2(s[0], s[1], rc);
+    AES2(s[0], s[1], ctx->rc);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc + 4);
+    AES2(s[0], s[1], ctx->rc + 4);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc + 8);
+    AES2(s[0], s[1], ctx->rc + 8);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc + 12);
+    AES2(s[0], s[1], ctx->rc + 12);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc + 16);
+    AES2(s[0], s[1], ctx->rc + 16);
     MIX2(s[0], s[1]);
   
     s[0] = XOR128(s[0], LOAD(in));
@@ -644,7 +651,8 @@ void haraka256(unsigned char *out, const unsigned char *in)
     STORE(out + 16, s[1]);
 }
 
-void haraka256x4(unsigned char *out, const unsigned char *in) 
+void haraka256x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) 
 {
     u128 s[4][2], tmp;
 
@@ -658,7 +666,7 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     s[3][1] = LOAD(in + 112);
 
     // Round 1
-    AES2_4x(s[0], s[1], s[2], s[3], rc);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -666,7 +674,7 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 2
-    AES2_4x(s[0], s[1], s[2], s[3], rc + 4);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc + 4);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -674,7 +682,7 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 3
-    AES2_4x(s[0], s[1], s[2], s[3], rc + 8);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc + 8);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -682,7 +690,7 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 4
-    AES2_4x(s[0], s[1], s[2], s[3], rc + 12);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc + 12);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -690,7 +698,7 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
     
     // Round 5
-    AES2_4x(s[0], s[1], s[2], s[3], rc + 16);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc + 16);
     
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -717,25 +725,26 @@ void haraka256x4(unsigned char *out, const unsigned char *in)
     STORE(out + 112, s[3][1]);
 }
 
-void haraka256_sk(unsigned char *out, const unsigned char *in) {
+void haraka256_sk(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) {
     u128 s[2], tmp;
   
     s[0] = LOAD(in);
     s[1] = LOAD(in + 16);
   
-    AES2(s[0], s[1], rc_sseed);
+    AES2(s[0], s[1], ctx->rc_sseed);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc_sseed + 4);
+    AES2(s[0], s[1], ctx->rc_sseed + 4);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc_sseed + 8);
+    AES2(s[0], s[1], ctx->rc_sseed + 8);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc_sseed + 12);
+    AES2(s[0], s[1], ctx->rc_sseed + 12);
     MIX2(s[0], s[1]);
   
-    AES2(s[0], s[1], rc_sseed + 16);
+    AES2(s[0], s[1], ctx->rc_sseed + 16);
     MIX2(s[0], s[1]);
   
     s[0] = XOR128(s[0], LOAD(in));
@@ -745,7 +754,8 @@ void haraka256_sk(unsigned char *out, const unsigned char *in) {
     STORE(out + 16, s[1]);
 }
 
-void haraka256_skx4(unsigned char *out, const unsigned char *in) 
+void haraka256_skx4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx) 
 {
     u128 s[4][2], tmp;
 
@@ -759,7 +769,7 @@ void haraka256_skx4(unsigned char *out, const unsigned char *in)
     s[3][1] = LOAD(in + 112);
 
     // Round 1
-    AES2_4x(s[0], s[1], s[2], s[3], rc_sseed);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -767,7 +777,7 @@ void haraka256_skx4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 2
-    AES2_4x(s[0], s[1], s[2], s[3], rc_sseed + 4);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 4);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -775,7 +785,7 @@ void haraka256_skx4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 3
-    AES2_4x(s[0], s[1], s[2], s[3], rc_sseed + 8);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 8);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -783,7 +793,7 @@ void haraka256_skx4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 4
-    AES2_4x(s[0], s[1], s[2], s[3], rc_sseed + 12);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 12);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);
@@ -791,7 +801,7 @@ void haraka256_skx4(unsigned char *out, const unsigned char *in)
     MIX2(s[3][0], s[3][1]);
 
     // Round 5
-    AES2_4x(s[0], s[1], s[2], s[3], rc_sseed + 16);
+    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 16);
 
     MIX2(s[0][0], s[0][1]);
     MIX2(s[1][0], s[1][1]);

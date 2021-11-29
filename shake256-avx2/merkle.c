@@ -14,7 +14,7 @@
  * authentication path).
  */ 
 void merkle_sign(uint8_t *sig, unsigned char *root,
-                 const unsigned char *sk_seed, const unsigned char *pub_seed,
+                 const spx_ctx* ctx,
                  uint32_t wots_addr[8], uint32_t tree_addr[8],
                  uint32_t idx_leaf)
 {
@@ -39,7 +39,7 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
 
     info.wots_sign_leaf = idx_leaf;
 
-    treehashx4(root, auth_path, sk_seed, pub_seed,
+    treehashx4(root, auth_path, ctx,
                 idx_leaf, 0,
                 SPX_TREE_HEIGHT,
                 wots_gen_leafx4,
@@ -47,8 +47,7 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
 }
 
 /* Compute root node of the top-most subtree. */
-void merkle_gen_root(unsigned char *root,
-           const unsigned char *sk_seed, const unsigned char *pub_seed)
+void merkle_gen_root(unsigned char *root, const spx_ctx *ctx)
 {
     /* We do not need the auth path in key generation, but it simplifies the
        code to have just one treehash routine that computes both root and path
@@ -60,7 +59,7 @@ void merkle_gen_root(unsigned char *root,
     set_layer_addr(top_tree_addr, SPX_D - 1);
     set_layer_addr(wots_addr, SPX_D - 1);
 
-    merkle_sign(auth_path, root, sk_seed, pub_seed,
+    merkle_sign(auth_path, root, ctx,
                 wots_addr, top_tree_addr,
                 ~0 /* ~0 means "don't bother generating an auth path */ );
 }

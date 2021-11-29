@@ -28,18 +28,16 @@ void thashx8(unsigned char *out0,
              const unsigned char *in5,
              const unsigned char *in6,
              const unsigned char *in7, unsigned int inblocks,
-             const unsigned char *pub_seed, uint32_t addrx8[8*8])
+             const spx_ctx *ctx, uint32_t addrx8[8*8])
 {
     unsigned char bufx8[8*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)];
     unsigned char outbufx8[8*SPX_SHA256_OUTPUT_BYTES];
     unsigned char bitmaskx8[8*(inblocks * SPX_N)];
     unsigned int i;
 
-    (void)pub_seed; /* Suppress an 'unused parameter' warning. */
-
     for (i = 0; i < 8; i++) {
         memcpy(bufx8 + i*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
-               pub_seed, SPX_N);
+               ctx->pub_seed, SPX_N);
         memcpy(bufx8 + SPX_N +
                          i*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
                          addrx8 + i*8, SPX_SHA256_ADDR_BYTES);
@@ -95,7 +93,7 @@ void thashx8(unsigned char *out0,
         outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
 
         /* seed */
-        state_seeded, 512,
+        ctx->state_seeded, 512,
 
         /* in */
         bufx8 + SPX_N + 0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),

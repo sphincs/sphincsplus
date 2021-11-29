@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "params.h"
+#include "context.h"
 
 
 /**
@@ -24,7 +25,7 @@ unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen);
 void compute_root(unsigned char *root, const unsigned char *leaf,
                   uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
-                  const unsigned char *pub_seed, uint32_t addr[8]);
+                  const spx_ctx *ctx, uint32_t addr[8]);
 
 /**
  * For a given leaf index, computes the authentication path and the resulting
@@ -35,12 +36,11 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
  * it is possible to continue counting indices across trees.
  */
 void treehash(unsigned char *root, unsigned char *auth_path,
-              const unsigned char *sk_seed, const unsigned char *pub_seed,
+              const spx_ctx* ctx,
               uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
               void (*gen_leaf)(
                  unsigned char* /* leaf */,
-                 const unsigned char* /* sk_seed */,
-                 const unsigned char* /* pub_seed */,
+                 const spx_ctx* ctx /* ctx */,
                  uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
               uint32_t tree_addr[8]);
 

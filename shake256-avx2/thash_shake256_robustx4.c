@@ -20,14 +20,14 @@ void thashx4(unsigned char *out0,
              const unsigned char *in1,
              const unsigned char *in2,
              const unsigned char *in3, unsigned int inblocks,
-             const unsigned char *pub_seed, uint32_t addrx4[4*8])
+             const spx_ctx *ctx, uint32_t addrx4[4*8])
 {
     if (SPX_N <= 32 && (inblocks == 1 || inblocks == 2)) {
         /* As we write and read only a few quadwords, it is more efficient to
          * build and extract from the fourway SHAKE256 state by hand. */
         __m256i state[25];
         for (int i = 0; i < SPX_N/8; i++) {
-            state[i] = _mm256_set1_epi64x(((int64_t*)pub_seed)[i]);
+            state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
         }
         for (int i = 0; i < 4; i++) {
             state[SPX_N/8+i] = _mm256_set_epi32(
@@ -99,7 +99,7 @@ void thashx4(unsigned char *out0,
          * build and extract from the fourway SHAKE256 state by hand. */
         __m256i state[25];
         for (int i = 0; i < 8; i++) {
-            state[i] = _mm256_set1_epi64x(((int64_t*)pub_seed)[i]);
+            state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
         }
         for (int i = 0; i < 4; i++) {
             state[8+i] = _mm256_set_epi32(
@@ -191,10 +191,10 @@ void thashx4(unsigned char *out0,
         unsigned char bitmask3[inblocks * SPX_N];
         unsigned int i;
 
-        memcpy(buf0, pub_seed, SPX_N);
-        memcpy(buf1, pub_seed, SPX_N);
-        memcpy(buf2, pub_seed, SPX_N);
-        memcpy(buf3, pub_seed, SPX_N);
+        memcpy(buf0, ctx->pub_seed, SPX_N);
+        memcpy(buf1, ctx->pub_seed, SPX_N);
+        memcpy(buf2, ctx->pub_seed, SPX_N);
+        memcpy(buf3, ctx->pub_seed, SPX_N);
         memcpy(buf0 + SPX_N, addrx4 + 0*8, SPX_ADDR_BYTES);
         memcpy(buf1 + SPX_N, addrx4 + 1*8, SPX_ADDR_BYTES);
         memcpy(buf2 + SPX_N, addrx4 + 2*8, SPX_ADDR_BYTES);

@@ -16,4 +16,6 @@
 #define SPX_OFFSET_TREE_HGT  17  /* The byte used to specify the height of this node in the FORS or Merkle tree */
 #define SPX_OFFSET_TREE_INDEX 18 /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
 
+#define SPX_SHA256 1
+
 #endif /* SHA256_OFFSETS_H_ */

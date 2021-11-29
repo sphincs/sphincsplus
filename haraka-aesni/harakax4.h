@@ -1,6 +1,8 @@
 #ifndef SPX_HARAKAX4_H
 #define SPX_HARAKAX4_H
 
+#include "context.h"
+
 /* Haraka Sponge */
 void haraka_Sx4(unsigned char *out0,
                 unsigned char *out1,
@@ -11,18 +13,23 @@ void haraka_Sx4(unsigned char *out0,
                 const unsigned char *in1,
                 const unsigned char *in2,
                 const unsigned char *in3,
-                unsigned long long inlen);
+                unsigned long long inlen,
+                const spx_ctx *ctx);
 
 /* Applies the 512-bit Haraka permutation x4 to in. */
-void haraka512_perm_x4(unsigned char *out, const unsigned char *in);
+void haraka512_perm_x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx);
 
 /* Implementation of Haraka-512 x4*/
-void haraka512x4(unsigned char *out, const unsigned char *in);
+void haraka512x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx);
 
 /* Implementation of Haraka-256 x4 */
-void haraka256x4(unsigned char *out, const unsigned char *in);
+void haraka256x4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx);
 
 /* Implementation of Haraka-256 x4 using sk.seed constants */
-void haraka256_skx4(unsigned char *out, const unsigned char *in);
+void haraka256_skx4(unsigned char *out, const unsigned char *in,
+        const spx_ctx *ctx);
 
 #endif

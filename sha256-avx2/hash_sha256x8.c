@@ -20,7 +20,7 @@ void prf_addrx8(unsigned char *out0,
                 unsigned char *out5,
                 unsigned char *out6,
                 unsigned char *out7,
-                const unsigned char *key,
+                const spx_ctx *ctx,
                 const uint32_t addrx8[8*8])
 {
     unsigned char bufx8[8 * (SPX_N + SPX_SHA256_ADDR_BYTES)];
@@ -28,7 +28,7 @@ void prf_addrx8(unsigned char *out0,
     unsigned int j;
 
     for (j = 0; j < 8; j++) {
-        memcpy(bufx8 + j*(SPX_N + SPX_SHA256_ADDR_BYTES), key, SPX_N);
+        memcpy(bufx8 + j*(SPX_N + SPX_SHA256_ADDR_BYTES), ctx->sk_seed, SPX_N);
         memcpy(bufx8 + SPX_N + j*(SPX_N + SPX_SHA256_ADDR_BYTES),
                          addrx8 + j*8, SPX_SHA256_ADDR_BYTES);
     }

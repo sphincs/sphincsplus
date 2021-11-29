@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "params.h"
+#include "context.h"
 
 /**
  * Signs a message m, deriving the secret key from sk_seed and the FTS address.
@@ -11,7 +12,7 @@
  */
 void fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
-               const unsigned char *sk_seed, const unsigned char *pub_seed,
+               const spx_ctx* ctx,
                const uint32_t fors_addr[8]);
 
 /**
@@ -23,7 +24,7 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
  */
 void fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
-                      const unsigned char *pub_seed,
+                      const spx_ctx* ctx,
                       const uint32_t fors_addr[8]);
 
 #endif

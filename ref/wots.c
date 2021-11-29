@@ -23,7 +23,7 @@
  */
 static void gen_chain(unsigned char *out, const unsigned char *in,
                       unsigned int start, unsigned int steps,
-                      const unsigned char *pub_seed, uint32_t addr[8])
+                      const spx_ctx *ctx, uint32_t addr[8])
 {
     uint32_t i;
 
@@ -33,7 +33,7 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
     /* Iterate 'steps' calls to the hash function. */
     for (i = start; i < (start+steps) && i < SPX_WOTS_W; i++) {
         set_hash_addr(addr, i);
-        thash(out, out, 1, pub_seed, addr);
+        thash(out, out, 1, ctx, addr);
     }
 }
 
@@ -97,7 +97,7 @@ void chain_lengths(unsigned int *lengths, const unsigned char *msg)
  */
 void wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
-                      const unsigned char *pub_seed, uint32_t addr[8])
+                      const spx_ctx *ctx, uint32_t addr[8])
 {
     unsigned int lengths[SPX_WOTS_LEN];
     uint32_t i;
@@ -107,6 +107,6 @@ void wots_pk_from_sig(unsigned char *pk,
     for (i = 0; i < SPX_WOTS_LEN; i++) {
         set_chain_addr(addr, i);
         gen_chain(pk + i*SPX_N, sig + i*SPX_N,
-                  lengths[i], SPX_WOTS_W - 1 - lengths[i], pub_seed, addr);
+                  lengths[i], SPX_WOTS_W - 1 - lengths[i], ctx, addr);
     }
 }

@@ -28,23 +28,21 @@
 
 /* For SHA, there is no immediate reason to initialize at the start,
    so this function is an empty operation. */
-void initialize_hash_function(const unsigned char *pub_seed,
-                              const unsigned char *sk_seed)
+void initialize_hash_function(spx_ctx *ctx)
 {
-    seed_state(pub_seed);
-    (void)sk_seed; /* Suppress an 'unused parameter' warning. */
+    seed_state(ctx);
 }
 
 /*
- * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
+ * Computes PRF(sk_seed, addr).
  */
-void prf_addr(unsigned char *out, const unsigned char *key,
+void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
     unsigned char buf[SPX_N + SPX_SHA256_ADDR_BYTES];
     unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
-    memcpy(buf, key, SPX_N);
+    memcpy(buf, ctx->sk_seed, SPX_N);
     memcpy(buf + SPX_N, addr, SPX_SHA256_ADDR_BYTES);
 
     sha256(outbuf, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
@@ -61,8 +59,11 @@ void prf_addr(unsigned char *out, const unsigned char *key,
  */
 void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
-                        const unsigned char *m, unsigned long long mlen)
+                        const unsigned char *m, unsigned long long mlen,
+                        const spx_ctx *ctx)
 {
+    (void)ctx;
+
     unsigned char buf[SPX_SHAX_BLOCK_BYTES + SPX_SHAX_OUTPUT_BYTES];
     uint8_t state[8 + SPX_SHAX_OUTPUT_BYTES];
     int i;
@@ -114,8 +115,10 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
  */
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
-                  const unsigned char *m, unsigned long long mlen)
+                  const unsigned char *m, unsigned long long mlen,
+                  const spx_ctx *ctx)
 {
+    (void)ctx;
 #define SPX_TREE_BITS (SPX_TREE_HEIGHT * (SPX_D - 1))
 #define SPX_TREE_BYTES ((SPX_TREE_BITS + 7) / 8)
 #define SPX_LEAF_BITS SPX_TREE_HEIGHT

@@ -35,13 +35,12 @@
  * we don't actually use such short trees, I haven't bothered
  */
 void treehashx8(unsigned char *root, unsigned char *auth_path,
-                const unsigned char *sk_seed, const unsigned char *pub_seed,
+                const spx_ctx *ctx,
                 uint32_t leaf_idx, uint32_t idx_offset,
                 uint32_t tree_height,
                 void (*gen_leafx8)(
                    unsigned char* /* Where to write the leaves */,
-                   const unsigned char* /* sk_seed */,
-                   const unsigned char* /* pub_seed */,
+                   const spx_ctx*,
                    uint32_t idx, void *info),
                 uint32_t tree_addrx8[8*8],
                 void *info)
@@ -56,7 +55,7 @@ void treehashx8(unsigned char *root, unsigned char *auth_path,
     uint32_t max_idx = (1 << (tree_height-3)) - 1;
     for (idx = 0;; idx++) {
         unsigned char current[8*SPX_N];   /* Current logical node */
-        gen_leafx8( current, sk_seed, pub_seed, 8*idx + idx_offset,
+        gen_leafx8( current, ctx, 8*idx + idx_offset,
                     info );
 
         /* Now combine the freshly generated right node with previously */
@@ -136,7 +135,7 @@ void treehashx8(unsigned char *root, unsigned char *auth_path,
                      &current[2 * SPX_N],
                      &current[4 * SPX_N],
                      &current[6 * SPX_N],
-                     2, pub_seed, tree_addrx8);
+                     2, ctx, tree_addrx8);
         }
 
         /* We've hit a left child; save the current for when we get the */

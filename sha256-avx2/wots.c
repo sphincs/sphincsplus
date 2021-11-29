@@ -24,7 +24,7 @@ static void gen_chains(
         const unsigned char *in,
         unsigned int start[SPX_WOTS_LEN],
         unsigned int steps[SPX_WOTS_LEN],
-        const unsigned char *pub_seed,
+        const spx_ctx *ctx,
         uint32_t addr[8])
 {
     uint32_t i, j, k, idx, watching;
@@ -99,7 +99,7 @@ static void gen_chains(
             thashx8(bufs[0], bufs[1], bufs[2], bufs[3],
                     bufs[4], bufs[5], bufs[6], bufs[7],
                     bufs[0], bufs[1], bufs[2], bufs[3],
-                    bufs[4], bufs[5], bufs[6], bufs[7], 1, pub_seed, addrs);
+                    bufs[4], bufs[5], bufs[6], bufs[7], 1, ctx, addrs);
         }
     }
 }
@@ -164,7 +164,7 @@ void chain_lengths(unsigned int *lengths, const unsigned char *msg)
  */
 void wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
-                      const unsigned char *pub_seed, uint32_t addr[8])
+                      const spx_ctx *ctx, uint32_t addr[8])
 {
     unsigned int steps[SPX_WOTS_LEN];
     unsigned int start[SPX_WOTS_LEN];
@@ -176,7 +176,7 @@ void wots_pk_from_sig(unsigned char *pk,
         steps[i] = SPX_WOTS_W - 1 - start[i];
     }
 
-    gen_chains(pk, sig, start, steps, pub_seed, addr);
+    gen_chains(pk, sig, start, steps, ctx, addr);
 }
 
 /*
@@ -185,8 +185,7 @@ void wots_pk_from_sig(unsigned char *pk,
  * that we're signing with one of these WOTS keys
  */
 void wots_gen_leafx8(unsigned char *dest,
-                   const unsigned char *sk_seed,
-                   const unsigned char *pub_seed,
+                   const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info) {
     struct leaf_info_x8 *info = v_info;
     uint32_t *leaf_addr = info->leaf_addr;
@@ -232,7 +231,7 @@ void wots_gen_leafx8(unsigned char *dest,
                    buffer + 5*wots_offset,
                    buffer + 6*wots_offset,
                    buffer + 7*wots_offset,
-                   sk_seed, leaf_addr);
+                   ctx, leaf_addr);
 
         /* Iterate down the WOTS chain */
         for (k=0;; k++) {
@@ -265,7 +264,7 @@ void wots_gen_leafx8(unsigned char *dest,
                     buffer + 4*wots_offset,
                     buffer + 5*wots_offset,
                     buffer + 6*wots_offset,
-                    buffer + 7*wots_offset, 1, pub_seed, leaf_addr);
+                    buffer + 7*wots_offset, 1, ctx, leaf_addr);
         }
     }
 
@@ -285,5 +284,5 @@ void wots_gen_leafx8(unsigned char *dest,
             pk_buffer + 4*wots_offset,
             pk_buffer + 5*wots_offset,
             pk_buffer + 6*wots_offset,
-            pk_buffer + 7*wots_offset, SPX_WOTS_LEN, pub_seed, pk_addr);
+            pk_buffer + 7*wots_offset, SPX_WOTS_LEN, ctx, pk_addr);
 }

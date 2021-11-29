@@ -13,8 +13,8 @@
 #define SPX_MLEN 32
 #define NTESTS 10
 
-static void wots_gen_pkx4(unsigned char *pk, const unsigned char *seed,
-                 const unsigned char *pub_seed, uint32_t addr[8]);
+static void wots_gen_pkx4(unsigned char* pk, const spx_ctx *ctx,
+         uint32_t addr[8]);
 
 static int cmp_llu(const void *a, const void*b)
 {
@@ -105,6 +105,7 @@ int main()
     /* Make stdout buffer more responsive. */
     setbuf(stdout, NULL);
 
+    spx_ctx ctx;
     unsigned char pk[SPX_PK_BYTES];
     unsigned char sk[SPX_SK_BYTES];
     unsigned char *m = malloc(SPX_MLEN);
@@ -135,10 +136,10 @@ int main()
     printf("Running %d iterations.\n", NTESTS);
 
     MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
-    MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx4(wots_pk, sk, pk, (uint32_t *) addr));
+    MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx4(wots_pk, &ctx, (uint32_t *) addr));
     MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
-    MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, sk, pk, (uint32_t *) addr));
-    MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx4(wots_pk, sk, pk, (uint32_t *) addr));
+    MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, &ctx, (uint32_t *) addr));
+    MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx4(wots_pk, &ctx, (uint32_t *) addr));
     MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
 
     printf("Signature size: %d (%.2f KiB)\n", SPX_BYTES, SPX_BYTES / 1024.0);
@@ -152,10 +153,10 @@ int main()
     return 0;
 }
 
-static void wots_gen_pkx4(unsigned char *pk, const unsigned char *seed,
-                 const unsigned char *pub_seed, uint32_t addr[8]) {
+static void wots_gen_pkx4(unsigned char *pk, const spx_ctx *ctx,
+                 uint32_t addr[8]) {
     struct leaf_info_x4 leaf;
     unsigned steps[ SPX_WOTS_LEN ] = { 0 };
     INITIALIZE_LEAF_INFO_X4(leaf, addr, steps);
-    wots_gen_leafx4(pk, seed, pub_seed, 0, &leaf);
+    wots_gen_leafx4(pk, ctx, 0, &leaf);
 }

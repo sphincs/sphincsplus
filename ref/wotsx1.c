@@ -15,8 +15,7 @@
  * that we're signing with this WOTS key
  */
 void wots_gen_leafx1(unsigned char *dest,
-                   const unsigned char *sk_seed,
-                   const unsigned char *pub_seed,
+                   const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info) {
     struct leaf_info_x1 *info = v_info;
     uint32_t *leaf_addr = info->leaf_addr;
@@ -46,7 +45,7 @@ void wots_gen_leafx1(unsigned char *dest,
         set_chain_addr(leaf_addr, i);
         set_hash_addr(leaf_addr, 0);
  
-        prf_addr(buffer, sk_seed, leaf_addr);
+        prf_addr(buffer, ctx, leaf_addr);
 
         /* Iterate down the WOTS chain */
         for (k=0;; k++) {
@@ -62,10 +61,10 @@ void wots_gen_leafx1(unsigned char *dest,
             /* Iterate one step on the chain */
             set_hash_addr(leaf_addr, k);
 
-            thash(buffer, buffer, 1, pub_seed, leaf_addr);
+            thash(buffer, buffer, 1, ctx, leaf_addr);
         }
     }
 
     /* Do the final thash to generate the public keys */
-    thash(dest, pk_buffer, SPX_WOTS_LEN, pub_seed, pk_addr);
+    thash(dest, pk_buffer, SPX_WOTS_LEN, ctx, pk_addr);
 }

@@ -15,14 +15,14 @@ void prf_addrx4(unsigned char *out0,
                 unsigned char *out1,
                 unsigned char *out2,
                 unsigned char *out3,
-                const unsigned char *key,
+                const spx_ctx *ctx,
                 const uint32_t addrx4[4*8]) {
     /* As we write and read only a few quadwords, it is more efficient to
      * build and extract from the fourway SHAKE256 state by hand. */
     __m256i state[25];
     
     for (int i = 0; i < SPX_N/8; i++) {
-        state[i] = _mm256_set1_epi64x(((int64_t*)key)[i]);
+        state[i] = _mm256_set1_epi64x(((int64_t*)ctx->sk_seed)[i]);
     }
     for (int i = 0; i < 4; i++) {
         state[SPX_N/8+i] = _mm256_set_epi32(

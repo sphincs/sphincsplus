@@ -2,6 +2,7 @@
 #define SPX_THASHX8_H
 
 #include <stdint.h>
+#include "context.h"
 
 void thashx8(unsigned char *out0,
              unsigned char *out1,
@@ -19,6 +20,6 @@ void thashx8(unsigned char *out0,
              const unsigned char *in5,
              const unsigned char *in6,
              const unsigned char *in7, unsigned int inblocks,
-             const unsigned char *pub_seed, uint32_t addrx8[8*8]);
+             const spx_ctx *ctx, uint32_t addrx8[8*8]);
 
 #endif

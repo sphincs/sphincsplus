@@ -32,9 +32,7 @@ void mgf1_256(unsigned char *out, unsigned long outlen,
 void mgf1_512(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 
-extern uint8_t state_seeded[40];
-
-void seed_state(const unsigned char *pub_seed);
+void seed_state(spx_ctx *ctx);
 
 
 #endif
