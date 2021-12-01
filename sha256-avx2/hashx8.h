@@ -12,7 +12,7 @@ void prf_addrx8(unsigned char *out0,
                 unsigned char *out5,
                 unsigned char *out6,
                 unsigned char *out7,
-                const unsigned char *key,
+                const spx_ctx *ctx,
                 const uint32_t addrx8[8*8]);
 
 #endif

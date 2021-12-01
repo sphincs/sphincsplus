@@ -21,13 +21,12 @@
  * This works by using the standard Merkle tree building algorithm,
  */
 void treehashx1(unsigned char *root, unsigned char *auth_path,
-                const unsigned char *sk_seed, const unsigned char *pub_seed,
+                const spx_ctx* ctx,
                 uint32_t leaf_idx, uint32_t idx_offset,
                 uint32_t tree_height,
                 void (*gen_leaf)(
                    unsigned char* /* Where to write the leaves */,
-                   const unsigned char* /* sk_seed */,
-                   const unsigned char* /* pub_seed */,
+                   const spx_ctx* /* ctx */,
                    uint32_t idx, void *info),
                 uint32_t tree_addr[8],
                 void *info)
@@ -41,7 +40,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
         unsigned char current[2*SPX_N];   /* Current logical node is at */
             /* index[SPX_N].  We do this to minimize the number of copies */
             /* needed during a thash */
-        gen_leaf( &current[SPX_N], sk_seed, pub_seed, idx + idx_offset,
+        gen_leaf( &current[SPX_N], ctx, idx + idx_offset,
                     info );
 
         /* Now combine the freshly generated right node with previously */
@@ -91,7 +90,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
             memcpy( &current[0], left, SPX_N );
             thash( &current[1 * SPX_N],
                    &current[0 * SPX_N],
-                   2, pub_seed, tree_addr);
+                   2, ctx, tree_addr);
         }
 
         /* We've hit a left child; save the current for when we get the */

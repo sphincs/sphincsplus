@@ -13,7 +13,7 @@ void prf_addrx4(unsigned char *out0,
                 unsigned char *out1,
                 unsigned char *out2,
                 unsigned char *out3,
-                const unsigned char *key,
+                const spx_ctx *ctx,
                 const uint32_t addrx4[4*8])
 {
     unsigned char bufx4[4 * SPX_ADDR_BYTES];
@@ -21,13 +21,11 @@ void prf_addrx4(unsigned char *out0,
     unsigned char outbuf[4 * 32];
     unsigned int i;
 
-    (void)key; /* Suppress an 'unused parameter' warning. */
-
     for (i = 0; i < 4; i++) {
         memcpy(bufx4 + i*SPX_ADDR_BYTES, addrx4 + i*8, SPX_ADDR_BYTES);
     }
 
-    haraka256_skx4(outbuf, bufx4);
+    haraka256_skx4(outbuf, bufx4, ctx);
 
     memcpy(out0, outbuf, SPX_N);
     memcpy(out1, outbuf + 32, SPX_N);

@@ -29,8 +29,7 @@ struct leaf_info_x1 {
 }
 
 void wots_gen_leafx1(unsigned char *dest,
-                   const unsigned char *sk_seed,
-                   const unsigned char *pub_seed,
+                   const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info);
 
 #endif /* WOTSX1_H_ */

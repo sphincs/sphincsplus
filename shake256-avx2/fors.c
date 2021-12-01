@@ -11,27 +11,27 @@
 #include "thashx4.h"
 #include "address.h"
 
-static void fors_gen_sk(unsigned char *sk, const unsigned char *sk_seed,
+static void fors_gen_sk(unsigned char *sk, const spx_ctx *ctx,
                         uint32_t fors_leaf_addr[8])
 {
-    prf_addr(sk, sk_seed, fors_leaf_addr);
+    prf_addr(sk, ctx, fors_leaf_addr);
 }
 
 static void fors_gen_skx4(unsigned char *sk0,
                           unsigned char *sk1,
                           unsigned char *sk2,
-                          unsigned char *sk3, const unsigned char *sk_seed,
+                          unsigned char *sk3, const spx_ctx *ctx,
                           uint32_t fors_leaf_addrx4[4*8])
 {
     prf_addrx4(sk0, sk1, sk2, sk3,
-               sk_seed, fors_leaf_addrx4);
+               ctx, fors_leaf_addrx4);
 }
 
 static void fors_sk_to_leaf(unsigned char *leaf, const unsigned char *sk,
-                            const unsigned char *pub_seed,
+                            const spx_ctx *ctx,
                             uint32_t fors_leaf_addr[8])
 {
-    thash(leaf, sk, 1, pub_seed, fors_leaf_addr);
+    thash(leaf, sk, 1, ctx, fors_leaf_addr);
 }
 
 static void fors_sk_to_leafx4(unsigned char *leaf0,
@@ -42,12 +42,12 @@ static void fors_sk_to_leafx4(unsigned char *leaf0,
                               const unsigned char *sk1,
                               const unsigned char *sk2,
                               const unsigned char *sk3,
-                              const unsigned char *pub_seed,
+                              const spx_ctx *ctx,
                               uint32_t fors_leaf_addrx4[4*8])
 {
     thashx4(leaf0, leaf1, leaf2, leaf3,
             sk0, sk1, sk2, sk3,
-            1, pub_seed, fors_leaf_addrx4);
+            1, ctx, fors_leaf_addrx4);
 }
 
 struct fors_gen_leaf_info {
@@ -55,8 +55,7 @@ struct fors_gen_leaf_info {
 };
 
 static void fors_gen_leafx4(unsigned char *leaf,
-                            const unsigned char *sk_seed,
-                            const unsigned char *pub_seed,
+                            const spx_ctx *ctx,
                             uint32_t addr_idx, void *info)
 {
     struct fors_gen_leaf_info *fors_info = info;
@@ -72,7 +71,7 @@ static void fors_gen_leafx4(unsigned char *leaf,
                   leaf + 1*SPX_N,
                   leaf + 2*SPX_N,
                   leaf + 3*SPX_N,
-                  sk_seed, fors_leaf_addrx4);
+                  ctx, fors_leaf_addrx4);
     fors_sk_to_leafx4(leaf + 0*SPX_N,
                   leaf + 1*SPX_N,
                   leaf + 2*SPX_N,
@@ -81,7 +80,7 @@ static void fors_gen_leafx4(unsigned char *leaf,
                   leaf + 1*SPX_N,
                   leaf + 2*SPX_N,
                   leaf + 3*SPX_N,
-                  pub_seed, fors_leaf_addrx4);
+                  ctx, fors_leaf_addrx4);
 }
 
 /**
@@ -109,7 +108,7 @@ static void message_to_indices(uint32_t *indices, const unsigned char *m)
  */
 void fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
-               const unsigned char *sk_seed, const unsigned char *pub_seed,
+               const spx_ctx *ctx,
                const uint32_t fors_addr[8])
 {
     uint32_t indices[SPX_FORS_TREES];
@@ -139,11 +138,11 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
         set_tree_index(fors_tree_addr, indices[i] + idx_offset);
 
         /* Include the secret key part that produces the selected leaf node. */
-        fors_gen_sk(sig, sk_seed, fors_tree_addr);
+        fors_gen_sk(sig, ctx, fors_tree_addr);
         sig += SPX_N;
 
         /* Compute the authentication path for this leaf node. */
-        treehashx4(roots + i*SPX_N, sig, sk_seed, pub_seed,
+        treehashx4(roots + i*SPX_N, sig, ctx,
                  indices[i], idx_offset, SPX_FORS_HEIGHT, fors_gen_leafx4,
                  fors_tree_addr, &fors_info);
 
@@ -151,7 +150,7 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
-    thash(pk, roots, SPX_FORS_TREES, pub_seed, fors_pk_addr);
+    thash(pk, roots, SPX_FORS_TREES, ctx, fors_pk_addr);
 }
 
 /**
@@ -163,7 +162,7 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
  */
 void fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
-                      const unsigned char *pub_seed,
+                      const spx_ctx *ctx,
                       const uint32_t fors_addr[8])
 {
     uint32_t indices[SPX_FORS_TREES];
@@ -189,15 +188,15 @@ void fors_pk_from_sig(unsigned char *pk,
         set_tree_index(fors_tree_addr, indices[i] + idx_offset);
 
         /* Derive the leaf from the included secret key part. */
-        fors_sk_to_leaf(leaf, sig, pub_seed, fors_tree_addr);
+        fors_sk_to_leaf(leaf, sig, ctx, fors_tree_addr);
         sig += SPX_N;
 
         /* Derive the corresponding root node of this tree. */
         compute_root(roots + i*SPX_N, leaf, indices[i], idx_offset,
-                     sig, SPX_FORS_HEIGHT, pub_seed, fors_tree_addr);
+                     sig, SPX_FORS_HEIGHT, ctx, fors_tree_addr);
         sig += SPX_N * SPX_FORS_HEIGHT;
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
-    thash(pk, roots, SPX_FORS_TREES, pub_seed, fors_pk_addr);
+    thash(pk, roots, SPX_FORS_TREES, ctx, fors_pk_addr);
 }

@@ -13,22 +13,22 @@ int main()
     setbuf(stdout, NULL);
 
     unsigned char input[8*SPX_N];
-    unsigned char seed[SPX_N];
+    spx_ctx ctx;
     unsigned char output[8*SPX_N];
     unsigned char out8[8*SPX_N];
     uint32_t addr[8*8] = {0};
     unsigned int j;
 
-    randombytes(seed, SPX_N);
+    randombytes(ctx.pub_seed, SPX_N);
     randombytes(input, 8*SPX_N);
     randombytes((unsigned char *)addr, 8 * 8 * sizeof(uint32_t));
 
-    initialize_hash_function(seed, seed);
+    initialize_hash_function(&ctx);
 
     printf("Testing if thash matches thashx8.. ");
 
     for (j = 0; j < 8; j++) {
-        thash(out8 + j * SPX_N, input + j * SPX_N, 1, seed, addr + j*8);
+        thash(out8 + j * SPX_N, input + j * SPX_N, 1, &ctx, addr + j*8);
     }
 
     thashx8(output + 0*SPX_N,
@@ -47,7 +47,7 @@ int main()
             input + 5*SPX_N,
             input + 6*SPX_N,
             input + 7*SPX_N,
-            1, seed, addr);
+            1, &ctx, addr);
 
     if (memcmp(out8, output, 8 * SPX_N)) {
         printf("failed!\n");

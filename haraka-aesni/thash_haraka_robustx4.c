@@ -18,7 +18,7 @@ void thashx4(unsigned char *out0,
              const unsigned char *in1,
              const unsigned char *in2,
              const unsigned char *in3, unsigned int inblocks,
-             const unsigned char *pub_seed, uint32_t addrx4[4*8])
+             const spx_ctx *ctx, uint32_t addrx4[4*8])
 {
     unsigned char buf0[SPX_ADDR_BYTES + inblocks*SPX_N];
     unsigned char buf1[SPX_ADDR_BYTES + inblocks*SPX_N];
@@ -32,8 +32,6 @@ void thashx4(unsigned char *out0,
     unsigned char buf_tmp[64 * 4];
     unsigned int i;
 
-    (void)pub_seed; /* Suppress an 'unused parameter' warning. */
-
     if (inblocks == 1) {
         memset(buf_tmp, 0, 64 * 4);
 
@@ -43,7 +41,7 @@ void thashx4(unsigned char *out0,
         memcpy(buf_tmp + 64, addrx4 + 2*8, 32);
         memcpy(buf_tmp + 96, addrx4 + 3*8, 32);
 
-        haraka256x4(outbuf, buf_tmp);
+        haraka256x4(outbuf, buf_tmp, ctx);
 
         /* move addresses to make room for inputs; zero old values */
         memcpy(buf_tmp + 192, buf_tmp + 96, SPX_ADDR_BYTES);
@@ -63,7 +61,7 @@ void thashx4(unsigned char *out0,
             buf_tmp[SPX_ADDR_BYTES + i + 192] = in3[i] ^ outbuf[i + 96];
         }
 
-        haraka512x4(outbuf, buf_tmp);
+        haraka512x4(outbuf, buf_tmp, ctx);
 
         memcpy(out0, outbuf,      SPX_N);
         memcpy(out1, outbuf + 32, SPX_N);
@@ -77,7 +75,7 @@ void thashx4(unsigned char *out0,
         memcpy(buf3, addrx4 + 3*8, 32);
 
         haraka_Sx4(bitmask0, bitmask1, bitmask2, bitmask3, inblocks * SPX_N,
-                   buf0, buf1, buf2, buf3, SPX_ADDR_BYTES);
+                   buf0, buf1, buf2, buf3, SPX_ADDR_BYTES, ctx);
 
         for (i = 0; i < inblocks * SPX_N; i++) {
             buf0[SPX_ADDR_BYTES + i] = in0[i] ^ bitmask0[i];
@@ -87,6 +85,7 @@ void thashx4(unsigned char *out0,
         }
 
         haraka_Sx4(out0, out1, out2, out3, SPX_N,
-                   buf0, buf1, buf2, buf3, SPX_ADDR_BYTES + inblocks*SPX_N);
+                   buf0, buf1, buf2, buf3, SPX_ADDR_BYTES + inblocks*SPX_N,
+                   ctx);
     }
 }

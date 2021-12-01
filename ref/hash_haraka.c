@@ -8,24 +8,21 @@
 #include "haraka.h"
 #include "hash.h"
 
-void initialize_hash_function(const unsigned char *pk_seed,
-                              const unsigned char *sk_seed)
+void initialize_hash_function(spx_ctx* ctx)
 {
-    tweak_constants(pk_seed, sk_seed, SPX_N);
+    tweak_constants(ctx);
 }
 
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */
-void prf_addr(unsigned char *out, const unsigned char *key,
+void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
     /* Since SPX_N may be smaller than 32, we need a temporary buffer. */
     unsigned char outbuf[32];
 
-    (void)key; /* Suppress an 'unused parameter' warning. */
-
-    haraka256_sk(outbuf, (const void *)addr);
+    haraka256_sk(outbuf, (const void *)addr, ctx);
     memcpy(out, outbuf, SPX_N);
 }
 
@@ -33,18 +30,19 @@ void prf_addr(unsigned char *out, const unsigned char *key,
  * Computes the message-dependent randomness R, using a secret seed and an
  * optional randomization value as well as the message.
  */
-void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
+void gen_message_random(unsigned char *R, const unsigned char* sk_prf,
                         const unsigned char *optrand,
-                        const unsigned char *m, unsigned long long mlen)
+                        const unsigned char *m, unsigned long long mlen,
+                        const spx_ctx *ctx)
 {
     uint8_t s_inc[65];
 
     haraka_S_inc_init(s_inc);
-    haraka_S_inc_absorb(s_inc, sk_prf, SPX_N);
-    haraka_S_inc_absorb(s_inc, optrand, SPX_N);
-    haraka_S_inc_absorb(s_inc, m, mlen);
+    haraka_S_inc_absorb(s_inc, sk_prf, SPX_N, ctx);
+    haraka_S_inc_absorb(s_inc, optrand, SPX_N, ctx);
+    haraka_S_inc_absorb(s_inc, m, mlen, ctx);
     haraka_S_inc_finalize(s_inc);
-    haraka_S_inc_squeeze(R, SPX_N, s_inc);
+    haraka_S_inc_squeeze(R, SPX_N, s_inc, ctx);
 }
 
 /**
@@ -54,7 +52,8 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
  */
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
-                  const unsigned char *m, unsigned long long mlen)
+                  const unsigned char *m, unsigned long long mlen,
+                  const spx_ctx *ctx)
 {
 #define SPX_TREE_BITS (SPX_TREE_HEIGHT * (SPX_D - 1))
 #define SPX_TREE_BYTES ((SPX_TREE_BITS + 7) / 8)
@@ -67,11 +66,11 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     uint8_t s_inc[65];
 
     haraka_S_inc_init(s_inc);
-    haraka_S_inc_absorb(s_inc, R, SPX_N);
-    haraka_S_inc_absorb(s_inc, pk + SPX_N, SPX_N); // Only absorb root part of pk
-    haraka_S_inc_absorb(s_inc, m, mlen);
+    haraka_S_inc_absorb(s_inc, R, SPX_N, ctx);
+    haraka_S_inc_absorb(s_inc, pk + SPX_N, SPX_N, ctx); // Only absorb root part of pk
+    haraka_S_inc_absorb(s_inc, m, mlen, ctx);
     haraka_S_inc_finalize(s_inc);
-    haraka_S_inc_squeeze(buf, SPX_DGST_BYTES, s_inc);
+    haraka_S_inc_squeeze(buf, SPX_DGST_BYTES, s_inc, ctx);
 
     memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
     bufp += SPX_FORS_MSG_BYTES;

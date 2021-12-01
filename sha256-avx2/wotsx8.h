@@ -32,8 +32,7 @@ struct leaf_info_x8 {
 }
 
 void wots_gen_leafx8(unsigned char *dest,
-                   const unsigned char *sk_seed,
-                   const unsigned char *pub_seed,
+                   const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info);
 
 #endif /* WOTSX8_H_ */
