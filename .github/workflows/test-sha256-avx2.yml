@@ -28,6 +28,6 @@ jobs:
           make -C sha256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha256-${{ matrix.size }}${{ matrix.option }} test
           make -C sha256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha256-${{ matrix.size }}${{ matrix.option }} PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
-        run: ./sha256-avx2/PQCgenKAT_sign
+        run: python3 vectors.py sphincs-sha256-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} sha256-avx2
 
 #  vim: set ft=yaml ts=2 sw=2 et :

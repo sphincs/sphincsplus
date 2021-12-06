@@ -28,6 +28,6 @@ jobs:
           make -C haraka-aesni THASH=${{ matrix.thash }} PARAMS=sphincs-haraka-${{ matrix.size }}${{ matrix.option }} test
           make -C haraka-aesni THASH=${{ matrix.thash }} PARAMS=sphincs-haraka-${{ matrix.size }}${{ matrix.option }} PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
-        run: ./haraka-aesni/PQCgenKAT_sign
+        run: python3 vectors.py sphincs-haraka-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} haraka-aesni
 
 #  vim: set ft=yaml ts=2 sw=2 et :

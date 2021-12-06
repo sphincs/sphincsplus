@@ -28,6 +28,6 @@ jobs:
           make -C shake256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-shake256-${{ matrix.size }}${{ matrix.option }} test
           make -C shake256-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-shake256-${{ matrix.size }}${{ matrix.option }} PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
-        run: ./shake256-avx2/PQCgenKAT_sign
+        run: python3 vectors.py sphincs-shake256-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} shake256-avx2
 
 #  vim: set ft=yaml ts=2 sw=2 et :

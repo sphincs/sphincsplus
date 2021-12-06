@@ -32,6 +32,6 @@ jobs:
           make -C ref HASH=${{ matrix.hash }} THASH=${{ matrix.thash }} PARAMS=sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }} test
           make -C ref THASH=${{ matrix.thash }} PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
-        run: ./ref/PQCgenKAT_sign
+        run: python3 vectors.py sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} ref
 
 #  vim: set ft=yaml ts=2 sw=2 et :
