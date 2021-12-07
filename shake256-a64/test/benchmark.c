@@ -5,18 +5,22 @@
 #include <time.h>
 
 #include "../thash.h"
+#include "../thashx2.h"
 #include "../api.h"
+#include "../f1600x2.h"
 #include "../fors.h"
-#include "../wotsx1.h"
+#include "../wots.h"
+#include "../wotsx2.h"
 #include "../params.h"
 #include "../randombytes.h"
+
 #include "cycles.h"
 
 #define SPX_MLEN 32
 #define NTESTS 10
 
-static void wots_gen_pkx1(unsigned char *pk, const spx_ctx* ctx,
-                uint32_t addr[8]);
+static void wots_gen_pkx2(unsigned char *pk, const spx_ctx *ctx,
+        uint32_t addr[8]);
 
 static int cmp_llu(const void *a, const void*b)
 {
@@ -40,7 +44,6 @@ static void delta(unsigned long long *l, size_t llen)
         l[i] = l[i+1] - l[i];
     }
 }
-
 
 static void printfcomma (unsigned long long n)
 {
@@ -108,12 +111,11 @@ static void display_result(double result, unsigned long long *l, size_t llen, un
 
 int main()
 {
+    init_cpucycles();
     /* Make stdout buffer more responsive. */
     setbuf(stdout, NULL);
-    init_cpucycles();
 
     spx_ctx ctx;
-
     unsigned char pk[SPX_PK_BYTES];
     unsigned char sk[SPX_SK_BYTES];
     unsigned char *m = malloc(SPX_MLEN);
@@ -123,10 +125,9 @@ int main()
     unsigned char fors_pk[SPX_FORS_PK_BYTES];
     unsigned char fors_m[SPX_FORS_MSG_BYTES];
     unsigned char fors_sig[SPX_FORS_BYTES];
-    unsigned char addr[SPX_ADDR_BYTES];
+    unsigned char addr[SPX_ADDR_BYTES*2];
+    unsigned char wots_pk[4*SPX_WOTS_PK_BYTES];
     unsigned char block[SPX_N];
-
-    unsigned char wots_pk[SPX_WOTS_PK_BYTES];
 
     unsigned long long smlen;
     unsigned long long mlen;
@@ -134,9 +135,10 @@ int main()
     struct timespec start, stop;
     double result;
     int i;
+    uint64_t statex2[50];
 
     randombytes(m, SPX_MLEN);
-    randombytes(addr, SPX_ADDR_BYTES);
+    randombytes(addr, SPX_ADDR_BYTES*2);
 
     printf("Parameters: n = %d, h = %d, d = %d, b = %d, k = %d, w = %d\n",
            SPX_N, SPX_FULL_HEIGHT, SPX_D, SPX_FORS_HEIGHT, SPX_FORS_TREES,
@@ -145,11 +147,13 @@ int main()
     printf("Running %d iterations.\n", NTESTS);
 
     MEASURT("thash                ", 1, thash(block, block, 1, &ctx, (uint32_t*)addr));
+    MEASURT("f1600x2              ", 1, f1600x2(statex2));
+    MEASURT("thashx2              ", 1, thashx2(block, block, block, block, 1, &ctx, (uint32_t*)addr));
     MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
-    MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+    MEASURE("  - WOTS pk gen 2x.. ", (1 << SPX_TREE_HEIGHT) / 2, wots_gen_pkx2(wots_pk, &ctx, (uint32_t *) addr));
     MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
     MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, &ctx, (uint32_t *) addr));
-    MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+    MEASURE("  - WOTS pk gen x2.. ", SPX_D * (1 << SPX_TREE_HEIGHT) / 2, wots_gen_pkx2(wots_pk, &ctx, (uint32_t *) addr));
     MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
 
     printf("Signature size: %d (%.2f KiB)\n", SPX_BYTES, SPX_BYTES / 1024.0);
@@ -163,11 +167,9 @@ int main()
     return 0;
 }
 
-static void wots_gen_pkx1(unsigned char *pk, const spx_ctx *ctx,
-                  uint32_t addr[8]) {
-    struct leaf_info_x1 leaf;
+static void wots_gen_pkx2(unsigned char *pk, const spx_ctx *ctx, uint32_t addr[8]) {
+    struct leaf_info_x2 leaf;
     unsigned steps[ SPX_WOTS_LEN ] = { 0 };
-    INITIALIZE_LEAF_INFO_X1(leaf, addr, steps);
-    wots_gen_leafx1(pk, ctx, 0, &leaf);
+    INITIALIZE_LEAF_INFO_X2(leaf, addr, steps);
+    wots_gen_leafx2(pk, ctx, 0, &leaf);
 }
-

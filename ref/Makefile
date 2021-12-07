@@ -45,6 +45,9 @@ benchmark: $(BENCHMARK:=.exec)
 PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
+test/benchmark: test/benchmark.c test/cycles.c $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ test/cycles.c $(SOURCES) $< $(LDLIBS)
+
 test/%: test/%.c $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)
 
