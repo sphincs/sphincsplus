@@ -32,7 +32,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
                 void *info)
 {
     /* This is where we keep the intermediate nodes */
-    unsigned char stack[tree_height*SPX_N];
+    SPX_VLA(uint8_t, stack, tree_height*SPX_N);
 
     uint32_t idx;
     uint32_t max_idx = (1 << tree_height) - 1;

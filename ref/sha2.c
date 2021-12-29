@@ -627,7 +627,7 @@ void sha512(uint8_t *out, const uint8_t *in, size_t inlen) {
 void mgf1_256(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen)
 {
-    unsigned char inbuf[inlen + 4];
+    SPX_VLA(uint8_t, inbuf, inlen+4);
     unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
     unsigned long i;
 
@@ -653,7 +653,7 @@ void mgf1_256(unsigned char *out, unsigned long outlen,
 void mgf1_512(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen)
 {
-    unsigned char inbuf[inlen + 4];
+    SPX_VLA(uint8_t, inbuf, inlen+4);
     unsigned char outbuf[SPX_SHA512_OUTPUT_BYTES];
     unsigned long i;
 
