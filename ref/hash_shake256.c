@@ -15,17 +15,18 @@ void initialize_hash_function(spx_ctx* ctx)
 }
 
 /*
- * Computes PRF(sk_seed, addr)
+ * Computes PRF(pk_seed, sk_seed, addr)
  */
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
-    unsigned char buf[SPX_N + SPX_ADDR_BYTES];
+    unsigned char buf[2*SPX_N + SPX_ADDR_BYTES];
 
-    memcpy(buf, ctx->sk_seed, SPX_N);
+    memcpy(buf, ctx->pub_seed, SPX_N);
     memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
+    memcpy(buf + SPX_N + SPX_ADDR_BYTES, ctx->sk_seed, SPX_N);
 
-    shake256(out, SPX_N, buf, SPX_N + SPX_ADDR_BYTES);
+    shake256(out, SPX_N, buf, 2*SPX_N + SPX_ADDR_BYTES);
 }
 
 /**

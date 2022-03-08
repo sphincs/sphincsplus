@@ -683,14 +683,6 @@ void tweak_constants(spx_ctx *ctx)
     /* Use the standard constants to generate tweaked ones. */
     memcpy((uint8_t *)ctx->tweaked512_rc64, (uint8_t *)haraka512_rc64, 40*16);
 
-    /* Constants for sk.seed */
-    haraka_S(buf, 40*16, ctx->sk_seed, SPX_N, ctx);
-
-    /* Interleave constants */
-    for (i = 0; i < 10; i++) {
-        interleave_constant32(ctx->tweaked256_rc32_sseed[i], buf + 32*i);
-    }
-
     /* Constants for pk.seed */
     haraka_S(buf, 40*16, ctx->pub_seed, SPX_N, ctx);
     for (i = 0; i < 10; i++) {
@@ -923,51 +915,6 @@ void haraka256(unsigned char *out, const unsigned char *in,
             shift_rows32(q);
             mix_columns32(q);
             add_round_key32(q, ctx->tweaked256_rc32[2*i + j]);
-        }
-
-        /* Mix states */
-        for (j = 0; j < 8; j++) {
-            tmp_q = q[j];
-            q[j] = (tmp_q & 0x81818181) |
-                   (tmp_q & 0x02020202) << 1 |
-                   (tmp_q & 0x04040404) << 2 |
-                   (tmp_q & 0x08080808) << 3 |
-                   (tmp_q & 0x10101010) >> 3 |
-                   (tmp_q & 0x20202020) >> 2 |
-                   (tmp_q & 0x40404040) >> 1;
-        }
-    }
-
-    br_aes_ct_ortho(q);
-    for (i = 0; i < 4; i++) {
-        br_enc32le(out + 4*i, q[2*i]);
-        br_enc32le(out + 4*i + 16, q[2*i + 1]);
-    }
-
-    for (i = 0; i < 32; i++) {
-        out[i] ^= in[i];
-    }
-}
-
-void haraka256_sk(unsigned char *out, const unsigned char *in,
-        const spx_ctx *ctx)
-{
-    uint32_t q[8], tmp_q;
-    int i, j;
-
-    for (i = 0; i < 4; i++) {
-        q[2*i] = br_dec32le(in + 4*i);
-        q[2*i + 1] = br_dec32le(in + 4*i + 16);
-    }
-    br_aes_ct_ortho(q);
-
-    /* AES rounds */
-    for (i = 0; i < 5; i++) {
-        for (j = 0; j < 2; j++) {
-            br_aes_ct_bitslice_Sbox(q);
-            shift_rows32(q);
-            mix_columns32(q);
-            add_round_key32(q, ctx->tweaked256_rc32_sseed[2*i + j]);
         }
 
         /* Mix states */

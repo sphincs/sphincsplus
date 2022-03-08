@@ -19,10 +19,14 @@ void initialize_hash_function(spx_ctx* ctx)
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
-    /* Since SPX_N may be smaller than 32, we need a temporary buffer. */
+    /* Since SPX_N may be smaller than 32, we need temporary buffers. */
     unsigned char outbuf[32];
+    unsigned char buf[64] = {0};
 
-    haraka256_sk(outbuf, (const void *)addr, ctx);
+    memcpy(buf, addr, SPX_ADDR_BYTES);
+    memcpy(buf + SPX_ADDR_BYTES, ctx->sk_seed, SPX_N);
+
+    haraka512(outbuf, (const void *)buf, ctx);
     memcpy(out, outbuf, SPX_N);
 }
 

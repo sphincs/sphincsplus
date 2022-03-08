@@ -22,7 +22,7 @@ void prf_addrx4(unsigned char *out0,
     __m256i state[25];
     
     for (int i = 0; i < SPX_N/8; i++) {
-        state[i] = _mm256_set1_epi64x(((int64_t*)ctx->sk_seed)[i]);
+        state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
     }
     for (int i = 0; i < 4; i++) {
         state[SPX_N/8+i] = _mm256_set_epi32(
@@ -36,10 +36,13 @@ void prf_addrx4(unsigned char *out0,
             addrx4[2*i]
         );
     }
+    for (int i = 0; i < SPX_N/8; i++) {
+        state[SPX_N/8+i+4] = _mm256_set1_epi64x(((int64_t*)ctx->sk_seed)[i]);
+    }
 
     /* SHAKE domain separator and padding. */
-    state[SPX_N/8+4] = _mm256_set1_epi64x(0x1f);
-    for (int i = SPX_N/8+5; i < 16; i++) {
+    state[SPX_N/4+4] = _mm256_set1_epi64x(0x1f);
+    for (int i = SPX_N/4+5; i < 16; i++) {
         state[i] = _mm256_set1_epi64x(0);
     }
     state[16] = _mm256_set1_epi64x(0x80ll << 56); 
