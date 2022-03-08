@@ -19,7 +19,7 @@ void prf_addrx2(unsigned char *out0,
     uint64_t state[50] = {0};
     
     for (int i = 0; i < SPX_N/8; i++) {
-        uint64_t x = load64(ctx->sk_seed + 8*i);
+        uint64_t x = load64(ctx->pub_seed + 8*i);
         state[2*i] = x;
         state[2*i+1] = x;
     }
@@ -29,10 +29,15 @@ void prf_addrx2(unsigned char *out0,
         state[2*(SPX_N/8 + i) + 1] = (((uint64_t)addrx2[8+1+2*i]) << 32)
             | (uint64_t)addrx2[8+2*i];
     }
+    for (int i = 0; i < SPX_N/8; i++) {
+        uint64_t x = load64(ctx->sk_seed + 8*i);
+        state[2*(SPX_N/8+i+4)] = x;
+        state[2*(SPX_N/8+i+4)+1] = x;
+    }
 
     /* SHAKE domain separator and padding. */
-    state[2*(SPX_N/8+4)] = 0x1f;
-    state[2*(SPX_N/8+4)+1] = 0x1f;
+    state[2*(SPX_N/4+4)] = 0x1f;
+    state[2*(SPX_N/4+4)+1] = 0x1f;
 
     state[2*16] = 0x80ll << 56; 
     state[2*16+1] = 0x80ll << 56; 
