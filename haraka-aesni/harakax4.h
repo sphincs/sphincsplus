@@ -28,8 +28,4 @@ void haraka512x4(unsigned char *out, const unsigned char *in,
 void haraka256x4(unsigned char *out, const unsigned char *in,
         const spx_ctx *ctx);
 
-/* Implementation of Haraka-256 x4 using sk.seed constants */
-void haraka256_skx4(unsigned char *out, const unsigned char *in,
-        const spx_ctx *ctx);
-
 #endif

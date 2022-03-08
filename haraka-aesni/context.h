@@ -11,7 +11,6 @@ typedef struct {
     uint8_t sk_seed[SPX_N];
 
     __m128i rc[40];
-    __m128i rc_sseed[40];
 } spx_ctx;
 
 #endif

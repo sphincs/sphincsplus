@@ -34,18 +34,24 @@ void initialize_hash_function(spx_ctx *ctx)
 }
 
 /*
- * Computes PRF(sk_seed, addr).
+ * Computes PRF(pk_seed, sk_seed, addr).
  */
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
-    unsigned char buf[SPX_N + SPX_SHA256_ADDR_BYTES];
+    uint8_t sha2_state[40];
+    unsigned char buf[SPX_SHA256_ADDR_BYTES + SPX_N];
     unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
-    memcpy(buf, ctx->sk_seed, SPX_N);
-    memcpy(buf + SPX_N, addr, SPX_SHA256_ADDR_BYTES);
+    /* Retrieve precomputed state containing pub_seed */
+    memcpy(sha2_state, ctx->state_seeded, 40 * sizeof(uint8_t));
 
-    sha256(outbuf, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
+    /* Remainder: ADDR^c ‖ SK.seed */
+    memcpy(buf, addr, SPX_SHA256_ADDR_BYTES);
+    memcpy(buf + SPX_SHA256_ADDR_BYTES, ctx->sk_seed, SPX_N);
+
+    sha256_inc_finalize(outbuf, sha2_state, buf, SPX_SHA256_ADDR_BYTES + SPX_N);
+
     memcpy(out, outbuf, SPX_N);
 }
 
@@ -141,7 +147,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     shaX_inc_init(state);
 
-    // seed: SHA-256(R || PK.seed || PK.root || M)
+    // seed: SHA-X(R ‖ PK.seed ‖ PK.root ‖ M)
     memcpy(inbuf, R, SPX_N);
     memcpy(inbuf + SPX_N, pk, SPX_PK_BYTES);
 
@@ -161,7 +167,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
         shaX_inc_finalize(seed + 2*SPX_N, state, m, mlen);
     }
 
-    // H_msg: MGF1-SHA-256(R || PK.seed || seed)
+    // H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed)
     memcpy(seed, R, SPX_N);
     memcpy(seed + SPX_N, pk, SPX_N);
 
