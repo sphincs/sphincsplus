@@ -17,7 +17,6 @@ typedef struct {
 #ifdef SPX_HARAKA
     uint64_t tweaked512_rc64[10][8];
     uint32_t tweaked256_rc32[10][8];
-    uint32_t tweaked256_rc32_sseed[10][8];
 #endif
 } spx_ctx;
 
