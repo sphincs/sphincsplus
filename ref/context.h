@@ -12,6 +12,7 @@ typedef struct {
 #ifdef SPX_SHA256
     // sha256 state that absorbed pub_seed
     uint8_t state_seeded[40];
+    uint8_t state_seeded_512[72];
 #endif
 
 #ifdef SPX_HARAKA
