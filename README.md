@@ -1,3 +1,10 @@
+The changes in this branch are expiremental, and probably not ready for prime-time.
+It involves using SHA-512 for the H, T functions (rather than SHA-256) in the L3, L5
+parameter sets.  For robust parameter sets, we switch to SHA-512 as well for the masks
+(again, for L3, L5 parameter sets).
+
+This desperately needs review (and cleanup) before we can even think of pulling...
+
 ## SPHINCS+ ![][test-ref] ![][test-sha256-avx2] ![][test-shake256-avx2] ![][test-haraka-aesni]
 
 [test-ref]: https://github.com/sphincs/sphincsplus/workflows/test-ref/badge.svg
