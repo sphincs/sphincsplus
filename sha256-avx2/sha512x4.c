@@ -253,7 +253,7 @@ static const unsigned long long RC[80] = {
 };
 
 static void sha512_transform4x(sha512ctx4x *ctx, const unsigned char *data) {
-    u256 s0, s1, s2, s3, s4, s5, s6, s7, w[64], T0, T1, nw;
+    u256 s0, s1, s2, s3, s4, s5, s6, s7, w[16], T0, T1, nw;
     int i;
 
     // Load words and transform data correctly
@@ -297,28 +297,44 @@ static void sha512_transform4x(sha512ctx4x *ctx, const unsigned char *data) {
     SHA512ROUND_AVX(s2, s3, s4, s5, s6, s7, s0, s1, 14, w[14]);
     SHA512ROUND_AVX(s1, s2, s3, s4, s5, s6, s7, s0, 15, w[15]);
 
-#define M(i) ((i) & 0xf)
+#define M(i) (((i)+16) & 0xf)
 #define NextW(i) \
     w[M(i)] = ADD4_64(GAMMA1_AVX(w[M((i)-2)]), w[M((i)-7)], GAMMA0_AVX(w[M((i)-15)]), w[M((i)-16)]);
 
     // The remaining 64 rounds (where the w inputs are a linear fix of the data)
-    for (unsigned i = 16; i<80; i+=8) {
-    nw = NextW(i+0);
+    for (unsigned i = 16; i<80; i+=16) {
+    nw = NextW(0);
     SHA512ROUND_AVX(s0, s1, s2, s3, s4, s5, s6, s7, i+0, nw);
-    nw = NextW(i+1);
+    nw = NextW(1);
     SHA512ROUND_AVX(s7, s0, s1, s2, s3, s4, s5, s6, i+1, nw);
-    nw = NextW(i+2);
+    nw = NextW(2);
     SHA512ROUND_AVX(s6, s7, s0, s1, s2, s3, s4, s5, i+2, nw);
-    nw = NextW(i+3);
+    nw = NextW(3);
     SHA512ROUND_AVX(s5, s6, s7, s0, s1, s2, s3, s4, i+3, nw);
-    nw = NextW(i+4);
+    nw = NextW(4);
     SHA512ROUND_AVX(s4, s5, s6, s7, s0, s1, s2, s3, i+4, nw);
-    nw = NextW(i+5);
+    nw = NextW(5);
     SHA512ROUND_AVX(s3, s4, s5, s6, s7, s0, s1, s2, i+5, nw);
-    nw = NextW(i+6);
+    nw = NextW(6);
     SHA512ROUND_AVX(s2, s3, s4, s5, s6, s7, s0, s1, i+6, nw);
-    nw = NextW(i+7);
+    nw = NextW(7);
     SHA512ROUND_AVX(s1, s2, s3, s4, s5, s6, s7, s0, i+7, nw);
+    nw = NextW(8);
+    SHA512ROUND_AVX(s0, s1, s2, s3, s4, s5, s6, s7, i+8, nw);
+    nw = NextW(9);
+    SHA512ROUND_AVX(s7, s0, s1, s2, s3, s4, s5, s6, i+9, nw);
+    nw = NextW(10);
+    SHA512ROUND_AVX(s6, s7, s0, s1, s2, s3, s4, s5, i+10, nw);
+    nw = NextW(11);
+    SHA512ROUND_AVX(s5, s6, s7, s0, s1, s2, s3, s4, i+11, nw);
+    nw = NextW(12);
+    SHA512ROUND_AVX(s4, s5, s6, s7, s0, s1, s2, s3, i+12, nw);
+    nw = NextW(13);
+    SHA512ROUND_AVX(s3, s4, s5, s6, s7, s0, s1, s2, i+13, nw);
+    nw = NextW(14);
+    SHA512ROUND_AVX(s2, s3, s4, s5, s6, s7, s0, s1, i+14, nw);
+    nw = NextW(15);
+    SHA512ROUND_AVX(s1, s2, s3, s4, s5, s6, s7, s0, i+15, nw);
     }
 
     // Feed Forward
