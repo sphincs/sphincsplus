@@ -50,7 +50,7 @@ void thashx8(unsigned char *out0,
              const spx_ctx *ctx, uint32_t addrx8[8*8])
 {
 #if DO_SHA512
-    if (inblocks > 1000) {
+    if (inblocks > 1) {
         thashx4_512(
              out0, out1, out2, out3,
              in0, in1, in2, in3,
@@ -150,6 +150,10 @@ void thashx8(unsigned char *out0,
 }
 
 #if DO_SHA512
+/**
+ * 4-way parallel version of thash; this is for the uses of thash that are
+ * based on SHA-512
+ */
 static void thashx4_512(unsigned char *out0,
              unsigned char *out1,
              unsigned char *out2,
