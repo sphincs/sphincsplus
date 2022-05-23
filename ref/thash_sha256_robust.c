@@ -24,7 +24,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8])
 {
 #if DO_SHA512
-    if (inblocks > 1000) {
+    if (inblocks > 1) {
 	thash_512(out, in, inblocks, ctx, addr);
         return;
     }
