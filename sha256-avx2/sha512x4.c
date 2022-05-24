@@ -208,7 +208,6 @@ static u256 GAMMA1_AVX(u256 x) {
     d = ADD64(d, T0); \
     h = ADD64(T0, T1);
 
-// To do: share this array with the non-AVX SHA-512 implementation...
 static const unsigned long long RC[80] = {
     0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 
     0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,
