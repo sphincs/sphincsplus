@@ -6,12 +6,6 @@
 #include "params.h"
 #include "sha256.h"
 
-#if SPX_N >= 24
-#define DO_SHA512 1
-#else
-#define DO_SHA512 0
-#endif
-
 #if DO_SHA512
 static void thash_512(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8]);
