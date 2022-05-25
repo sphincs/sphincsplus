@@ -10,12 +10,6 @@
 #include "sha256avx.h"
 #include "sha512x4.h"
 
-#if SPX_N >= 24
-#define DO_SHA512 1
-#else
-#define DO_SHA512 0
-#endif
-
 #if DO_SHA512
 static void thashx4_512(unsigned char *out0,
              unsigned char *out1,
