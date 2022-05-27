@@ -39,7 +39,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
 }
 
 #if DO_SHA512
-void thash_512(unsigned char *out, const unsigned char *in, unsigned int inblocks,
+static void thash_512(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8])
 {
     unsigned char buf[SPX_SHA256_ADDR_BYTES + inblocks*SPX_N];
