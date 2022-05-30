@@ -1,4 +1,4 @@
-PARAMS = sphincs-sha256-256f
+PARAMS = sphincs-sha256-128f
 THASH = robust
 
 CC = /usr/bin/gcc
