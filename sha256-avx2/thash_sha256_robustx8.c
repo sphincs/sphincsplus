@@ -212,9 +212,9 @@ static void thashx4_512(unsigned char *out0,
         outbufx4 + 3*SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)
     );
 
-    memcpy(out0, outbufx4 + 0*SPX_SHA256_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
-    memcpy(out1, outbufx4 + 1*SPX_SHA256_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
-    memcpy(out2, outbufx4 + 2*SPX_SHA256_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
-    memcpy(out3, outbufx4 + 3*SPX_SHA256_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
+    memcpy(out0, outbufx4 + 0*SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
+    memcpy(out1, outbufx4 + 1*SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
+    memcpy(out2, outbufx4 + 2*SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
+    memcpy(out3, outbufx4 + 3*SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i), SPX_N);
 }
 #endif
