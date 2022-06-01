@@ -6,7 +6,7 @@
 #include "params.h"
 #include "sha256.h"
 
-#if DO_SHA512
+#if SPX_SHA512
 static void thash_512(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8]);
 #endif
@@ -17,7 +17,7 @@ static void thash_512(unsigned char *out, const unsigned char *in, unsigned int 
 void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8])
 {
-#if DO_SHA512
+#if SPX_SHA512
     if (inblocks > 1) {
 	thash_512(out, in, inblocks, ctx, addr);
         return;
@@ -45,7 +45,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     memcpy(out, outbuf, SPX_N);
 }
 
-#if DO_SHA512
+#if SPX_SHA512
 static void thash_512(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const spx_ctx *ctx, uint32_t addr[8])
 {
