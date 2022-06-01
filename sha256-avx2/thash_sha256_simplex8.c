@@ -8,9 +8,10 @@
 #include "sha256.h"
 #include "sha256x8.h"
 #include "sha256avx.h"
-#include "sha512x4.h"
 
 #if SPX_SHA512
+#include "sha512x4.h"
+
 static void thashx4_512(unsigned char *out0,
              unsigned char *out1,
              unsigned char *out2,

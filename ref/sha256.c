@@ -693,6 +693,8 @@ void seed_state(spx_ctx *ctx) {
 
     sha256_inc_init(ctx->state_seeded);
     sha256_inc_blocks(ctx->state_seeded, block, 1);
+#ifdef SPX_SHA512
     sha512_inc_init(ctx->state_seeded_512);
     sha512_inc_blocks(ctx->state_seeded_512, block, 1);
+#endif
 }
