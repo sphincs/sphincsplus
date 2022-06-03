@@ -46,10 +46,15 @@ static void transpose(u256 s[4]) {
 
 void sha512_init_frombytes_x4(sha512ctx4x *ctx, const void *s, unsigned long long msglen) {
     uint64_t t;
+    const uint8_t* s2 = s;
 
     for (size_t i = 0; i < 8; i++) {
-        t = ((const uint64_t*)s)[i];  /* Yes, this is ugly */
+        t = (uint64_t)(s2[7]) | (((uint64_t)(s2[6])) << 8) |
+           (((uint64_t)(s2[5])) << 16) | (((uint64_t)(s2[4])) << 24) |
+           (((uint64_t)(s2[3])) << 32) | (((uint64_t)(s2[2])) << 40) |
+           (((uint64_t)(s2[1])) << 48) | (((uint64_t)(s2[0])) << 56);
         ctx->s[i] = _mm256_set_epi64x(t, t, t, t);
+        s2 += 8;
     }
 
     ctx->datalen = 0;
