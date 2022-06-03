@@ -16,6 +16,11 @@
 /* The hash function is defined by linking a different hash.c file, as opposed
    to setting a #define constant. */
 
+/* This is a SHA2-based parameter set, hence whether we use SHA-256
+ * exclusively or we use both SHA-256 and SHA-512 is controlled by
+ * the following #define */
+#define SPX_SHA512 1  /* Use SHA-512 for H and T_l, l >= 2 */
+
 /* For clarity */
 #define SPX_ADDR_BYTES 32
 
