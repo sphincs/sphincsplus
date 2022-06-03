@@ -67,116 +67,6 @@ void sha512_init4x(sha512ctx4x *ctx) {
     ctx->msglen = 0;
 }
 
-void sha512_update4x(sha512ctx4x *ctx, 
-                     const void *i0,
-                     const void *i1,
-                     const void *i2,
-                     const void *i3,
-                     unsigned long long len) 
-{
-    unsigned i = 0;
-    const unsigned char *d0 = (const unsigned char *)(i0);
-    const unsigned char *d1 = (const unsigned char *)(i1);
-    const unsigned char *d2 = (const unsigned char *)(i2);
-    const unsigned char *d3 = (const unsigned char *)(i3);
-
-    unsigned datalen = ctx->datalen;
-    while(i < len) {
-        unsigned bytes_to_copy = len - i;
-	if (bytes_to_copy + datalen > 128) bytes_to_copy = 128 - datalen;
-        memcpy(&ctx->msgblocks[128*0+datalen], d0 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[128*1+datalen], d1 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[128*2+datalen], d2 + i, bytes_to_copy);
-        memcpy(&ctx->msgblocks[128*3+datalen], d3 + i, bytes_to_copy);
-        datalen += bytes_to_copy;
-        i += bytes_to_copy;
-        if (datalen == 128) {
-            sha512_transform4x(
-                ctx,
-                ctx->msgblocks,
-                ctx->msgblocks+128,
-                ctx->msgblocks+256,
-                ctx->msgblocks+384
-            );
-
-            ctx->msglen += 1024;
-            datalen = 0;
-        }        
-    }
-    ctx->datalen = datalen;
-}
-
-void sha512_final4x(sha512ctx4x *ctx,
-                    u256 *out0,
-                    u256 *out1,
-                    u256 *out2,
-                    u256 *out3)
-{
-    unsigned int i, curlen;
-
-    // Padding
-    if (ctx->datalen < 112) {
-        for (i = 0; i < 4; ++i) {
-            curlen = ctx->datalen;
-            ctx->msgblocks[128*i + curlen++] = 0x80;
-            while(curlen < 128) {
-                ctx->msgblocks[128*i + curlen++] = 0x00;
-            }
-        }
-    } else {
-        for (i = 0; i < 4; ++i) {
-            curlen = ctx->datalen;
-            ctx->msgblocks[128*i + curlen++] = 0x80;
-            while(curlen < 128) {
-                ctx->msgblocks[128*i + curlen++] = 0x00;
-            }
-        }
-        sha512_transform4x(
-            ctx,
-            ctx->msgblocks,
-            ctx->msgblocks + 128,
-            ctx->msgblocks + 256,
-            ctx->msgblocks + 384
-        );
-        memset(ctx->msgblocks, 0, 4 * 128);
-    }
-
-    // Add length of the message to each block
-    ctx->msglen += ctx->datalen * 8;
-    for (i = 0; i < 4; i++) {
-        ctx->msgblocks[128*i + 127] = ctx->msglen;
-        ctx->msgblocks[128*i + 126] = ctx->msglen >> 8;
-        ctx->msgblocks[128*i + 125] = ctx->msglen >> 16;
-        ctx->msgblocks[128*i + 124] = ctx->msglen >> 24;
-        ctx->msgblocks[128*i + 123] = ctx->msglen >> 32;
-        ctx->msgblocks[128*i + 122] = ctx->msglen >> 40;
-        ctx->msgblocks[128*i + 121] = ctx->msglen >> 48;
-        ctx->msgblocks[128*i + 120] = ctx->msglen >> 56;
-	memset( &ctx->msgblocks[128*i + 112], 0, 8 );
-    }
-    sha512_transform4x(
-        ctx,
-        ctx->msgblocks,
-        ctx->msgblocks + 128,
-        ctx->msgblocks + 256,
-        ctx->msgblocks + 384
-    );
-
-    // Compute final hash output
-    transpose(ctx->s);
-    transpose(ctx->s+4);
-
-    // Store Hash value
-    STORE(out0,   BYTESWAP(ctx->s[0]));
-    STORE(out0+1, BYTESWAP(ctx->s[4]));
-    STORE(out1,   BYTESWAP(ctx->s[1]));
-    STORE(out1+1, BYTESWAP(ctx->s[5]));
-    STORE(out2,   BYTESWAP(ctx->s[2]));
-    STORE(out2+1, BYTESWAP(ctx->s[6]));
-    STORE(out3,   BYTESWAP(ctx->s[3]));
-    STORE(out3+1, BYTESWAP(ctx->s[7]));
-}
-
 #define XOR _mm256_xor_si256
 #define OR _mm256_or_si256
 #define AND _mm256_and_si256
@@ -378,6 +268,110 @@ static void sha512_transform4x(
     ctx->s[7] = ADD64(s7, ctx->s[7]);
 }
 
+static void _sha512x4(
+        sha512ctx4x* ctx,
+        unsigned char *out0,
+        unsigned char *out1,
+        unsigned char *out2,
+        unsigned char *out3,
+        const unsigned char *in0,
+        const unsigned char *in1,
+        const unsigned char *in2,
+        const unsigned char *in3,
+        unsigned long long inlen) {
+    unsigned int i = 0;
+
+    while(inlen - i >= 128) {
+        sha512_transform4x(
+            ctx,
+            in0 + i,
+            in1 + i,
+            in2 + i,
+            in3 + i
+        );
+        ctx->msglen += 1024;
+        i += 128;
+    }
+
+    ctx->datalen = inlen - i;
+    memcpy(&ctx->msgblocks[128*0], in0 + i, ctx->datalen);
+    memcpy(&ctx->msgblocks[128*1], in1 + i, ctx->datalen);
+    memcpy(&ctx->msgblocks[128*2], in2 + i, ctx->datalen);
+    memcpy(&ctx->msgblocks[128*3], in3 + i, ctx->datalen);
+
+    // Padding
+    unsigned long curlen;
+    if (ctx->datalen < 112) {
+        for (i = 0; i < 4; ++i) {
+            curlen = ctx->datalen;
+            ctx->msgblocks[128*i + curlen++] = 0x80;
+            while(curlen < 128) {
+                ctx->msgblocks[128*i + curlen++] = 0x00;
+            }
+        }
+    } else {
+        for (i = 0; i < 4; ++i) {
+            curlen = ctx->datalen;
+            ctx->msgblocks[128*i + curlen++] = 0x80;
+            while(curlen < 128) {
+                ctx->msgblocks[128*i + curlen++] = 0x00;
+            }
+        }
+        sha512_transform4x(
+            ctx,
+            ctx->msgblocks,
+            ctx->msgblocks + 128,
+            ctx->msgblocks + 256,
+            ctx->msgblocks + 384
+        );
+        memset(ctx->msgblocks, 0, 4 * 128);
+    }
+
+    // Add length of the message to each block
+    ctx->msglen += ctx->datalen * 8;
+    for (i = 0; i < 4; i++) {
+        ctx->msgblocks[128*i + 127] = ctx->msglen;
+        ctx->msgblocks[128*i + 126] = ctx->msglen >> 8;
+        ctx->msgblocks[128*i + 125] = ctx->msglen >> 16;
+        ctx->msgblocks[128*i + 124] = ctx->msglen >> 24;
+        ctx->msgblocks[128*i + 123] = ctx->msglen >> 32;
+        ctx->msgblocks[128*i + 122] = ctx->msglen >> 40;
+        ctx->msgblocks[128*i + 121] = ctx->msglen >> 48;
+        ctx->msgblocks[128*i + 120] = ctx->msglen >> 56;
+	memset( &ctx->msgblocks[128*i + 112], 0, 8 );
+    }
+    sha512_transform4x(
+        ctx,
+        ctx->msgblocks,
+        ctx->msgblocks + 128,
+        ctx->msgblocks + 256,
+        ctx->msgblocks + 384
+    );
+
+    // Compute final hash output
+    transpose(ctx->s);
+    transpose(ctx->s+4);
+
+    // Store Hash value
+    __m256i out[2];
+    STORE(out,   BYTESWAP(ctx->s[0]));
+    STORE(out+1, BYTESWAP(ctx->s[4]));
+    memcpy(out0, out, 64);
+
+    STORE(out,   BYTESWAP(ctx->s[1]));
+    STORE(out+1, BYTESWAP(ctx->s[5]));
+    memcpy(out1, out, 64);
+
+    STORE(out,   BYTESWAP(ctx->s[2]));
+    STORE(out+1, BYTESWAP(ctx->s[6]));
+    memcpy(out2, out, 64);
+
+    STORE(out,   BYTESWAP(ctx->s[3]));
+    STORE(out+1, BYTESWAP(ctx->s[7]));
+    memcpy(out3, out, 64);
+}
+
+
 /**
  * Note that inlen should be sufficiently small that it still allows for
  * an array to be allocated on the stack. Typically 'in' is merely a seed.
@@ -391,7 +385,7 @@ void mgf1x4_512(unsigned char *outx4, unsigned long outlen,
             unsigned long inlen)
 {
     unsigned char inbufx4[4*(inlen + 4)];
-    u256 outbufx4[4*16];
+    unsigned char outbuf[4*64];
     unsigned long i;
     unsigned int j;
 
@@ -403,30 +397,33 @@ void mgf1x4_512(unsigned char *outx4, unsigned long outlen,
     /* While we can fit in at least another full block of SHA512 output.. */
     unsigned long remaining = outlen;
     for (i = 0; remaining > 0; i++) {
-	unsigned this_step = SPX_SHA512_OUTPUT_BYTES;
-	if (this_step > remaining) this_step = remaining;
-	remaining -= this_step;
+        unsigned this_step = SPX_SHA512_OUTPUT_BYTES;
+        if (this_step > remaining) this_step = remaining;
+        remaining -= this_step;
         for (j = 0; j < 4; j++) {
             u32_to_bytes(inbufx4 + inlen + j*(inlen + 4), i);
         }
 
         sha512ctx4x ctx;
         sha512_init4x(&ctx);
-        sha512_update4x(&ctx, 
-                 inbufx4 + 0*(inlen + 4),
-                 inbufx4 + 1*(inlen + 4),
-                 inbufx4 + 2*(inlen + 4),
-                 inbufx4 + 3*(inlen + 4),
-                 inlen+4);
-        sha512_final4x(&ctx,
-		 outbufx4+0*16,
-		 outbufx4+1*16,
-		 outbufx4+2*16,
-		 outbufx4+3*16);
-	memcpy(outx4 + 0*outlen, outbufx4+0*16, this_step);
-	memcpy(outx4 + 1*outlen, outbufx4+1*16, this_step);
-	memcpy(outx4 + 2*outlen, outbufx4+2*16, this_step);
-	memcpy(outx4 + 3*outlen, outbufx4+3*16, this_step);
+        
+        _sha512x4(
+            &ctx,
+            outbuf + 0*64,
+            outbuf + 1*64,
+            outbuf + 2*64,
+            outbuf + 3*64,
+            inbufx4 + 0*(inlen + 4),
+            inbufx4 + 1*(inlen + 4),
+            inbufx4 + 2*(inlen + 4),
+            inbufx4 + 3*(inlen + 4),
+            inlen+4
+        );
+
+        memcpy(outx4 + 0*outlen, outbuf+0*64, this_step);
+        memcpy(outx4 + 1*outlen, outbuf+1*64, this_step);
+        memcpy(outx4 + 2*outlen, outbuf+2*64, this_step);
+        memcpy(outx4 + 3*outlen, outbuf+3*64, this_step);
         outx4 += this_step;
     }
 }
@@ -456,95 +453,10 @@ void sha512x4_seeded(
     }
 
     ctx.msglen = seedlen;
-
-    i = 0;
-
-    while(inlen - i >= 128) {
-        sha512_transform4x(
-            &ctx,
-            in0 + i,
-            in1 + i,
-            in2 + i,
-            in3 + i
-        );
-        ctx.msglen += 1024;
-        i += 128;
-    }
-
-    ctx.datalen = inlen - i;
-    memcpy(&ctx.msgblocks[128*0], in0 + i, ctx.datalen);
-    memcpy(&ctx.msgblocks[128*1], in1 + i, ctx.datalen);
-    memcpy(&ctx.msgblocks[128*2], in2 + i, ctx.datalen);
-    memcpy(&ctx.msgblocks[128*3], in3 + i, ctx.datalen);
-
-    // Padding
-    unsigned long curlen;
-    if (ctx.datalen < 112) {
-        for (i = 0; i < 4; ++i) {
-            curlen = ctx.datalen;
-            ctx.msgblocks[128*i + curlen++] = 0x80;
-            while(curlen < 128) {
-                ctx.msgblocks[128*i + curlen++] = 0x00;
-            }
-        }
-    } else {
-        for (i = 0; i < 4; ++i) {
-            curlen = ctx.datalen;
-            ctx.msgblocks[128*i + curlen++] = 0x80;
-            while(curlen < 128) {
-                ctx.msgblocks[128*i + curlen++] = 0x00;
-            }
-        }
-        sha512_transform4x(
-            &ctx,
-            ctx.msgblocks,
-            ctx.msgblocks + 128,
-            ctx.msgblocks + 256,
-            ctx.msgblocks + 384
-        );
-        memset(ctx.msgblocks, 0, 4 * 128);
-    }
-
-    // Add length of the message to each block
-    ctx.msglen += ctx.datalen * 8;
-    for (i = 0; i < 4; i++) {
-        ctx.msgblocks[128*i + 127] = ctx.msglen;
-        ctx.msgblocks[128*i + 126] = ctx.msglen >> 8;
-        ctx.msgblocks[128*i + 125] = ctx.msglen >> 16;
-        ctx.msgblocks[128*i + 124] = ctx.msglen >> 24;
-        ctx.msgblocks[128*i + 123] = ctx.msglen >> 32;
-        ctx.msgblocks[128*i + 122] = ctx.msglen >> 40;
-        ctx.msgblocks[128*i + 121] = ctx.msglen >> 48;
-        ctx.msgblocks[128*i + 120] = ctx.msglen >> 56;
-	memset( &ctx.msgblocks[128*i + 112], 0, 8 );
-    }
-    sha512_transform4x(
+    _sha512x4(
         &ctx,
-        ctx.msgblocks,
-        ctx.msgblocks + 128,
-        ctx.msgblocks + 256,
-        ctx.msgblocks + 384
+        out0, out1, out2, out3,
+        in0, in1, in2, in3,
+        inlen
     );
-
-    // Compute final hash output
-    transpose(ctx.s);
-    transpose(ctx.s+4);
-
-    // Store Hash value
-    __m256i out[2];
-    STORE(out,   BYTESWAP(ctx.s[0]));
-    STORE(out+1, BYTESWAP(ctx.s[4]));
-    memcpy(out0, out, 64);
-
-    STORE(out,   BYTESWAP(ctx.s[1]));
-    STORE(out+1, BYTESWAP(ctx.s[5]));
-    memcpy(out1, out, 64);
-
-    STORE(out,   BYTESWAP(ctx.s[2]));
-    STORE(out+1, BYTESWAP(ctx.s[6]));
-    memcpy(out2, out, 64);
-
-    STORE(out,   BYTESWAP(ctx.s[3]));
-    STORE(out+1, BYTESWAP(ctx.s[7]));
-    memcpy(out3, out, 64);
 }

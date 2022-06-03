@@ -24,18 +24,6 @@ void sha512x4_seeded(
     const unsigned char *in3,
     unsigned long long inlen);
 
-void sha512_init4x(sha512ctx4x *ctx);
-void sha512_update4x(sha512ctx4x *ctx, 
-                     const void *d0,
-                     const void *d1,
-                     const void *d2,
-                     const void *d3,
-                     unsigned long long len);
-void sha512_final4x(sha512ctx4x *ctx,
-                     __m256i out0[2],
-                     __m256i out1[2],
-                     __m256i out2[2],
-                     __m256i out3[2]);
 
 /**
  * Note that inlen should be sufficiently small that it still allows for
