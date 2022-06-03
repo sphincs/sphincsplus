@@ -10,7 +10,13 @@
 typedef uint64_t u64;
 typedef __m256i u256;
 
-static void sha512_transform4x(sha512ctx4x *ctx, const unsigned char *data);
+static void sha512_transform4x(
+    sha512ctx4x *ctx,
+    const unsigned char *d0,
+    const unsigned char *d1,
+    const unsigned char *d2,
+    const unsigned char *d3
+);
 
 #define BYTESWAP(x) _mm256_shuffle_epi8(x, _mm256_set_epi8(0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7))
 #define STORE(dest,src) _mm256_storeu_si256((__m256i *)(dest),src)
@@ -44,22 +50,6 @@ static void transpose(u256 s[4]) {
     s[3] = _mm256_permute2x128_si256(tmp[1], tmp[3], 0x31);
 }
 
-void sha512_init_frombytes_x4(sha512ctx4x *ctx, const void *s, unsigned long long msglen) {
-    uint64_t t;
-    const uint8_t* s2 = s;
-
-    for (size_t i = 0; i < 8; i++) {
-        t = (uint64_t)(s2[7]) | (((uint64_t)(s2[6])) << 8) |
-           (((uint64_t)(s2[5])) << 16) | (((uint64_t)(s2[4])) << 24) |
-           (((uint64_t)(s2[3])) << 32) | (((uint64_t)(s2[2])) << 40) |
-           (((uint64_t)(s2[1])) << 48) | (((uint64_t)(s2[0])) << 56);
-        ctx->s[i] = _mm256_set_epi64x(t, t, t, t);
-        s2 += 8;
-    }
-
-    ctx->datalen = 0;
-    ctx->msglen = msglen;
-}
 
 void sha512_init4x(sha512ctx4x *ctx) {
 #define SET4(x) _mm256_set_epi64x(x, x, x, x)
@@ -101,7 +91,14 @@ void sha512_update4x(sha512ctx4x *ctx,
         datalen += bytes_to_copy;
         i += bytes_to_copy;
         if (datalen == 128) {
-            sha512_transform4x(ctx, ctx->msgblocks);
+            sha512_transform4x(
+                ctx,
+                ctx->msgblocks,
+                ctx->msgblocks+128,
+                ctx->msgblocks+256,
+                ctx->msgblocks+384
+            );
+
             ctx->msglen += 1024;
             datalen = 0;
         }        
@@ -134,7 +131,13 @@ void sha512_final4x(sha512ctx4x *ctx,
                 ctx->msgblocks[128*i + curlen++] = 0x00;
             }
         }
-        sha512_transform4x(ctx, ctx->msgblocks);
+        sha512_transform4x(
+            ctx,
+            ctx->msgblocks,
+            ctx->msgblocks + 128,
+            ctx->msgblocks + 256,
+            ctx->msgblocks + 384
+        );
         memset(ctx->msgblocks, 0, 4 * 128);
     }
 
@@ -151,7 +154,13 @@ void sha512_final4x(sha512ctx4x *ctx,
         ctx->msgblocks[128*i + 120] = ctx->msglen >> 56;
 	memset( &ctx->msgblocks[128*i + 112], 0, 8 );
     }
-    sha512_transform4x(ctx, ctx->msgblocks);
+    sha512_transform4x(
+        ctx,
+        ctx->msgblocks,
+        ctx->msgblocks + 128,
+        ctx->msgblocks + 256,
+        ctx->msgblocks + 384
+    );
 
     // Compute final hash output
     transpose(ctx->s);
@@ -256,17 +265,34 @@ static const unsigned long long RC[80] = {
     0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL,
 };
 
-static void sha512_transform4x(sha512ctx4x *ctx, const unsigned char *data) {
+static void sha512_transform4x(
+        sha512ctx4x *ctx,
+        const unsigned char *d0,
+        const unsigned char *d1,
+        const unsigned char *d2,
+        const unsigned char *d3) {
     u256 s0, s1, s2, s3, s4, s5, s6, s7, w[16], T0, T1, nw;
-    int i;
 
     // Load words and transform data correctly
-    for(i = 0; i < 4; i++) {
-        w[i     ] = BYTESWAP(LOAD(data      + 128*i));
-        w[i +  4] = BYTESWAP(LOAD(data + 32 + 128*i));
-        w[i +  8] = BYTESWAP(LOAD(data + 64 + 128*i));
-        w[i + 12] = BYTESWAP(LOAD(data + 96 + 128*i));
-    }
+    w[0     ] = BYTESWAP(LOAD(d0     ));
+    w[0 +  4] = BYTESWAP(LOAD(d0 + 32));
+    w[0 +  8] = BYTESWAP(LOAD(d0 + 64));
+    w[0 + 12] = BYTESWAP(LOAD(d0 + 96));
+
+    w[1     ] = BYTESWAP(LOAD(d1     ));
+    w[1 +  4] = BYTESWAP(LOAD(d1 + 32));
+    w[1 +  8] = BYTESWAP(LOAD(d1 + 64));
+    w[1 + 12] = BYTESWAP(LOAD(d1 + 96));
+
+    w[2     ] = BYTESWAP(LOAD(d2     ));
+    w[2 +  4] = BYTESWAP(LOAD(d2 + 32));
+    w[2 +  8] = BYTESWAP(LOAD(d2 + 64));
+    w[2 + 12] = BYTESWAP(LOAD(d2 + 96));
+
+    w[3     ] = BYTESWAP(LOAD(d3     ));
+    w[3 +  4] = BYTESWAP(LOAD(d3 + 32));
+    w[3 +  8] = BYTESWAP(LOAD(d3 + 64));
+    w[3 + 12] = BYTESWAP(LOAD(d3 + 96));
 
     transpose(w);
     transpose(w + 4);
@@ -403,4 +429,122 @@ void mgf1x4_512(unsigned char *outx4, unsigned long outlen,
 	memcpy(outx4 + 3*outlen, outbufx4+3*16, this_step);
         outx4 += this_step;
     }
+}
+
+void sha512x4_seeded(
+        unsigned char *out0,
+        unsigned char *out1,
+        unsigned char *out2,
+        unsigned char *out3,
+        const unsigned char *seed,
+        unsigned long long seedlen,
+        const unsigned char *in0,
+        const unsigned char *in1,
+        const unsigned char *in2,
+        const unsigned char *in3,
+        unsigned long long inlen) {
+    sha512ctx4x ctx;
+    unsigned long i;
+
+    for (i = 0; i < 8; i++) {
+        uint64_t t = (uint64_t)(seed[7]) | (((uint64_t)(seed[6])) << 8) |
+           (((uint64_t)(seed[5])) << 16) | (((uint64_t)(seed[4])) << 24) |
+           (((uint64_t)(seed[3])) << 32) | (((uint64_t)(seed[2])) << 40) |
+           (((uint64_t)(seed[1])) << 48) | (((uint64_t)(seed[0])) << 56);
+        ctx.s[i] = _mm256_set_epi64x(t, t, t, t);
+        seed += 8;
+    }
+
+    ctx.msglen = seedlen;
+
+    i = 0;
+
+    while(inlen - i >= 128) {
+        sha512_transform4x(
+            &ctx,
+            in0 + i,
+            in1 + i,
+            in2 + i,
+            in3 + i
+        );
+        ctx.msglen += 1024;
+        i += 128;
+    }
+
+    ctx.datalen = inlen - i;
+    memcpy(&ctx.msgblocks[128*0], in0 + i, ctx.datalen);
+    memcpy(&ctx.msgblocks[128*1], in1 + i, ctx.datalen);
+    memcpy(&ctx.msgblocks[128*2], in2 + i, ctx.datalen);
+    memcpy(&ctx.msgblocks[128*3], in3 + i, ctx.datalen);
+
+    // Padding
+    unsigned long curlen;
+    if (ctx.datalen < 112) {
+        for (i = 0; i < 4; ++i) {
+            curlen = ctx.datalen;
+            ctx.msgblocks[128*i + curlen++] = 0x80;
+            while(curlen < 128) {
+                ctx.msgblocks[128*i + curlen++] = 0x00;
+            }
+        }
+    } else {
+        for (i = 0; i < 4; ++i) {
+            curlen = ctx.datalen;
+            ctx.msgblocks[128*i + curlen++] = 0x80;
+            while(curlen < 128) {
+                ctx.msgblocks[128*i + curlen++] = 0x00;
+            }
+        }
+        sha512_transform4x(
+            &ctx,
+            ctx.msgblocks,
+            ctx.msgblocks + 128,
+            ctx.msgblocks + 256,
+            ctx.msgblocks + 384
+        );
+        memset(ctx.msgblocks, 0, 4 * 128);
+    }
+
+    // Add length of the message to each block
+    ctx.msglen += ctx.datalen * 8;
+    for (i = 0; i < 4; i++) {
+        ctx.msgblocks[128*i + 127] = ctx.msglen;
+        ctx.msgblocks[128*i + 126] = ctx.msglen >> 8;
+        ctx.msgblocks[128*i + 125] = ctx.msglen >> 16;
+        ctx.msgblocks[128*i + 124] = ctx.msglen >> 24;
+        ctx.msgblocks[128*i + 123] = ctx.msglen >> 32;
+        ctx.msgblocks[128*i + 122] = ctx.msglen >> 40;
+        ctx.msgblocks[128*i + 121] = ctx.msglen >> 48;
+        ctx.msgblocks[128*i + 120] = ctx.msglen >> 56;
+	memset( &ctx.msgblocks[128*i + 112], 0, 8 );
+    }
+    sha512_transform4x(
+        &ctx,
+        ctx.msgblocks,
+        ctx.msgblocks + 128,
+        ctx.msgblocks + 256,
+        ctx.msgblocks + 384
+    );
+
+    // Compute final hash output
+    transpose(ctx.s);
+    transpose(ctx.s+4);
+
+    // Store Hash value
+    __m256i out[2];
+    STORE(out,   BYTESWAP(ctx.s[0]));
+    STORE(out+1, BYTESWAP(ctx.s[4]));
+    memcpy(out0, out, 64);
+
+    STORE(out,   BYTESWAP(ctx.s[1]));
+    STORE(out+1, BYTESWAP(ctx.s[5]));
+    memcpy(out1, out, 64);
+
+    STORE(out,   BYTESWAP(ctx.s[2]));
+    STORE(out+1, BYTESWAP(ctx.s[6]));
+    memcpy(out2, out, 64);
+
+    STORE(out,   BYTESWAP(ctx.s[3]));
+    STORE(out+1, BYTESWAP(ctx.s[7]));
+    memcpy(out3, out, 64);
 }

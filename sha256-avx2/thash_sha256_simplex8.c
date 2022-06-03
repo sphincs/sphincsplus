@@ -136,7 +136,7 @@ static void thashx4_512(unsigned char *out0,
              const spx_ctx *ctx, uint32_t addrx8[4*8])
 {
     unsigned char bufx4[4*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N)];
-    __m256i outbufx4[4*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i))];
+    unsigned char outbuf[4*SPX_SHA512_OUTPUT_BYTES];
     unsigned int i;
 
     for (i = 0; i < 4; i++) {
@@ -153,27 +153,23 @@ static void thashx4_512(unsigned char *out0,
     memcpy(bufx4 + SPX_SHA256_ADDR_BYTES +
         3*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), in3, inblocks * SPX_N);
 
-    sha512ctx4x hash;
-    sha512_init_frombytes_x4(&hash, ctx->state_seeded_512, 1024);
-    sha512_update4x(&hash,  
-        /* in */
-        bufx4 + 0*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
+    sha512x4_seeded(
+        outbuf + 0*SPX_SHA512_OUTPUT_BYTES,
+        outbuf + 1*SPX_SHA512_OUTPUT_BYTES,
+        outbuf + 2*SPX_SHA512_OUTPUT_BYTES,
+        outbuf + 3*SPX_SHA512_OUTPUT_BYTES,
+        ctx->state_seeded_512, /* seed */
+        1024,                  /* seed length */
+        bufx4 + 0*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N), /* in */
         bufx4 + 1*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx4 + 2*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx4 + 3*(SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         SPX_SHA256_ADDR_BYTES + inblocks*SPX_N /* len */
     );
-    sha512_final4x(&hash,
-        /* out */
-        outbufx4 + 0*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)),
-        outbufx4 + 1*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)),
-        outbufx4 + 2*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)),
-        outbufx4 + 3*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i))
-    );
 
-    memcpy(out0, outbufx4 + 0*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)), SPX_N);
-    memcpy(out1, outbufx4 + 1*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)), SPX_N);
-    memcpy(out2, outbufx4 + 2*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)), SPX_N);
-    memcpy(out3, outbufx4 + 3*(SPX_SHA512_OUTPUT_BYTES / sizeof(__m256i)), SPX_N);
+    memcpy(out0, outbuf + 0*SPX_SHA512_OUTPUT_BYTES, SPX_N);
+    memcpy(out1, outbuf + 1*SPX_SHA512_OUTPUT_BYTES, SPX_N);
+    memcpy(out2, outbuf + 2*SPX_SHA512_OUTPUT_BYTES, SPX_N);
+    memcpy(out3, outbuf + 3*SPX_SHA512_OUTPUT_BYTES, SPX_N);
 }
 #endif

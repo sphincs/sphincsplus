@@ -11,7 +11,19 @@ typedef struct SHA512state4x {
 } sha512ctx4x;
 
 
-void sha512_init_frombytes_x4(sha512ctx4x *ctx, const void *s, unsigned long long msglen);
+void sha512x4_seeded(
+    unsigned char *out0,
+    unsigned char *out1,
+    unsigned char *out2,
+    unsigned char *out3,
+    const unsigned char *seed,
+    unsigned long long seedlen,
+    const unsigned char *in0,
+    const unsigned char *in1,
+    const unsigned char *in2,
+    const unsigned char *in3,
+    unsigned long long inlen);
+
 void sha512_init4x(sha512ctx4x *ctx);
 void sha512_update4x(sha512ctx4x *ctx, 
                      const void *d0,
