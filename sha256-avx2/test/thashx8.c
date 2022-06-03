@@ -41,7 +41,7 @@ int main()
 
         for (j = 0; j < 4; j++) {
             sha512(buf, input + j*SPX_N, SPX_N);
-            memcpy(out8 + j*SPX_N, input + j*SPX_N, SPX_N);
+            memcpy(out8 + j*SPX_N, buf, SPX_N);
         }
 
         sha512_init4x(&ctx4);
