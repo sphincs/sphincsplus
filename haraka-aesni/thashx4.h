@@ -1,1 +1,1 @@
-../shake256-avx2/thashx4.h
+../shake-avx2/thashx4.h

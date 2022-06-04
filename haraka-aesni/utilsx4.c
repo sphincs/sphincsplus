@@ -1,1 +1,1 @@
-../shake256-avx2/utilsx4.c
+../shake-avx2/utilsx4.c
