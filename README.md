@@ -1,11 +1,11 @@
-## SPHINCS+ ![][test-ref] ![][test-sha256-avx2] ![][test-shake256-avx2] ![][test-haraka-aesni]
-
-[test-ref]: https://github.com/sphincs/sphincsplus/workflows/test-ref/badge.svg
-[test-sha256-avx2]: https://github.com/sphincs/sphincsplus/workflows/test-sha256-avx2/badge.svg
-[test-shake256-avx2]: https://github.com/sphincs/sphincsplus/workflows/test-shake256-avx2/badge.svg
-[test-haraka-aesni]: https://github.com/sphincs/sphincsplus/workflows/test-haraka-aesni/badge.svg
+## SPHINCS+
 
 This repository contains the software that accompanies the [SPHINCS+ submission](https://sphincs.org/) to [NIST's Post-Quantum Cryptography](https://csrc.nist.gov/Projects/Post-Quantum-Cryptography) project.
+
+![][test-ref]
+![][test-sha256-avx2]
+![][test-shake256-avx2]
+![][test-haraka-aesni]
 
 ### Parameters
 
@@ -23,3 +23,8 @@ The [SPHINCS+ specification](https://sphincs.org/data/sphincs+-specification.pdf
 ### License
 
 All included code is available under the CC0 1.0 Universal Public Domain Dedication, with the exception of `rng.c`, `rng.h` and `PQCgenKAT_sign.c`, which were provided by NIST.
+
+[test-ref]: https://github.com/sphincs/sphincsplus/actions/workflows/test-ref.yml/badge.svg
+[test-sha256-avx2]: https://github.com/sphincs/sphincsplus/actions/workflows/test-sha256-avx2.yml/badge.svg
+[test-shake256-avx2]: https://github.com/sphincs/sphincsplus/actions/workflows/test-shake256-avx2.yml/badge.svg
+[test-haraka-aesni]: https://github.com/sphincs/sphincsplus/actions/workflows/test-haraka-aesni.yml/badge.svg
