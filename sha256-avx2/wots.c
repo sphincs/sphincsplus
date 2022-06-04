@@ -222,6 +222,7 @@ void wots_gen_leafx8(unsigned char *dest,
         for (j = 0; j < 8; j++) {
             set_chain_addr(leaf_addr + j*8, i);
             set_hash_addr(leaf_addr + j*8, 0);
+            set_type(leaf_addr + j*8, SPX_ADDR_TYPE_WOTSPRF);
         }
         prf_addrx8(buffer + 0*wots_offset,
                    buffer + 1*wots_offset,
@@ -232,6 +233,10 @@ void wots_gen_leafx8(unsigned char *dest,
                    buffer + 6*wots_offset,
                    buffer + 7*wots_offset,
                    ctx, leaf_addr);
+
+        for (j = 0; j < 8; j++) {
+            set_type(leaf_addr + j*8, SPX_ADDR_TYPE_WOTS);
+        }
 
         /* Iterate down the WOTS chain */
         for (k=0;; k++) {

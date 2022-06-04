@@ -9,6 +9,8 @@
 #define SPX_ADDR_TYPE_HASHTREE 2
 #define SPX_ADDR_TYPE_FORSTREE 3
 #define SPX_ADDR_TYPE_FORSPK 4
+#define SPX_ADDR_TYPE_WOTSPRF 5
+#define SPX_ADDR_TYPE_FORSPRF 6
 
 void set_layer_addr(uint32_t addr[8], uint32_t layer);
 
