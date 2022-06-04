@@ -29,7 +29,6 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
     info.wots_steps = steps;
 
     set_type(&tree_addr[0], SPX_ADDR_TYPE_HASHTREE);
-    set_type(&info.leaf_addr[0], SPX_ADDR_TYPE_WOTS);
     set_type(&info.pk_addr[0], SPX_ADDR_TYPE_WOTSPK);
     copy_subtree_addr(&info.leaf_addr[0], wots_addr);
     copy_subtree_addr(&info.pk_addr[0], wots_addr);

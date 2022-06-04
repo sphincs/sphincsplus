@@ -44,8 +44,11 @@ void wots_gen_leafx1(unsigned char *dest,
         /* Start with the secret seed */
         set_chain_addr(leaf_addr, i);
         set_hash_addr(leaf_addr, 0);
+        set_type(leaf_addr, SPX_ADDR_TYPE_WOTSPRF);
  
         prf_addr(buffer, ctx, leaf_addr);
+
+        set_type(leaf_addr, SPX_ADDR_TYPE_WOTS);
 
         /* Iterate down the WOTS chain */
         for (k=0;; k++) {
