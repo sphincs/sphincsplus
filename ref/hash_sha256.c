@@ -7,7 +7,7 @@
 #include "hash.h"
 #include "sha256.h"
 
-#if SPX_N==32
+#if SPX_N >= 24
 #define SPX_SHAX_OUTPUT_BYTES SPX_SHA512_OUTPUT_BYTES
 #define SPX_SHAX_BLOCK_BYTES SPX_SHA512_BLOCK_BYTES
 #define shaX_inc_init sha512_inc_init
