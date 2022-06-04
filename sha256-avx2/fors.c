@@ -77,6 +77,7 @@ static void fors_gen_leafx8(unsigned char *leaf,
     /* Only set the parts that the caller doesn't set */
     for (j = 0; j < 8; j++) {
         set_tree_index(fors_leaf_addrx8 + j*8, addr_idx + j);
+        set_type(fors_leaf_addrx8 + j*8, SPX_ADDR_TYPE_FORSPRF);
     }
 
     fors_gen_skx8(leaf + 0*SPX_N,
@@ -88,6 +89,11 @@ static void fors_gen_leafx8(unsigned char *leaf,
                   leaf + 6*SPX_N,
                   leaf + 7*SPX_N,
                   ctx, fors_leaf_addrx8);
+
+    for (j = 0; j < 8; j++) {
+        set_type(fors_leaf_addrx8 + j*8, SPX_ADDR_TYPE_FORSTREE);
+    }
+
     fors_sk_to_leafx8(leaf + 0*SPX_N,
                   leaf + 1*SPX_N,
                   leaf + 2*SPX_N,
@@ -148,7 +154,6 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
         copy_keypair_addr(fors_tree_addr + 8*i, fors_addr);
         set_type(fors_tree_addr + 8*i, SPX_ADDR_TYPE_FORSTREE);
         copy_keypair_addr(fors_leaf_addr + 8*i, fors_addr);
-        set_type(fors_leaf_addr + 8*i, SPX_ADDR_TYPE_FORSTREE);
     }
     copy_keypair_addr(fors_pk_addr, fors_addr);
     set_type(fors_pk_addr, SPX_ADDR_TYPE_FORSPK);
@@ -162,7 +167,9 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
         set_tree_index(fors_tree_addr, indices[i] + idx_offset);
 
         /* Include the secret key part that produces the selected leaf node. */
+        set_type(fors_tree_addr, SPX_ADDR_TYPE_FORSPRF);
         fors_gen_sk(sig, ctx, fors_tree_addr);
+        set_type(fors_tree_addr, SPX_ADDR_TYPE_FORSTREE);
         sig += SPX_N;
 
         /* Compute the authentication path for this leaf node. */
