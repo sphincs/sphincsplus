@@ -1,1 +1,0 @@
-../../ref/params/params-sphincs-shake256-256f.h

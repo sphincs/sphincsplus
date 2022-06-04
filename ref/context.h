@@ -9,7 +9,7 @@ typedef struct {
     uint8_t pub_seed[SPX_N];
     uint8_t sk_seed[SPX_N];
 
-#ifdef SPX_SHA256
+#ifdef SPX_SHA2
     // sha256 state that absorbed pub_seed
     uint8_t state_seeded[40];
 

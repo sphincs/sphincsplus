@@ -6,10 +6,10 @@ import sys
 from subprocess import DEVNULL, run
 
 implementations = [
-                   ('ref', ['shake256', 'sha256', 'haraka']),
+                   ('ref', ['shake', 'sha2', 'haraka']),
                    ('haraka-aesni', ['haraka']),
-                   ('shake256-avx2', ['shake256']),
-                   ('sha256-avx2', ['sha256']),
+                   ('shake-avx2', ['shake']),
+                   ('sha2-avx2', ['sha2']),
                    ]
 
 options = ["f", "s"]

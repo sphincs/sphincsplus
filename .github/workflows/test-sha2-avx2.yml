@@ -1,0 +1,33 @@
+name: Tests for sha2-avx2 implementation
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        size:
+          - 128
+          - 192
+          - 256
+        option:
+          - s
+          - f
+        thash:
+          - simple
+          - robust
+    steps:
+      - uses: actions/checkout@v1
+      - name: Run make
+        run: |
+          make -C sha2-avx2 THASH=${{ matrix.thash }} clean
+          make -C sha2-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha2-${{ matrix.size }}${{ matrix.option }} tests
+          make -C sha2-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha2-${{ matrix.size }}${{ matrix.option }} test
+          make -C sha2-avx2 THASH=${{ matrix.thash }} PARAMS=sphincs-sha2-${{ matrix.size }}${{ matrix.option }} PQCgenKAT_sign
+      - name: Run PQCgenKAT_sign
+        run: python3 vectors.py sphincs-sha2-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} sha2-avx2
+
+#  vim: set ft=yaml ts=2 sw=2 et :
