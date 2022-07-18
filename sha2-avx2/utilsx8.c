@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "utilsx8.h"
 #include "params.h"
 #include "thashx8.h"
 #include "address.h"

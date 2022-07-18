@@ -51,7 +51,7 @@ static void transpose(u256 s[4]) {
 }
 
 
-void sha512_init4x(sha512ctx4x *ctx) {
+static void sha512_init4x(sha512ctx4x *ctx) {
 #define SET4(x) _mm256_set_epi64x(x, x, x, x)
     ctx->s[0] = SET4(0x6a09e667f3bcc908ULL);
     ctx->s[1] = SET4(0xbb67ae8584caa73bULL);

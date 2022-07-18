@@ -2,7 +2,7 @@ PARAMS = sphincs-sha2-128f
 THASH = robust
 
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -march=native -fomit-frame-pointer -flto -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
+CFLAGS = -Wall -Wextra -Wpedantic -Wmissing-prototypes -O3 -std=c99 -march=native -flto -fomit-frame-pointer -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
 
 
 SOURCES =          hash_sha2.c hash_sha2x8.c thash_sha2_$(THASH).c thash_sha2_$(THASH)x8.c sha2.c sha256x8.c sha512x4.c sha256avx.c address.c randombytes.c merkle.c wots.c utils.c utilsx8.c fors.c sign.c
