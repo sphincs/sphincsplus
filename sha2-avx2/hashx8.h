@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "params.h"
 
+#define prf_addrx8 SPX_NAMESPACE(prf_addrx8)
 void prf_addrx8(unsigned char *out0,
                 unsigned char *out1,
                 unsigned char *out2,

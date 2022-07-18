@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include "context.h"
+#include "params.h"
 
+#define prf_addrx2 SPX_NAMESPACE(prf_addrx2)
 void prf_addrx2(unsigned char *out0,
                 unsigned char *out1,
                 const spx_ctx *ctx,

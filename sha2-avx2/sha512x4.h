@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include "immintrin.h"
 
+#include "params.h"
+
 typedef struct SHA512state4x {
     __m256i s[8];
     unsigned char msgblocks[4*128];
@@ -11,6 +13,7 @@ typedef struct SHA512state4x {
 } sha512ctx4x;
 
 
+#define sha512x4_seeded SPX_NAMESPACE(sha512x4_seeded)
 void sha512x4_seeded(
     unsigned char *out0,
     unsigned char *out1,
@@ -30,6 +33,7 @@ void sha512x4_seeded(
  * an array to be allocated on the stack. Typically 'in' is merely a seed.
  * Outputs outlen number of bytes
  */
+#define mgf1x4_512 SPX_NAMESPACE(mgf1x4_512)
 void mgf1x4_512(unsigned char *outx4, unsigned long outlen,
             const unsigned char *in0,
             const unsigned char *in1,

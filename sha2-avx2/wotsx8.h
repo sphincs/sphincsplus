@@ -2,6 +2,7 @@
 #define WOTSX8_H_ 
 
 #include <string.h>
+#include "params.h"
 
 /*
  * This is here to provide an interface to the internal wots_gen_leafx8
@@ -31,6 +32,7 @@ struct leaf_info_x8 {
     } \
 }
 
+#define wots_gen_leafx8 SPX_NAMESPACE(wots_gen_leafx8)
 void wots_gen_leafx8(unsigned char *dest,
                    const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info);
