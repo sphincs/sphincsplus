@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "thash.h"
 #include "thashx2.h"
 #include "address.h"
 #include "params.h"

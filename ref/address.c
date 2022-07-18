@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "address.h"
+#include "params.h"
 #include "utils.h"
 
 /*
