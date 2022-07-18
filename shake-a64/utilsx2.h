@@ -15,6 +15,7 @@
  * This implementation uses SIMD to compute internal nodes 2 at a time (in
  * parallel)
  */
+#define treehashx2 SPX_NAMESPACE(treehashx2)
 void treehashx2(unsigned char *root, unsigned char *auth_path,
                 const spx_ctx *ctx,
                 uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,

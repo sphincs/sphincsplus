@@ -1,6 +1,8 @@
 #ifndef SPX_SHA2_H
 #define SPX_SHA2_H
 
+#include "params.h"
+
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
 
@@ -26,12 +28,15 @@ void sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
 void sha512_inc_finalize(uint8_t *out, uint8_t *state, const uint8_t *in, size_t inlen);
 void sha512(uint8_t *out, const uint8_t *in, size_t inlen);
 
+#define mgf1_256 SPX_NAMESPACE(mgf1_256)
 void mgf1_256(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 
+#define mgf1_512 SPX_NAMESPACE(mgf1_512)
 void mgf1_512(unsigned char *out, unsigned long outlen,
           const unsigned char *in, unsigned long inlen);
 
+#define seed_state SPX_NAMESPACE(seed_state)
 void seed_state(spx_ctx *ctx);
 
 

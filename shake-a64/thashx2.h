@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include "context.h"
+#include "params.h"
 
+#define thashx2 SPX_NAMESPACE(thashx2)
 void thashx2(unsigned char *out0,
              unsigned char *out1,
              const unsigned char *in0,

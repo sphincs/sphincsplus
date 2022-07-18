@@ -1,6 +1,8 @@
 #ifndef SPX_SHA256X8_H
 #define SPX_SHA256X8_H
 
+#include "params.h"
+
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
 
@@ -8,6 +10,7 @@
     #error Linking against SHA-256 with N larger than 32 bytes is not supported
 #endif
 
+#define sha256x8_seeded SPX_NAMESPACE(sha256x8_seeded)
 void sha256x8_seeded(
               unsigned char *out0,
               unsigned char *out1,
@@ -29,6 +32,7 @@ void sha256x8_seeded(
               const unsigned char *in7, unsigned long long inlen);
 
 /* This provides a wrapper around the internals of 8x parallel SHA256 */
+#define sha256x8 SPX_NAMESPACE(sha256x8)
 void sha256x8(unsigned char *out0,
               unsigned char *out1,
               unsigned char *out2,
@@ -51,6 +55,7 @@ void sha256x8(unsigned char *out0,
  * an array to be allocated on the stack. Typically 'in' is merely a seed.
  * Outputs outlen number of bytes
  */
+#define mgf1x8 SPX_NAMESPACE(mgf1x8)
 void mgf1x8(unsigned char *outx8, unsigned long outlen,
             const unsigned char *in0,
             const unsigned char *in1,
