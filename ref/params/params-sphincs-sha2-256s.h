@@ -1,6 +1,8 @@
 #ifndef SPX_PARAMS_H
 #define SPX_PARAMS_H
 
+#define SPX_NAMESPACE(s) SPX_##s
+
 /* Hash output length in bytes. */
 #define SPX_N 32
 /* Height of the hypertree. */

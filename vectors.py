@@ -90,7 +90,7 @@ def check_sum(name, impl):
             sys.stderr.write(f"Test vector mismatch: {line}\n")
             sys.exit(2)
         sys.stderr.write("ok\n")
-        
+
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
         generate_sums()
