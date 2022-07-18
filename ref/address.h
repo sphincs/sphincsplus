@@ -2,6 +2,7 @@
 #define SPX_ADDRESS_H
 
 #include <stdint.h>
+#include "params.h"
 
 /* The hash types that are passed to set_type */
 #define SPX_ADDR_TYPE_WOTS 0
