@@ -5,6 +5,8 @@ This code was taken from the SPHINCS reference implementation and is public doma
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "randombytes.h"
+
 static int fd = -1;
 
 void randombytes(unsigned char *x, unsigned long long xlen)

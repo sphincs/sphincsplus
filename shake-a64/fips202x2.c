@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "fips202x2.h"
 #include "fips202.h"
 #include "f1600x2.h"
 
