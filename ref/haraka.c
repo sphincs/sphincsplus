@@ -235,7 +235,7 @@ static void br_aes_ct64_bitslice_Sbox(uint64_t *q) {
     q[0] = s7;
 }
 
-void br_aes_ct_bitslice_Sbox(uint32_t *q)
+static void br_aes_ct_bitslice_Sbox(uint32_t *q)
 {
     /*
      * This S-box implementation is a straightforward translation of
@@ -410,7 +410,7 @@ void br_aes_ct_bitslice_Sbox(uint32_t *q)
     q[0] = s7;
 }
 
-void br_aes_ct_ortho(uint32_t *q) 
+static void br_aes_ct_ortho(uint32_t *q)
 {
 #define SWAPN_32(cl, ch, s, x, y)   do { \
         uint32_t a, b; \
@@ -653,7 +653,7 @@ static inline void mix_columns(uint64_t *q)
     q[7] = q6 ^ r6 ^ r7 ^ rotr32(q7 ^ r7);
 }
 
-void interleave_constant(uint64_t *out, const unsigned char *in) 
+static void interleave_constant(uint64_t *out, const unsigned char *in)
 {
     uint32_t tmp_32_constant[16];
     int i;
@@ -665,7 +665,7 @@ void interleave_constant(uint64_t *out, const unsigned char *in)
     br_aes_ct64_ortho(out);
 }
 
-void interleave_constant32(uint32_t *out, const unsigned char *in) 
+static void interleave_constant32(uint32_t *out, const unsigned char *in)
 {
     int i;
     for (i = 0; i < 4; i++) {
