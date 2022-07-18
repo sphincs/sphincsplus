@@ -1,7 +1,7 @@
 PARAMS = sphincs-shake-128f
 THASH = robust
 
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -fomit-frame-pointer -flto -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
+CFLAGS = -Wall -Wextra -Wpedantic -Wmissing-prototypes -O3 -std=c99 -fomit-frame-pointer -flto -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
 
 SOURCES =          hash_shake.c hash_shakex2.c thash_shake_$(THASH)x2.c address.c randombytes.c merkle.c wots.c utils.c utilsx2.c fors.c sign.c fips202.c fips202x2.c f1600x2.c f1600x2.s
 HEADERS = params.h hash.h          hashx2.h                          thashx2.h                 address.h randombytes.h merkle.h wots.h utils.h utilsx2.h fors.h api.h fips202.h fips202x2.h f1600x2.h thash.h

@@ -69,7 +69,7 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
   _mm_storeu_si128((u128 *)(out + 16), \
                    (__m128i)_mm_shuffle_pd((__m128d)s2, (__m128d)s3, 0));
 
-void load_haraka_constants(u128 *rc)
+static void load_haraka_constants(u128 *rc)
 {
     rc[0] = _mm_set_epi32(0x0684704c,0xe620c00a,0xb2c5fef0,0x75817b9d);
     rc[1] = _mm_set_epi32(0x8b66b4e1,0x88f3a06b,0x640f6ba4,0x2f08f717);

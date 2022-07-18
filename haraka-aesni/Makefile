@@ -2,7 +2,7 @@ PARAMS = sphincs-haraka-128f
 THASH = robust
 
 CC = /usr/bin/gcc
-CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -march=native -fomit-frame-pointer -flto -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
+CFLAGS = -Wall -Wextra -Wpedantic -Wmissing-prototypes -O3 -std=c99 -march=native -fomit-frame-pointer -flto -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
 
 
 SOURCES = hash_haraka.c hash_harakax4.c thash_haraka_$(THASH).c thash_haraka_$(THASH)x4.c address.c randombytes.c merkle.c wots.c utils.c utilsx4.c fors.c sign.c haraka.c
