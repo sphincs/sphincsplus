@@ -31,7 +31,7 @@ void thashx2(unsigned char *out0,
              unsigned int inblocks,
              const spx_ctx *ctx, uint32_t addrx2[2*8])
 {
-    if (SPX_N <= 32 && (inblocks == 1 || inblocks == 2)) {
+    if (inblocks == 1 || inblocks == 2) {
         /* As we write and read only a few quadwords, it is more efficient to
          * build and extract from the twoway SHAKE256 state by hand. */
         uint64_t state[50] = {0};
@@ -82,68 +82,6 @@ void thashx2(unsigned char *out0,
         f1600x2(state2);
 
         for (int i = 0; i < SPX_N/8; i++) {
-            store64(out0 + 8*i, state2[2*i]);
-            store64(out1 + 8*i, state2[2*i+1]);
-        }
-    } else if (SPX_N == 64 && (inblocks == 1 || inblocks == 2)) {
-        /* As we write and read only a few quadwords, it is more efficient to
-         * build and extract from the fourway SHAKE256 state by hand. */
-        uint64_t state[50] = {0};
-        uint64_t state2[50];
-
-        for (int i = 0; i < SPX_N/8; i++) {
-            uint64_t x = load64(ctx->pub_seed + 8*i);
-            state[2*i] = x;
-            state[2*i+1] = x;
-        }
-        for (int i = 0; i < 4; i++) {
-            state[2*(SPX_N/8 + i)] = (((uint64_t)addrx2[1+2*i]) << 32)
-                | (uint64_t)addrx2[2*i];
-            state[2*(SPX_N/8 + i) + 1] = (((uint64_t)addrx2[8+1+2*i]) << 32)
-                | (uint64_t)addrx2[8+2*i];
-        }
-
-        /* Domain separator and padding. */
-        state[2*16] = 0x80ll << 56; 
-        state[2*16+1] = 0x80ll << 56; 
-
-        state[2*((SPX_N/8)*+4)] ^= 0x1f;
-        state[2*((SPX_N/8)*+4)+1] ^= 0x1f;
-
-        /* We will permutate state2 with f1600x2 to compute the bitmask,
-         * but first we'll copy it to state2 which will be used to compute
-         * the final output, as its input is almost identical. */
-        memcpy(state2, state, 400);
-
-        f1600x2(state);
-
-        /* We will won't be able to fit all input in on go.
-         * By copying from state, state2 already contains the pub_seed
-         * and address.  We just need to copy in the input blocks xorred with
-         * the bitmask we just computed. */
-        for (int i = 0; i < 5; i++) {
-            state2[2*(8+4+i)] = state[2*i] ^ load64(in0 + 8*i);
-            state2[2*(8+4+i)+1] = state[2*i+1] ^ load64(in1 + 8*i);
-        }
-        
-        f1600x2(state2);
-
-        /* Final input. */
-        for (int i = 0; i < 3+8*(inblocks-1); i++) {
-            state2[2*i] = state2[2*i] ^ state[2*(i+5)] ^ load64(in0 + 8*(i+5));
-            state2[2*i+1] = state2[2*i+1] ^ state[2*(i+5)+1]
-                ^ load64(in1 + 8*(i+5));
-        }
-
-        /* Domain separator and padding. */
-        state2[2*(3+8*(inblocks-1))] ^= 0x1f;
-        state2[2*(3+8*(inblocks-1))+1] ^= 0x1f;
-        state2[16] ^= 0x80ll << 56;
-        state2[16] ^= 0x80ll << 56;
-
-        f1600x2(state2);
-
-        for (int i = 0; i < 8; i++) {
             store64(out0 + 8*i, state2[2*i]);
             store64(out1 + 8*i, state2[2*i+1]);
         }
