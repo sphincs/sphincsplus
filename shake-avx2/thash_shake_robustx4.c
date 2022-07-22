@@ -22,7 +22,7 @@ void thashx4(unsigned char *out0,
              const unsigned char *in3, unsigned int inblocks,
              const spx_ctx *ctx, uint32_t addrx4[4*8])
 {
-    if (SPX_N <= 32 && (inblocks == 1 || inblocks == 2)) {
+    if (inblocks == 1 || inblocks == 2) {
         /* As we write and read only a few quadwords, it is more efficient to
          * build and extract from the fourway SHAKE256 state by hand. */
         __m256i state[25];
@@ -89,92 +89,6 @@ void thashx4(unsigned char *out0,
         KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
 
         for (int i = 0; i < SPX_N/8; i++) {
-            ((int64_t*)out0)[i] = _mm256_extract_epi64(state2[i], 0);
-            ((int64_t*)out1)[i] = _mm256_extract_epi64(state2[i], 1);
-            ((int64_t*)out2)[i] = _mm256_extract_epi64(state2[i], 2);
-            ((int64_t*)out3)[i] = _mm256_extract_epi64(state2[i], 3);
-        }
-    } else if (SPX_N == 64 && (inblocks == 1 || inblocks == 2)) {
-        /* As we write and read only a few quadwords, it is more efficient to
-         * build and extract from the fourway SHAKE256 state by hand. */
-        __m256i state[25];
-        for (int i = 0; i < 8; i++) {
-            state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
-        }
-        for (int i = 0; i < 4; i++) {
-            state[8+i] = _mm256_set_epi32(
-                addrx4[3*8+1+2*i],
-                addrx4[3*8+2*i],
-                addrx4[2*8+1+2*i],
-                addrx4[2*8+2*i],
-                addrx4[8+1+2*i],
-                addrx4[8+2*i],
-                addrx4[1+2*i],
-                addrx4[2*i]
-            );
-        }
-
-        /* SHAKE domain separator and padding */
-        state[8+4] = _mm256_set1_epi64x(0x1f);
-        for (int i = 8+5; i < 16; i++) {
-            state[i] = _mm256_set1_epi64x(0);
-        }
-        state[16] = _mm256_set1_epi64x(0x80ll << 56);
-
-        for (int i = 17; i < 25; i++) {
-            state[i] = _mm256_set1_epi64x(0);
-        }
-
-        /* We will permutate state2 with f1600x4 to compute the bitmask,
-         * but first we'll copy it to state2 which will be used to compute
-         * the final output, as its input is alsmost identical. */
-        __m256i state2[25];
-        memcpy(state2, state, 800);
-
-        KeccakP1600times4_PermuteAll_24rounds(&state[0]);
-
-        /* We will won't be able to fit all input in on go.
-         * By copying from state, state2 already contains the pub_seed
-         * and addres.  We just need to copy in the input blocks xorred with
-         * the bitmask we just computed. */
-        for (unsigned int i = 0; i < 5; i++) {
-            state2[8+4+i] = _mm256_xor_si256(
-                    state[i],
-                    _mm256_set_epi64x(
-                        ((int64_t*)in3)[i],
-                        ((int64_t*)in2)[i],
-                        ((int64_t*)in1)[i],
-                        ((int64_t*)in0)[i]
-                    )
-                );
-        }
-
-        KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
-
-        /* Final input. */
-        for (unsigned int i = 0; i < 3+8*(inblocks-1); i++) {
-            state2[i] = _mm256_xor_si256(
-                    state2[i],
-                    _mm256_xor_si256(
-                        state[i+5],
-                        _mm256_set_epi64x(
-                            ((int64_t*)in3)[i+5],
-                            ((int64_t*)in2)[i+5],
-                            ((int64_t*)in1)[i+5],
-                            ((int64_t*)in0)[i+5]
-                        )
-                    )
-                );
-        }
-
-        /* Domain separator and padding. */
-        state2[3+8*(inblocks-1)] = _mm256_xor_si256(state2[3+8*(inblocks-1)],
-                _mm256_set1_epi64x(0x1f));
-        state2[16] = _mm256_xor_si256(state2[16], _mm256_set1_epi64x(0x80ll << 56));
-
-        KeccakP1600times4_PermuteAll_24rounds(&state2[0]);
-
-        for (int i = 0; i < 8; i++) {
             ((int64_t*)out0)[i] = _mm256_extract_epi64(state2[i], 0);
             ((int64_t*)out1)[i] = _mm256_extract_epi64(state2[i], 1);
             ((int64_t*)out2)[i] = _mm256_extract_epi64(state2[i], 2);

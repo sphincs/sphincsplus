@@ -31,7 +31,7 @@ void thashx2(unsigned char *out0,
              unsigned int inblocks,
              const spx_ctx *ctx, uint32_t addrx2[2*8])
 {
-    if (SPX_N <= 32 && (inblocks == 1 || inblocks == 2)) {
+    if (inblocks == 1 || inblocks == 2) {
         /* As we write and read only a few quadwords, it is more efficient to
          * build and extract from the twoway SHAKE256 state by hand. */
         uint64_t state[50] = {0};
@@ -65,47 +65,6 @@ void thashx2(unsigned char *out0,
             store64(out0 + 8*i, state[2*i]);
             store64(out1 + 8*i, state[2*i+1]);
         }
-    } else if (SPX_N == 64 && (inblocks == 1 || inblocks == 2)) {
-        uint64_t state[50] = {0};
-        for (int i = 0; i < SPX_N/8; i++) {
-            uint64_t x = load64(ctx->pub_seed + 8*i);
-            state[2*i] = x;
-            state[2*i+1] = x;
-        }
-        for (int i = 0; i < 4; i++) {
-            state[2*(SPX_N/8 + i)] = (((uint64_t)addrx2[1+2*i]) << 32)
-                | (uint64_t)addrx2[2*i];
-            state[2*(SPX_N/8 + i) + 1] = (((uint64_t)addrx2[8+1+2*i]) << 32)
-                | (uint64_t)addrx2[8+2*i];
-        }
-
-        for (unsigned int i = 0; i < (SPX_N/8) * inblocks; i++) {
-            state[2*(SPX_N/8+4+i)] = load64(in0+8*i);
-            state[2*(SPX_N/8+4+i)+1] = load64(in1+8*i);
-        }
-
-        f1600x2(state);
-
-        /* Final input. */
-        for (unsigned int i = 0; i < 3+8*(inblocks-1); i++) {
-            state[2*i] ^= load64(in0+8*(i+5));
-            state[2*i+1] ^= load64(in1+8*(i+5));
-        }
-
-        /* Domain separator and padding. */
-        state[2*16] ^= 0x80ll << 56; 
-        state[2*16+1] ^= 0x80ll << 56; 
-
-        state[2*(3+8*(inblocks-1))] ^= 0x1f;
-        state[2*(3+8*(inblocks-1))+1] ^= 0x1f;
-
-        f1600x2(state);
-
-        for (int i = 0; i < SPX_N/8; i++) {
-            store64(out0 + 8*i, state[2*i]);
-            store64(out1 + 8*i, state[2*i+1]);
-        }
-
     } else {
         unsigned char buf0[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
         unsigned char buf1[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
