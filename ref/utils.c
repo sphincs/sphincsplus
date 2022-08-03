@@ -110,8 +110,8 @@ void treehash(unsigned char *root, unsigned char *auth_path, const spx_ctx* ctx,
                  uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
               uint32_t tree_addr[8])
 {
-    unsigned char stack[(tree_height + 1)*SPX_N];
-    unsigned int heights[tree_height + 1];
+    SPX_VLA(uint8_t, stack, (tree_height+1)*SPX_N);
+    SPX_VLA(unsigned int, heights, tree_height+1);
     unsigned int offset = 0;
     uint32_t idx;
     uint32_t tree_idx;

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "haraka.h"
+#include "utils.h"
 
 #define HARAKAS_RATE 32
 
@@ -696,7 +697,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
                             unsigned char p, const spx_ctx *ctx)
 {
     unsigned long long i;
-    unsigned char t[r];
+    SPX_VLA(uint8_t, t, r);
 
     while (mlen >= r) {
         /* XOR block to state */
