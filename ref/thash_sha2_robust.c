@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "context.h"
+#include "hash.h"
 #include "thash.h"
 #include "address.h"
 #include "params.h"
@@ -35,7 +37,7 @@ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
     mgf1_256(bitmask, inblocks * SPX_N, buf, SPX_N + SPX_SHA256_ADDR_BYTES);
 
     /* Retrieve precomputed state containing pub_seed */
-    sha256_inc_ctx_clone(&sha2_state, ctx->state_seeded);
+    sha256_inc_ctx_clone(&sha2_state, &ctx->state_seeded);
 
     for (i = 0; i < inblocks * SPX_N; i++) {
         buf[SPX_N + SPX_SHA256_ADDR_BYTES + i] = in[i] ^ bitmask[i];

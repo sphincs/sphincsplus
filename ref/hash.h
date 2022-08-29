@@ -5,12 +5,6 @@
 #include "context.h"
 #include "params.h"
 
-#define initialize_hash_function SPX_NAMESPACE(initialize_hash_function)
-void initialize_hash_function(spx_ctx *ctx);
-
-#define free_hash_function SPX_NAMESPACE(free_hash_function)
-void free_hash_function(spx_ctx *ctx);
-
 #define prf_addr SPX_NAMESPACE(prf_addr)
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8]);
@@ -38,9 +32,6 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 #   define mgf1_512 SPX_NAMESPACE(mgf1_512)
     void mgf1_512(unsigned char *out, unsigned long outlen,
             const unsigned char *in, unsigned long inlen);
-
-#   define seed_state SPX_NAMESPACE(seed_state)
-    void seed_state(spx_ctx *ctx);
 #endif
 
 #endif
