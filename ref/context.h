@@ -4,6 +4,9 @@
 #include <stdint.h>
 
 #include "params.h"
+#ifdef SPX_SHA2
+#include "sha2.h"
+#endif
 
 typedef struct {
     uint8_t pub_seed[SPX_N];
@@ -11,11 +14,11 @@ typedef struct {
 
 #ifdef SPX_SHA2
     // sha256 state that absorbed pub_seed
-    uint8_t state_seeded[40];
+    sha256ctx state_seeded;
 
 # if SPX_SHA512
     // sha512 state that absorbed pub_seed
-    uint8_t state_seeded_512[72];
+    sha512ctx state_seeded_512[72];
 # endif
 #endif
 

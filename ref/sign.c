@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "api.h"
+#include "context.h"
 #include "params.h"
 #include "wots.h"
 #include "fors.h"
@@ -69,6 +70,9 @@ int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
 
     /* Compute root node of the top-most subtree. */
     merkle_gen_root(sk + 3*SPX_N, &ctx);
+
+    // cleanup
+    free_hash_function(&ctx);
 
     memcpy(pk + SPX_N, sk + 3*SPX_N, SPX_N);
 
@@ -152,6 +156,8 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
         tree = tree >> SPX_TREE_HEIGHT;
     }
 
+    free_hash_function(&ctx);
+
     *siglen = SPX_BYTES;
 
     return 0;
@@ -230,6 +236,9 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
         idx_leaf = (tree & ((1 << SPX_TREE_HEIGHT)-1));
         tree = tree >> SPX_TREE_HEIGHT;
     }
+
+    // cleanup
+    free_hash_function(&ctx);
 
     /* Check if the root node equals the root node in the public key. */
     if (memcmp(root, pub_root, SPX_N)) {

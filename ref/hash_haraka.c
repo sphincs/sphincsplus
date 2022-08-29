@@ -13,6 +13,11 @@ void initialize_hash_function(spx_ctx* ctx)
     tweak_constants(ctx);
 }
 
+// we don't support heap-based haraka right now
+void free_hash_function(spx_ctx *ctx) {
+    (void)ctx; // suppress unused variable warnings
+}
+
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */
