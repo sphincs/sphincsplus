@@ -39,7 +39,7 @@ main()
     int                 done;
     unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
     int                 ret_val;
-    
+
     // Create the REQUEST file
     sprintf(fn_req, "PQCsignKAT_%d.req", CRYPTO_SECRETKEYBYTES);
     if ( (fp_req = fopen(fn_req, "w")) == NULL ) {
@@ -51,16 +51,16 @@ main()
         printf("Couldn't open <%s> for write\n", fn_rsp);
         return KAT_FILE_OPEN_ERROR;
     }
-    
+
     for (int i=0; i<48; i++)
-        entropy_input[i] = i;
+        entropy_input[i] = (unsigned char)i;
 
     randombytes_init(entropy_input, NULL);
     for (int i=0; i<100; i++) {
         fprintf(fp_req, "count = %d\n", i);
         randombytes(seed, 48);
         fprintBstr(fp_req, "seed = ", seed, 48);
-        mlen = 33*(i+1);
+        mlen = (unsigned long long int)(33*(i+1));
         fprintf(fp_req, "mlen = %llu\n", mlen);
         randombytes(msg, mlen);
         fprintBstr(fp_req, "msg = ", msg, mlen);
@@ -70,13 +70,13 @@ main()
         fprintf(fp_req, "sm =\n\n");
     }
     fclose(fp_req);
-    
+
     //Create the RESPONSE file based on what's in the REQUEST file
     if ( (fp_req = fopen(fn_req, "r")) == NULL ) {
         printf("Couldn't open <%s> for read\n", fn_req);
         return KAT_FILE_OPEN_ERROR;
     }
-    
+
     fprintf(fp_rsp, "# %s\n\n", CRYPTO_ALGNAME);
     done = 0;
     do {
@@ -87,15 +87,15 @@ main()
             break;
         }
         fprintf(fp_rsp, "count = %d\n", count);
-        
+
         if ( !ReadHex(fp_req, seed, 48, "seed = ") ) {
             printf("ERROR: unable to read 'seed' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
         }
         fprintBstr(fp_rsp, "seed = ", seed, 48);
-        
+
         randombytes_init(seed, NULL);
-        
+
         if ( FindMarker(fp_req, "mlen = ") )
             ret_val = fscanf(fp_req, "%llu", &mlen);
         else {
@@ -103,17 +103,17 @@ main()
             return KAT_DATA_ERROR;
         }
         fprintf(fp_rsp, "mlen = %llu\n", mlen);
-        
+
         m = (unsigned char *)calloc(mlen, sizeof(unsigned char));
         m1 = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
         sm = (unsigned char *)calloc(mlen+CRYPTO_BYTES, sizeof(unsigned char));
-        
+
         if ( !ReadHex(fp_req, m, (int)mlen, "msg = ") ) {
             printf("ERROR: unable to read 'msg' from <%s>\n", fn_req);
             return KAT_DATA_ERROR;
         }
         fprintBstr(fp_rsp, "msg = ", m, mlen);
-        
+
         // Generate the public/private keypair
         if ( (ret_val = crypto_sign_keypair(pk, sk)) != 0) {
             printf("crypto_sign_keypair returned <%d>\n", ret_val);
@@ -121,7 +121,7 @@ main()
         }
         fprintBstr(fp_rsp, "pk = ", pk, CRYPTO_PUBLICKEYBYTES);
         fprintBstr(fp_rsp, "sk = ", sk, CRYPTO_SECRETKEYBYTES);
-        
+
         if ( (ret_val = crypto_sign(sm, &smlen, m, mlen, sk)) != 0) {
             printf("crypto_sign returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
@@ -129,28 +129,28 @@ main()
         fprintf(fp_rsp, "smlen = %llu\n", smlen);
         fprintBstr(fp_rsp, "sm = ", sm, smlen);
         fprintf(fp_rsp, "\n");
-        
+
         if ( (ret_val = crypto_sign_open(m1, &mlen1, sm, smlen, pk)) != 0) {
             printf("crypto_sign_open returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         if ( mlen != mlen1 ) {
             printf("crypto_sign_open returned bad 'mlen': Got <%llu>, expected <%llu>\n", mlen1, mlen);
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         if ( memcmp(m, m1, mlen) ) {
             printf("crypto_sign_open returned bad 'm' value\n");
             return KAT_CRYPTO_FAILURE;
         }
-        
+
         free(m);
         free(m1);
         free(sm);
 
     } while ( !done );
-    
+
     fclose(fp_req);
     fclose(fp_rsp);
 
@@ -164,17 +164,17 @@ int
 FindMarker(FILE *infile, const char *marker)
 {
 	char	line[MAX_MARKER_LEN];
-	int		i, len;
+	size_t		i, len;
 	int curr_line;
 
-	len = (int)strlen(marker);
+	len = strlen(marker);
 	if ( len > MAX_MARKER_LEN-1 )
 		len = MAX_MARKER_LEN-1;
 
 	for ( i=0; i<len; i++ )
 	  {
 	    curr_line = fgetc(infile);
-	    line[i] = curr_line;
+	    line[i] = (char)curr_line;
 	    if (curr_line == EOF )
 	      return 0;
 	  }
@@ -187,7 +187,7 @@ FindMarker(FILE *infile, const char *marker)
 		for ( i=0; i<len-1; i++ )
 			line[i] = line[i+1];
 		curr_line = fgetc(infile);
-		line[len-1] = curr_line;
+		line[len-1] = (char)curr_line;
 		if (curr_line == EOF )
 		    return 0;
 		line[len] = '\0';
@@ -210,7 +210,7 @@ ReadHex(FILE *infile, unsigned char *A, int Length, char *str)
 		A[0] = 0x00;
 		return 1;
 	}
-	memset(A, 0x00, Length);
+	memset(A, 0x00, (size_t)Length);
 	started = 0;
 	if ( FindMarker(infile, str) )
 		while ( (ch = fgetc(infile)) != EOF ) {
@@ -226,14 +226,14 @@ ReadHex(FILE *infile, unsigned char *A, int Length, char *str)
 			}
 			started = 1;
 			if ( (ch >= '0') && (ch <= '9') )
-				ich = ch - '0';
+				ich = (unsigned char)(ch - '0');
 			else if ( (ch >= 'A') && (ch <= 'F') )
-				ich = ch - 'A' + 10;
+				ich = (unsigned char)(ch - 'A' + 10);
 			else if ( (ch >= 'a') && (ch <= 'f') )
-				ich = ch - 'a' + 10;
+				ich = (unsigned char)(ch - 'a' + 10);
             else // shouldn't ever get here
                 ich = 0;
-			
+
 			for ( i=0; i<Length-1; i++ )
 				A[i] = (A[i] << 4) | (A[i+1] >> 4);
 			A[Length-1] = (A[Length-1] << 4) | ich;

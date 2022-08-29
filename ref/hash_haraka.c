@@ -87,6 +87,6 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
     bufp += SPX_TREE_BYTES;
 
-    *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
+    *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
 }

@@ -1,4 +1,4 @@
-#if !defined( SHA2_OFFSETS_H_ )
+#ifndef SHA2_OFFSETS_H_
 #define SHA2_OFFSETS_H_
 
 /*
