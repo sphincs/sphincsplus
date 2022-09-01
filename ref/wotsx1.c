@@ -31,7 +31,7 @@ void wots_gen_leafx1(unsigned char *dest,
         wots_k_mask = 0;
     } else {
         /* Nope, we're just generating pk's; turn off the signature logic */
-        wots_k_mask = ~0;
+        wots_k_mask = (uint32_t)~0;
     }
 
     set_keypair_addr( leaf_addr, leaf_idx );
@@ -45,7 +45,7 @@ void wots_gen_leafx1(unsigned char *dest,
         set_chain_addr(leaf_addr, i);
         set_hash_addr(leaf_addr, 0);
         set_type(leaf_addr, SPX_ADDR_TYPE_WOTSPRF);
- 
+
         prf_addr(buffer, ctx, leaf_addr);
 
         set_type(leaf_addr, SPX_ADDR_TYPE_WOTS);

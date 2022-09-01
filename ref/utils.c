@@ -15,7 +15,7 @@ void ull_to_bytes(unsigned char *out, unsigned int outlen,
     int i;
 
     /* Iterate over out in decreasing order, for big-endianness. */
-    for (i = outlen - 1; i >= 0; i--) {
+    for (i = (signed int)outlen - 1; i >= 0; i--) {
         out[i] = in & 0xff;
         in = in >> 8;
     }

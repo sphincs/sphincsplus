@@ -103,7 +103,7 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     unsigned char optrand[SPX_N];
     unsigned char mhash[SPX_FORS_MSG_BYTES];
     unsigned char root[SPX_N];
-    unsigned long long i;
+    uint32_t i;
     uint64_t tree;
     uint32_t idx_leaf;
     uint32_t wots_addr[8] = {0};
@@ -179,7 +179,7 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
     if (siglen != SPX_BYTES) {
         return -1;
     }
-    
+
     memcpy(ctx.pub_seed, pk, SPX_N);
 
     /* This hook allows the hash function instantiation to do whatever

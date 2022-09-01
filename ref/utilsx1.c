@@ -12,7 +12,7 @@
  * Expects the layer and tree parts of the tree_addr to be set, as well as the
  * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_FORSTREE)
  *
- * This expecta tree_addr to be initialized to the addr structures for the 
+ * This expects tree_addr to be initialized to the addr structures for the
  * Merkle tree nodes
  *
  * Applies the offset idx_offset to indices before building addresses, so that
@@ -35,7 +35,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
     SPX_VLA(uint8_t, stack, tree_height*SPX_N);
 
     uint32_t idx;
-    uint32_t max_idx = (1 << tree_height) - 1;
+    uint32_t max_idx = (uint32_t)((1 << tree_height) - 1);
     for (idx = 0;; idx++) {
         unsigned char current[2*SPX_N];   /* Current logical node is at */
             /* index[SPX_N].  We do this to minimize the number of copies */
@@ -57,7 +57,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
                 memcpy( root, &current[SPX_N], SPX_N );
                 return;
             }
-            
+
             /*
              * Check if the node we have is a part of the
              * authentication path; if it is, write it out
