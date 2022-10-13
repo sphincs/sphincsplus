@@ -1,4 +1,4 @@
-PARAMS = sphincs-haraka-128f
+PARAMS = sphincs-shake-256f
 THASH = robust
 
 CC=/usr/bin/gcc
@@ -32,7 +32,7 @@ BENCHMARK = test/benchmark
 
 default: PQCgenKAT_sign
 
-all: PQCgenKAT_sign tests benchmarks
+all: PQCgenKAT_sign tests benchmarks libsphincs
 
 tests: $(TESTS)
 
@@ -63,3 +63,7 @@ clean:
 	-$(RM) PQCgenKAT_sign
 	-$(RM) PQCsignKAT_*.rsp
 	-$(RM) PQCsignKAT_*.req
+	-$(RM) libsphincs
+
+libsphincs:
+	$(CC) -shared -o libsphincs.so $(CFLAGS) $(SOURCES)
