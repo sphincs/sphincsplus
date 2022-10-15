@@ -67,3 +67,10 @@ clean:
 
 libsphincs:
 	$(CC) -shared -o libsphincs.so $(CFLAGS) $(SOURCES)
+
+install:
+	mkdir -p /opt/sphincsplus/lib
+	mkdir -p /opt/sphincsplus/include
+	cp *.h /opt/sphincsplus/include
+	cp -a params /opt/sphincsplus/include
+	cp *.so /opt/sphincsplus/lib
