@@ -1,4 +1,4 @@
-PARAMS = sphincs-haraka-128f
+PARAMS = sphincs-shake-256f
 THASH = robust
 
 CC=/usr/bin/gcc
@@ -32,7 +32,7 @@ BENCHMARK = test/benchmark
 
 default: PQCgenKAT_sign
 
-all: PQCgenKAT_sign tests benchmarks
+all: PQCgenKAT_sign tests benchmarks libsphincsplus.so
 
 tests: $(TESTS)
 
@@ -63,3 +63,16 @@ clean:
 	-$(RM) PQCgenKAT_sign
 	-$(RM) PQCsignKAT_*.rsp
 	-$(RM) PQCsignKAT_*.req
+	-$(RM) libsphincsplus.so
+
+libsphincsplus.so:
+	$(CC) -shared -o libsphincsplus.so $(CFLAGS) $(SOURCES)
+
+DESTDIR ?= /usr/local
+install: libsphincsplus.so
+		install -d $(DESTDIR)/include/sphincsplus/
+		install -d $(DESTDIR)/include/sphincsplus/params
+		install -d $(DESTDIR)/lib/
+		install -v *.h $(DESTDIR)/include/sphincsplus/
+		install -v params/* $(DESTDIR)/include/sphincsplus/params
+		install -v libsphincsplus.so $(DESTDIR)/lib/
