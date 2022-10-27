@@ -32,7 +32,7 @@ BENCHMARK = test/benchmark
 
 default: PQCgenKAT_sign
 
-all: PQCgenKAT_sign tests benchmarks libsphincs
+all: PQCgenKAT_sign tests benchmarks libsphincsplus.so
 
 tests: $(TESTS)
 
@@ -63,14 +63,16 @@ clean:
 	-$(RM) PQCgenKAT_sign
 	-$(RM) PQCsignKAT_*.rsp
 	-$(RM) PQCsignKAT_*.req
-	-$(RM) libsphincs
+	-$(RM) libsphincsplus.so
 
-libsphincs:
-	$(CC) -shared -o libsphincs.so $(CFLAGS) $(SOURCES)
+libsphincsplus.so:
+	$(CC) -shared -o libsphincsplus.so $(CFLAGS) $(SOURCES)
 
-install:
-	mkdir -p /opt/sphincsplus/lib
-	mkdir -p /opt/sphincsplus/include
-	cp *.h /opt/sphincsplus/include
-	cp -a params /opt/sphincsplus/include
-	cp *.so /opt/sphincsplus/lib
+DESTDIR ?= /usr/local
+install: libsphincsplus.so
+		install -d $(DESTDIR)/include/sphincsplus/
+		install -d $(DESTDIR)/include/sphincsplus/params
+		install -d $(DESTDIR)/lib/
+		install -v *.h $(DESTDIR)/include/sphincsplus/
+		install -v params/* $(DESTDIR)/include/sphincsplus/params
+		install -v libsphincsplus.so $(DESTDIR)/lib/
