@@ -4,6 +4,7 @@
 #include "address.h"
 #include "utils.h"
 #include "params.h"
+#include "hash.h"
 #include "hashx8.h"
 #include "sha2.h"
 #include "sha256x8.h"
@@ -49,7 +50,7 @@ void prf_addrx8(unsigned char *out0,
         outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
 
         /* seed */
-        ctx->state_seeded, 512,
+        &ctx->statex8_seeded,
 
         /* in */
         bufx8 + 0*(SPX_SHA256_ADDR_BYTES + SPX_N),

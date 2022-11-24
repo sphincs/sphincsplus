@@ -10,7 +10,7 @@ typedef struct SHA512state4x {
     unsigned char msgblocks[4*128];
     int datalen;
     unsigned long long msglen;
-} sha512ctx4x;
+} sha512x4ctx;
 
 
 #define sha512x4_seeded SPX_NAMESPACE(sha512x4_seeded)
@@ -19,14 +19,14 @@ void sha512x4_seeded(
     unsigned char *out1,
     unsigned char *out2,
     unsigned char *out3,
-    const unsigned char *seed,
-    unsigned long long seedlen,
+    const sha512x4ctx *seed,
     const unsigned char *in0,
     const unsigned char *in1,
     const unsigned char *in2,
     const unsigned char *in3,
     unsigned long long inlen);
 
+void sha512_ctx_clone4x(sha512x4ctx *out, const sha512x4ctx *in);
 
 /**
  * Note that inlen should be sufficiently small that it still allows for

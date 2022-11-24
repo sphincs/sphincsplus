@@ -4,8 +4,68 @@
 
 #include "sha256avx.h"
 
+static const unsigned int RC[] = {
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+    0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+    0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+    0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+    0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+    0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+    0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+    0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+    0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+};
+
+#define u32 uint32_t
+#define u256 __m256i
+
+#define XOR _mm256_xor_si256
+#define OR _mm256_or_si256
+#define AND _mm256_and_si256
+#define ADD32 _mm256_add_epi32
+#define NOT(x) _mm256_xor_si256(x, _mm256_set_epi32(-1, -1, -1, -1, -1, -1, -1, -1))
+
+#define LOAD(src) _mm256_loadu_si256((__m256i *)(src))
+#define STORE(dest,src) _mm256_storeu_si256((__m256i *)(dest),src)
+
+#define BYTESWAP(x) _mm256_shuffle_epi8(x, _mm256_set_epi8(0xc,0xd,0xe,0xf,0x8,0x9,0xa,0xb,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xc,0xd,0xe,0xf,0x8,0x9,0xa,0xb,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3))
+
+#define SHIFTR32(x, y) _mm256_srli_epi32(x, y)
+#define SHIFTL32(x, y) _mm256_slli_epi32(x, y)
+
+#define ROTR32(x, y) OR(SHIFTR32(x, y), SHIFTL32(x, 32 - y))
+#define ROTL32(x, y) OR(SHIFTL32(x, y), SHIFTR32(x, 32 - y))
+
+#define XOR3(a, b, c) XOR(XOR(a, b), c)
+
+#define ADD3_32(a, b, c) ADD32(ADD32(a, b), c)
+#define ADD4_32(a, b, c, d) ADD32(ADD32(ADD32(a, b), c), d)
+#define ADD5_32(a, b, c, d, e) ADD32(ADD32(ADD32(ADD32(a, b), c), d), e)
+
+#define MAJ_AVX(a, b, c) XOR3(AND(a, b), AND(a, c), AND(b, c))
+#define CH_AVX(a, b, c) XOR(AND(a, b), AND(NOT(a), c))
+
+#define SIGMA1_AVX(x) XOR3(ROTR32(x, 6), ROTR32(x, 11), ROTR32(x, 25))
+#define SIGMA0_AVX(x) XOR3(ROTR32(x, 2), ROTR32(x, 13), ROTR32(x, 22))
+
+#define WSIGMA1_AVX(x) XOR3(ROTR32(x, 17), ROTR32(x, 19), SHIFTR32(x, 10))
+#define WSIGMA0_AVX(x) XOR3(ROTR32(x, 7), ROTR32(x, 18), SHIFTR32(x, 3))
+
+#define SHA256ROUND_AVX(a, b, c, d, e, f, g, h, rc, w) \
+    T0 = ADD5_32(h, SIGMA1_AVX(e), CH_AVX(e, f, g), _mm256_set1_epi32(RC[rc]), w); \
+    d = ADD32(d, T0); \
+    T1 = ADD32(SIGMA0_AVX(a), MAJ_AVX(a, b, c)); \
+    h = ADD32(T0, T1);
+
 // Transpose 8 vectors containing 32-bit values
-void transpose(u256 s[8]) {
+static void transpose(u256 s[8]) {
     u256 tmp0[8];
     u256 tmp1[8];
     tmp0[0] = _mm256_unpacklo_epi32(s[0], s[1]);
@@ -31,10 +91,14 @@ void transpose(u256 s[8]) {
     s[4] = _mm256_permute2x128_si256(tmp1[0], tmp1[4], 0x31);
     s[5] = _mm256_permute2x128_si256(tmp1[1], tmp1[5], 0x31);
     s[6] = _mm256_permute2x128_si256(tmp1[2], tmp1[6], 0x31);
-    s[7] = _mm256_permute2x128_si256(tmp1[3], tmp1[7], 0x31);    
+    s[7] = _mm256_permute2x128_si256(tmp1[3], tmp1[7], 0x31);
 }
 
-void sha256_init8x(sha256ctx *ctx) {
+void sha256_ctx_clone8x(sha256x8ctx *out, const sha256x8ctx *in) {
+    memcpy(out, in, sizeof(sha256x8ctx));
+}
+
+void sha256_init8x(sha256x8ctx *ctx) {
     ctx->s[0] = _mm256_set_epi32(0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667,0x6a09e667);
     ctx->s[1] = _mm256_set_epi32(0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85,0xbb67ae85);
     ctx->s[2] = _mm256_set_epi32(0x3c6ef372,0x3c6ef372,0x3c6ef372,0x3c6ef372,0x3c6ef372,0x3c6ef372,0x3c6ef372,0x3c6ef372);
@@ -43,12 +107,12 @@ void sha256_init8x(sha256ctx *ctx) {
     ctx->s[5] = _mm256_set_epi32(0x9b05688c,0x9b05688c,0x9b05688c,0x9b05688c,0x9b05688c,0x9b05688c,0x9b05688c,0x9b05688c);
     ctx->s[6] = _mm256_set_epi32(0x1f83d9ab,0x1f83d9ab,0x1f83d9ab,0x1f83d9ab,0x1f83d9ab,0x1f83d9ab,0x1f83d9ab,0x1f83d9ab);
     ctx->s[7] = _mm256_set_epi32(0x5be0cd19,0x5be0cd19,0x5be0cd19,0x5be0cd19,0x5be0cd19,0x5be0cd19,0x5be0cd19,0x5be0cd19);
-    
+
     ctx->datalen = 0;
     ctx->msglen = 0;
 }
 
-void sha256_final8x(sha256ctx *ctx,
+void sha256_final8x(sha256x8ctx *ctx,
                     unsigned char *out0,
                     unsigned char *out1,
                     unsigned char *out2,
@@ -56,7 +120,7 @@ void sha256_final8x(sha256ctx *ctx,
                     unsigned char *out4,
                     unsigned char *out5,
                     unsigned char *out6,
-                    unsigned char *out7) 
+                    unsigned char *out7)
 {
     unsigned int i, curlen;
 
@@ -127,7 +191,7 @@ void sha256_final8x(sha256ctx *ctx,
     STORE(out7, BYTESWAP(ctx->s[7]));
 }
 
-void sha256_transform8x(sha256ctx *ctx,
+void sha256_transform8x(sha256x8ctx *ctx,
         const unsigned char* data0,
         const unsigned char* data1,
         const unsigned char* data2,
@@ -169,7 +233,7 @@ void sha256_transform8x(sha256ctx *ctx,
     s[6] = ctx->s[6];
     s[7] = ctx->s[7];
 
-    SHA256ROUND_AVX(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, w[0]);    
+    SHA256ROUND_AVX(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, w[0]);
     SHA256ROUND_AVX(s[7], s[0], s[1], s[2], s[3], s[4], s[5], s[6], 1, w[1]);
     SHA256ROUND_AVX(s[6], s[7], s[0], s[1], s[2], s[3], s[4], s[5], 2, w[2]);
     SHA256ROUND_AVX(s[5], s[6], s[7], s[0], s[1], s[2], s[3], s[4], 3, w[3]);
@@ -184,7 +248,7 @@ void sha256_transform8x(sha256ctx *ctx,
     SHA256ROUND_AVX(s[4], s[5], s[6], s[7], s[0], s[1], s[2], s[3], 12, w[12]);
     SHA256ROUND_AVX(s[3], s[4], s[5], s[6], s[7], s[0], s[1], s[2], 13, w[13]);
     SHA256ROUND_AVX(s[2], s[3], s[4], s[5], s[6], s[7], s[0], s[1], 14, w[14]);
-    SHA256ROUND_AVX(s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[0], 15, w[15]);   
+    SHA256ROUND_AVX(s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[0], 15, w[15]);
     w[16] = ADD4_32(WSIGMA1_AVX(w[14]), w[0], w[9], WSIGMA0_AVX(w[1]));
     SHA256ROUND_AVX(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 16, w[16]);
     w[17] = ADD4_32(WSIGMA1_AVX(w[15]), w[1], w[10], WSIGMA0_AVX(w[2]));
@@ -216,7 +280,7 @@ void sha256_transform8x(sha256ctx *ctx,
     w[30] = ADD4_32(WSIGMA1_AVX(w[28]), w[14], w[23], WSIGMA0_AVX(w[15]));
     SHA256ROUND_AVX(s[2], s[3], s[4], s[5], s[6], s[7], s[0], s[1], 30, w[30]);
     w[31] = ADD4_32(WSIGMA1_AVX(w[29]), w[15], w[24], WSIGMA0_AVX(w[16]));
-    SHA256ROUND_AVX(s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[0], 31, w[31]);   
+    SHA256ROUND_AVX(s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[0], 31, w[31]);
     w[32] = ADD4_32(WSIGMA1_AVX(w[30]), w[16], w[25], WSIGMA0_AVX(w[17]));
     SHA256ROUND_AVX(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 32, w[32]);
     w[33] = ADD4_32(WSIGMA1_AVX(w[31]), w[17], w[26], WSIGMA0_AVX(w[18]));
@@ -268,9 +332,9 @@ void sha256_transform8x(sha256ctx *ctx,
     w[56] = ADD4_32(WSIGMA1_AVX(w[54]), w[40], w[49], WSIGMA0_AVX(w[41]));
     SHA256ROUND_AVX(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 56, w[56]);
     w[57] = ADD4_32(WSIGMA1_AVX(w[55]), w[41], w[50], WSIGMA0_AVX(w[42]));
-    SHA256ROUND_AVX(s[7], s[0], s[1], s[2], s[3], s[4], s[5], s[6], 57, w[57]); 
+    SHA256ROUND_AVX(s[7], s[0], s[1], s[2], s[3], s[4], s[5], s[6], 57, w[57]);
     w[58] = ADD4_32(WSIGMA1_AVX(w[56]), w[42], w[51], WSIGMA0_AVX(w[43]));
-    SHA256ROUND_AVX(s[6], s[7], s[0], s[1], s[2], s[3], s[4], s[5], 58, w[58]);   
+    SHA256ROUND_AVX(s[6], s[7], s[0], s[1], s[2], s[3], s[4], s[5], 58, w[58]);
     w[59] = ADD4_32(WSIGMA1_AVX(w[57]), w[43], w[52], WSIGMA0_AVX(w[44]));
     SHA256ROUND_AVX(s[5], s[6], s[7], s[0], s[1], s[2], s[3], s[4], 59, w[59]);
     w[60] = ADD4_32(WSIGMA1_AVX(w[58]), w[44], w[53], WSIGMA0_AVX(w[45]));

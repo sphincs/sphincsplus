@@ -4,6 +4,7 @@
 #include "address.h"
 #include "utils.h"
 #include "params.h"
+#include "hash.h"
 #include "thashx8.h"
 #include "sha2.h"
 #include "sha256x8.h"
@@ -128,7 +129,7 @@ void thashx8(unsigned char *out0,
         outbufx8 + 7*SPX_SHA256_OUTPUT_BYTES,
 
         /* seed */
-        ctx->state_seeded, 512,
+        &ctx->statex8_seeded,
 
         /* in */
         bufx8 + SPX_N + 0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
@@ -240,8 +241,7 @@ static void thashx8_512(
         outbuf + 1*SPX_SHA512_OUTPUT_BYTES,
         outbuf + 2*SPX_SHA512_OUTPUT_BYTES,
         outbuf + 3*SPX_SHA512_OUTPUT_BYTES,
-        ctx->state_seeded_512, /* seed */
-        1024,                  /* seed length */
+        &ctx->statex4_seeded_512, /* seed */
         bufx8 + SPX_N + 0*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx8 + SPX_N + 1*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx8 + SPX_N + 2*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
@@ -259,8 +259,7 @@ static void thashx8_512(
         outbuf + 1*SPX_SHA512_OUTPUT_BYTES,
         outbuf + 2*SPX_SHA512_OUTPUT_BYTES,
         outbuf + 3*SPX_SHA512_OUTPUT_BYTES,
-        ctx->state_seeded_512, /* seed */
-        1024,                  /* seed length */
+        &ctx->statex4_seeded_512, /* seed */
         bufx8 + SPX_N + 4*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx8 + SPX_N + 5*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
         bufx8 + SPX_N + 6*(SPX_N + SPX_SHA256_ADDR_BYTES + inblocks*SPX_N),
