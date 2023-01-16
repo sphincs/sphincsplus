@@ -2,11 +2,6 @@
 
 #include "context.h"
 
-static uint32_t load_bigendian_32(const uint8_t *x) {
-    return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) |
-           (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
-}
-
 /**
  * Absorb the constant pub_seed using one round of the compression function
  * This initializes state_seeded and state_seeded_512, which can then be
@@ -27,13 +22,11 @@ static void seed_state(spx_ctx *ctx) {
     sha256_inc_init(&ctx->state_seeded);
     sha256_inc_blocks(&ctx->state_seeded, block, 1);
 
-    // this still assumes internal representation of the SHA256x1 API.
-    // should be replaced by proper initialization.
-    for (size_t i = 0; i < 8; i++) {
-        uint32_t t = load_bigendian_32(((uint8_t*)&ctx->state_seeded.ctx) + 4*i);
-        ctx->statex8_seeded.s[i] = _mm256_set_epi32(t, t, t, t, t, t, t, t);
-    }
-
+    // initialize x8
+    sha256_init8x(&ctx->statex8_seeded);
+    sha256_transform8x(&ctx->statex8_seeded,
+        block, block, block, block,
+        block, block, block, block);
     ctx->statex8_seeded.datalen = 0;
     ctx->statex8_seeded.msglen = 512;
 
@@ -41,22 +34,11 @@ static void seed_state(spx_ctx *ctx) {
     sha512_inc_init(&ctx->state_seeded_512);
     sha512_inc_blocks(&ctx->state_seeded_512, block, 1);
 
-    // this still assumes internal representation of the SHA512x1 API.
-    // should be replaced by proper initialization.
-    uint8_t *seed = (uint8_t*)&ctx->state_seeded_512.ctx;
-    for (i = 0; i < 8; i++) {
-        uint64_t t = (uint64_t)(seed[7]) | (((uint64_t)(seed[6])) << 8) |
-           (((uint64_t)(seed[5])) << 16) | (((uint64_t)(seed[4])) << 24) |
-           (((uint64_t)(seed[3])) << 32) | (((uint64_t)(seed[2])) << 40) |
-           (((uint64_t)(seed[1])) << 48) | (((uint64_t)(seed[0])) << 56);
-        ctx->statex4_seeded_512.s[i] = _mm256_set_epi64x(t, t, t, t);
-        seed += 8;
-    }
-
+    // initialize x4
+    sha512_initx4(&ctx->statex4_seeded_512);
+    sha512_transform(&ctx->statex4_seeded_512, block, block, block, block);
     ctx->statex4_seeded_512.datalen = 0;
     ctx->statex4_seeded_512.msglen = 1024;
-
-
 #endif
 }
 

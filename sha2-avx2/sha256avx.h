@@ -1,18 +1,25 @@
 #ifndef SHA256AVX_H
 #define SHA256AVX_H
 
-#include <stdint.h>
 #include <immintrin.h>
+#include <stdint.h>
+
+#include "params.h"
 
 typedef struct SHA256state {
     __m256i s[8];
     unsigned char msgblocks[8*64];
-    int datalen;
+    unsigned int datalen;
     unsigned long long msglen;
 } sha256x8ctx;
 
+#define sha256_ctx_clone8x SPX_NAMESPACE(sha256_ctx_clone8x)
 void sha256_ctx_clone8x(sha256x8ctx *out, const sha256x8ctx *in);
+
+#define sha256_init8x SPX_NAMESPACE(sha256_init8x)
 void sha256_init8x(sha256x8ctx *ctx);
+
+#define sha256_final8x SPX_NAMESPACE(sha256_final8x)
 void sha256_final8x(sha256x8ctx *ctx,
                     unsigned char *out0,
                     unsigned char *out1,
@@ -23,6 +30,7 @@ void sha256_final8x(sha256x8ctx *ctx,
                     unsigned char *out6,
                     unsigned char *out7);
 
+#define sha256_transform8x SPX_NAMESPACE(sha256_transform8x)
 void sha256_transform8x(sha256x8ctx *ctx,
         const unsigned char *data0,
         const unsigned char *data1,

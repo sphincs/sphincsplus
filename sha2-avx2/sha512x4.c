@@ -10,14 +10,6 @@
 typedef uint64_t u64;
 typedef __m256i u256;
 
-static void sha512_transform4x(
-    sha512x4ctx *ctx,
-    const unsigned char *d0,
-    const unsigned char *d1,
-    const unsigned char *d2,
-    const unsigned char *d3
-);
-
 #define BYTESWAP(x) _mm256_shuffle_epi8(x, _mm256_set_epi8(0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7))
 #define STORE(dest,src) _mm256_storeu_si256((__m256i *)(dest),src)
 
@@ -51,7 +43,7 @@ static void transpose(u256 s[4]) {
 }
 
 
-static void sha512_init4x(sha512x4ctx *ctx) {
+void sha512_init4x(sha512x4ctx *ctx) {
 #define SET4(x) _mm256_set_epi64x(x, x, x, x)
     ctx->s[0] = SET4(0x6a09e667f3bcc908ULL);
     ctx->s[1] = SET4(0xbb67ae8584caa73bULL);
@@ -155,7 +147,7 @@ static const unsigned long long RC[80] = {
     0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL,
 };
 
-static void sha512_transform4x(
+void sha512_transform4x(
         sha512x4ctx *ctx,
         const unsigned char *d0,
         const unsigned char *d1,
