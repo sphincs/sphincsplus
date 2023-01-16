@@ -8,11 +8,6 @@
 #include "haraka.h"
 #include "hash.h"
 
-void initialize_hash_function(spx_ctx* ctx)
-{
-    tweak_constants(ctx);
-}
-
 /*
  * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
  */

@@ -2,6 +2,7 @@
 #define SPX_SHA256X8_H
 
 #include "params.h"
+#include "sha256avx.h"
 
 #define SPX_SHA256_BLOCK_BYTES 64
 #define SPX_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SPX_N */
@@ -20,8 +21,7 @@ void sha256x8_seeded(
               unsigned char *out5,
               unsigned char *out6,
               unsigned char *out7,
-              const unsigned char *seed,
-              unsigned long long seedlen,
+              const sha256x8ctx *seed,
               const unsigned char *in0,
               const unsigned char *in1,
               const unsigned char *in2,

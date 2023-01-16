@@ -7,13 +7,6 @@
 #include "hash.h"
 #include "fips202.h"
 
-/* For SHAKE256, there is no immediate reason to initialize at the start,
-   so this function is an empty operation. */
-void initialize_hash_function(spx_ctx* ctx)
-{
-    (void)ctx; /* Suppress an 'unused parameter' warning. */
-}
-
 /*
  * Computes PRF(pk_seed, sk_seed, addr)
  */
@@ -39,14 +32,15 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const spx_ctx *ctx)
 {
     (void)ctx;
-    uint64_t s_inc[26];
+    shake256incctx s_inc;
 
-    shake256_inc_init(s_inc);
-    shake256_inc_absorb(s_inc, sk_prf, SPX_N);
-    shake256_inc_absorb(s_inc, optrand, SPX_N);
-    shake256_inc_absorb(s_inc, m, mlen);
-    shake256_inc_finalize(s_inc);
-    shake256_inc_squeeze(R, SPX_N, s_inc);
+    shake256_inc_init(&s_inc);
+    shake256_inc_absorb(&s_inc, sk_prf, SPX_N);
+    shake256_inc_absorb(&s_inc, optrand, SPX_N);
+    shake256_inc_absorb(&s_inc, m, mlen);
+    shake256_inc_finalize(&s_inc);
+    shake256_inc_squeeze(R, SPX_N, &s_inc);
+    shake256_inc_ctx_release(&s_inc);
 }
 
 /**
@@ -68,14 +62,15 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
-    uint64_t s_inc[26];
+    shake256incctx s_inc;
 
-    shake256_inc_init(s_inc);
-    shake256_inc_absorb(s_inc, R, SPX_N);
-    shake256_inc_absorb(s_inc, pk, SPX_PK_BYTES);
-    shake256_inc_absorb(s_inc, m, mlen);
-    shake256_inc_finalize(s_inc);
-    shake256_inc_squeeze(buf, SPX_DGST_BYTES, s_inc);
+    shake256_inc_init(&s_inc);
+    shake256_inc_absorb(&s_inc, R, SPX_N);
+    shake256_inc_absorb(&s_inc, pk, SPX_PK_BYTES);
+    shake256_inc_absorb(&s_inc, m, mlen);
+    shake256_inc_finalize(&s_inc);
+    shake256_inc_squeeze(buf, SPX_DGST_BYTES, &s_inc);
+    shake256_inc_ctx_release(&s_inc);
 
     memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
     bufp += SPX_FORS_MSG_BYTES;

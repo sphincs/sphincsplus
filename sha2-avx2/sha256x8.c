@@ -4,14 +4,9 @@
 #include "sha256avx.h"
 #include "utils.h"
 
-static uint32_t load_bigendian_32(const uint8_t *x) {
-    return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) |
-           (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
-}
-
 // Performs sha256x8 on an initialized (and perhaps seeded) state.
 static void _sha256x8(
-              sha256ctx *ctx,
+              sha256x8ctx *ctx,
               unsigned char *out0,
               unsigned char *out1,
               unsigned char *out2,
@@ -67,8 +62,7 @@ void sha256x8_seeded(
               unsigned char *out5,
               unsigned char *out6,
               unsigned char *out7,
-              const unsigned char *seed,
-              unsigned long long seedlen,
+              const sha256x8ctx *seed,
               const unsigned char *in0,
               const unsigned char *in1,
               const unsigned char *in2,
@@ -77,17 +71,9 @@ void sha256x8_seeded(
               const unsigned char *in5,
               const unsigned char *in6,
               const unsigned char *in7, unsigned long long inlen) {
-    uint32_t t;
 
-    sha256ctx ctx;
-
-    for (size_t i = 0; i < 8; i++) {
-        t = load_bigendian_32(seed + 4*i);
-        ctx.s[i] = _mm256_set_epi32(t, t, t, t, t, t, t, t);
-    }
-
-    ctx.datalen = 0;
-    ctx.msglen = seedlen;
+    sha256x8ctx ctx;
+    sha256_ctx_clone8x(&ctx, seed);
 
     _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7,
             in0, in1, in2, in3, in4, in5, in6, in7, inlen);
@@ -111,7 +97,7 @@ void sha256x8(unsigned char *out0,
               const unsigned char *in6,
               const unsigned char *in7, unsigned long long inlen)
 {
-    sha256ctx ctx;
+    sha256x8ctx ctx;
     sha256_init8x(&ctx);
 
     _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7,
