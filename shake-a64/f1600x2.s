@@ -1,28 +1,33 @@
-; From https://github.com/bwesterb/armed-keccak
+# From https://github.com/bwesterb/armed-keccak
 
 .macro round
-    ; Execute theta, but without xoring into the state yet.
-    ; Compute parities p[i] = a[i] ^ a[5+i] ^ ... ^ a[20+i].
+    # Execute theta, but without xoring into the state yet.
+    # Compute parities p[i] = a[i] ^ a[5+i] ^ ... ^ a[20+i].
     eor3.16b v25, v0, v5, v10
     eor3.16b v26, v1, v6, v11
     eor3.16b v27, v2, v7, v12
     eor3.16b v28, v3, v8, v13
     eor3.16b v29, v4, v9, v14
 
-    eor3.16b v25, v25, v15, v20 
-    eor3.16b v26, v26, v16, v21 
-    eor3.16b v27, v27, v17, v22 
-    eor3.16b v28, v28, v18, v23 
-    eor3.16b v29, v29, v19, v24 
+    eor3.16b v25, v25, v15, v20
+    eor3.16b v26, v26, v16, v21
+    eor3.16b v27, v27, v17, v22
+    eor3.16b v28, v28, v18, v23
+    eor3.16b v29, v29, v19, v24
 
-    rax1.2d v30, v29, v26 ; d[0] = rotl(p[1], 1) ^ p[4]
-    rax1.2d v29, v27, v29 ; d[3] = rotl(p[4], 1) ^ p[2]
-    rax1.2d v27, v25, v27 ; d[1] = rotl(p[2], 1) ^ p[0]
-    rax1.2d v25, v28, v25 ; d[4] = rotl(p[0], 1) ^ p[3]
-    rax1.2d v28, v26, v28 ; d[2] = rotl(p[3], 1) ^ p[1]
+    # d[0] = rotl(p[1], 1) ^ p[4]
+    rax1.2d v30, v29, v26
+    # d[3] = rotl(p[4], 1) ^ p[2]
+    rax1.2d v29, v27, v29
+    # d[1] = rotl(p[2], 1) ^ p[0]
+    rax1.2d v27, v25, v27
+    # d[4] = rotl(p[0], 1) ^ p[3]
+    rax1.2d v25, v28, v25
+    # d[2] = rotl(p[3], 1) ^ p[1]
+    rax1.2d v28, v26, v28
 
-    ; Xor parities from step theta into the state at the same time
-    ; as executing rho and pi.
+    # Xor parities from step theta into the state at the same time
+    # as executing rho and pi.
     eor.16b v0, v0,  v30
     mov.16b v31, v1
     xar.2d v1,  v6,  v27, 20
@@ -50,7 +55,7 @@
     xar.2d v7,  v10, v30, 61
     xar.2d v10, v31, v27, 63
 
-    ; Chi
+    # Chi
     bcax.16b v25, v0,  v2,  v1
     bcax.16b v26, v1,  v3,  v2
     bcax.16b v2,  v2,  v4,  v3
@@ -74,7 +79,7 @@
     bcax.16b v14, v14,  v11,  v10
     mov.16b v10, v25
     mov.16b v11, v26
-    
+
     bcax.16b v25, v15,  v17,  v16
     bcax.16b v26, v16,  v18,  v17
     bcax.16b v17, v17,  v19,  v18
@@ -82,7 +87,7 @@
     bcax.16b v19, v19,  v16,  v15
     mov.16b v15, v25
     mov.16b v16, v26
-    
+
     bcax.16b v25, v20,  v22,  v21
     bcax.16b v26, v21,  v23,  v22
     bcax.16b v22, v22,  v24,  v23
@@ -91,7 +96,7 @@
     mov.16b v20, v25
     mov.16b v21, v26
 
-    ; iota
+    # iota
     ld1r {v25.2d}, [x1], #8
     eor.16b v0, v0, v25
 .endm
