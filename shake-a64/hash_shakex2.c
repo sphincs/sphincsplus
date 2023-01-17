@@ -39,8 +39,8 @@ void prf_addrx2(unsigned char *out0,
     state[2*(SPX_N/4+4)] = 0x1f;
     state[2*(SPX_N/4+4)+1] = 0x1f;
 
-    state[2*16] = 0x80ll << 56; 
-    state[2*16+1] = 0x80ll << 56; 
+    state[2*16] = 0x80ULL << 56;
+    state[2*16+1] = 0x80ULL << 56;
 
     f1600x2(state);
 
