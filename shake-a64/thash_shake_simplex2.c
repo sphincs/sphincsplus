@@ -53,8 +53,8 @@ void thashx2(unsigned char *out0,
         }
 
         /* Domain separator and padding. */
-        state[2*16] = 0x80ll << 56; 
-        state[2*16+1] = 0x80ll << 56; 
+        state[2*16] = 0x80ULL << 56;
+        state[2*16+1] = 0x80ULL << 56;
 
         state[2*((SPX_N/8)*(1+inblocks)+4)] ^= 0x1f;
         state[2*((SPX_N/8)*(1+inblocks)+4)+1] ^= 0x1f;

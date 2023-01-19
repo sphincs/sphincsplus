@@ -47,7 +47,7 @@ void thashx4(unsigned char *out0,
         for (int i = SPX_N/8+5; i < 16; i++) {
             state[i] = _mm256_set1_epi64x(0);
         }
-        state[16] = _mm256_set1_epi64x(0x80ll << 56);
+        state[16] = _mm256_set1_epi64x((long long)(0x80ULL << 56));
 
         for (int i = 17; i < 25; i++) {
             state[i] = _mm256_set1_epi64x(0);
