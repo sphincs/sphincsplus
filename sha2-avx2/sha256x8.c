@@ -134,7 +134,7 @@ void mgf1x8(unsigned char *outx8, unsigned long outlen,
             const unsigned char *in7,
             unsigned long inlen)
 {
-    unsigned char inbufx8[8*(inlen + 4)];
+    SPX_VLA(unsigned char, inbufx8, 8 * (inlen + 4));
     unsigned char outbufx8[8*SPX_SHA256_OUTPUT_BYTES];
     unsigned long i;
     unsigned int j;

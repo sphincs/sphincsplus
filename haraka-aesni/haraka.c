@@ -1,6 +1,7 @@
 /*
 Plain C implementation of the Haraka256 and Haraka512 permutations.
 */
+#include <immintrin.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
 
 #include "haraka.h"
 #include "harakax4.h"
-#include "immintrin.h"
+#include "utils.h"
 
 #define HARAKAS_RATE 32
 
@@ -135,7 +136,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
                             unsigned char p, const spx_ctx *ctx)
 {
     unsigned long long i;
-    unsigned char t[r];
+    SPX_VLA(unsigned char, t, r);
 
     while (mlen >= r) {
         // XOR block to state
@@ -169,10 +170,10 @@ static void haraka_S_absorb4x(unsigned char *s,
                               const spx_ctx *ctx)
 {
     unsigned long long i;
-    unsigned char t0[r];
-    unsigned char t1[r];
-    unsigned char t2[r];
-    unsigned char t3[r];
+    SPX_VLA(unsigned char, t0, r);
+    SPX_VLA(unsigned char, t1, r);
+    SPX_VLA(unsigned char, t2, r);
+    SPX_VLA(unsigned char, t3, r);
 
     while (mlen >= r) {
         // XOR block to state
