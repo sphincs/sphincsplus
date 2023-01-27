@@ -43,7 +43,7 @@ void treehashx2(unsigned char *root, unsigned char *auth_path,
                 void *info)
 {
     /* This is where we keep the intermediate nodes */
-    unsigned char stackx2[tree_height*2*SPX_N];
+    SPX_VLA(unsigned char, stackx2, 2 * tree_height * SPX_N);
     uint32_t left_adj = 0, prev_left_adj = 0; /* When we're doing the top */
         /* level, the left-most part of the tree isn't at the beginning */
         /* of current[].  These give the offset of the actual start */

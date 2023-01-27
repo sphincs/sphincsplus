@@ -4,6 +4,7 @@
 #include "thashx4.h"
 #include "address.h"
 #include "params.h"
+#include "utils.h"
 
 #include "harakax4.h"
 
@@ -21,14 +22,14 @@ void thashx4(unsigned char *out0,
              const unsigned char *in3, unsigned int inblocks,
              const spx_ctx *ctx, uint32_t addrx4[4*8])
 {
-    unsigned char buf0[SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char buf1[SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char buf2[SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char buf3[SPX_ADDR_BYTES + inblocks*SPX_N];
-    unsigned char bitmask0[inblocks * SPX_N];
-    unsigned char bitmask1[inblocks * SPX_N];
-    unsigned char bitmask2[inblocks * SPX_N];
-    unsigned char bitmask3[inblocks * SPX_N];
+    SPX_VLA(unsigned char, buf0, SPX_ADDR_BYTES + inblocks*SPX_N);
+    SPX_VLA(unsigned char, buf1, SPX_ADDR_BYTES + inblocks*SPX_N);
+    SPX_VLA(unsigned char, buf2, SPX_ADDR_BYTES + inblocks*SPX_N);
+    SPX_VLA(unsigned char, buf3, SPX_ADDR_BYTES + inblocks*SPX_N);
+    SPX_VLA(unsigned char, bitmask0, inblocks * SPX_N);
+    SPX_VLA(unsigned char, bitmask1, inblocks * SPX_N);
+    SPX_VLA(unsigned char, bitmask2, inblocks * SPX_N);
+    SPX_VLA(unsigned char, bitmask3, inblocks * SPX_N);
     unsigned char outbuf[32 * 4];
     unsigned char buf_tmp[64 * 4];
     unsigned int i;

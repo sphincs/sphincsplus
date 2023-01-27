@@ -4,6 +4,7 @@
 #include "thashx4.h"
 #include "address.h"
 #include "params.h"
+#include "utils.h"
 
 #include "fips202x4.h"
 
@@ -73,10 +74,10 @@ void thashx4(unsigned char *out0,
             ((int64_t*)out3)[i] = _mm256_extract_epi64(state[i], 3);
         }
     } else {
-        unsigned char buf0[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf1[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf2[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
-        unsigned char buf3[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
+        SPX_VLA(unsigned char, buf0, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
+        SPX_VLA(unsigned char, buf1, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
+        SPX_VLA(unsigned char, buf2, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
+        SPX_VLA(unsigned char, buf3, SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N);
 
         memcpy(buf0, ctx->pub_seed, SPX_N);
         memcpy(buf1, ctx->pub_seed, SPX_N);
