@@ -1,6 +1,7 @@
 /*
 Plain C implementation of the Haraka256 and Haraka512 permutations.
 */
+#include <immintrin.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
 
 #include "haraka.h"
 #include "harakax4.h"
-#include "immintrin.h"
+#include "utils.h"
 
 #define HARAKAS_RATE 32
 
@@ -65,11 +66,11 @@ Plain C implementation of the Haraka256 and Haraka512 permutations.
 
 #define TRUNCSTORE(out, s0, s1, s2, s3) \
   _mm_storeu_si128((u128 *)out, \
-                   (__m128i)_mm_shuffle_pd((__m128d)s0, (__m128d)s1, 3)); \
+                   _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(s0), _mm_castsi128_pd(s1), 3))); \
   _mm_storeu_si128((u128 *)(out + 16), \
-                   (__m128i)_mm_shuffle_pd((__m128d)s2, (__m128d)s3, 0));
+                   _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(s2), _mm_castsi128_pd(s3), 0)));
 
-void load_haraka_constants(u128 *rc)
+static void load_haraka_constants(u128 *rc)
 {
     rc[0] = _mm_set_epi32(0x0684704c,0xe620c00a,0xb2c5fef0,0x75817b9d);
     rc[1] = _mm_set_epi32(0x8b66b4e1,0x88f3a06b,0x640f6ba4,0x2f08f717);
@@ -121,13 +122,6 @@ void tweak_constants(spx_ctx *ctx)
     /* Use the standard constants to generate tweaked ones. */
     load_haraka_constants(ctx->rc);
 
-    /* Constants for sk.seed */
-    haraka_S(buf, 40*16, ctx->sk_seed, SPX_N, ctx);
-    /* Tweak constants with the pub_seed */
-    for (i = 0; i < 40; i++) {
-        ctx->rc_sseed[i] = LOAD(buf + i*16);
-    }
-
     /* Constants for pk.seed */
     haraka_S(buf, 40*16, ctx->pub_seed, SPX_N, ctx);
 
@@ -142,7 +136,7 @@ static void haraka_S_absorb(unsigned char *s, unsigned int r,
                             unsigned char p, const spx_ctx *ctx)
 {
     unsigned long long i;
-    unsigned char t[r];
+    SPX_VLA(unsigned char, t, r);
 
     while (mlen >= r) {
         // XOR block to state
@@ -176,10 +170,10 @@ static void haraka_S_absorb4x(unsigned char *s,
                               const spx_ctx *ctx)
 {
     unsigned long long i;
-    unsigned char t0[r];
-    unsigned char t1[r];
-    unsigned char t2[r];
-    unsigned char t3[r];
+    SPX_VLA(unsigned char, t0, r);
+    SPX_VLA(unsigned char, t1, r);
+    SPX_VLA(unsigned char, t2, r);
+    SPX_VLA(unsigned char, t3, r);
 
     while (mlen >= r) {
         // XOR block to state
@@ -715,109 +709,6 @@ void haraka256x4(unsigned char *out, const unsigned char *in,
     s[3][0] = _mm_xor_si128(s[3][0], LOAD(in + 96));
     s[3][1] = _mm_xor_si128(s[3][1], LOAD(in + 112));
     
-    STORE(out, s[0][0]);
-    STORE(out + 16, s[0][1]);
-    STORE(out + 32, s[1][0]);
-    STORE(out + 48, s[1][1]);
-    STORE(out + 64, s[2][0]);
-    STORE(out + 80, s[2][1]);
-    STORE(out + 96, s[3][0]);
-    STORE(out + 112, s[3][1]);
-}
-
-void haraka256_sk(unsigned char *out, const unsigned char *in,
-        const spx_ctx *ctx) {
-    u128 s[2], tmp;
-  
-    s[0] = LOAD(in);
-    s[1] = LOAD(in + 16);
-  
-    AES2(s[0], s[1], ctx->rc_sseed);
-    MIX2(s[0], s[1]);
-  
-    AES2(s[0], s[1], ctx->rc_sseed + 4);
-    MIX2(s[0], s[1]);
-  
-    AES2(s[0], s[1], ctx->rc_sseed + 8);
-    MIX2(s[0], s[1]);
-  
-    AES2(s[0], s[1], ctx->rc_sseed + 12);
-    MIX2(s[0], s[1]);
-  
-    AES2(s[0], s[1], ctx->rc_sseed + 16);
-    MIX2(s[0], s[1]);
-  
-    s[0] = XOR128(s[0], LOAD(in));
-    s[1] = XOR128(s[1], LOAD(in + 16));
-  
-    STORE(out, s[0]);
-    STORE(out + 16, s[1]);
-}
-
-void haraka256_skx4(unsigned char *out, const unsigned char *in,
-        const spx_ctx *ctx) 
-{
-    u128 s[4][2], tmp;
-
-    s[0][0] = LOAD(in);
-    s[0][1] = LOAD(in + 16);
-    s[1][0] = LOAD(in + 32);
-    s[1][1] = LOAD(in + 48);
-    s[2][0] = LOAD(in + 64);
-    s[2][1] = LOAD(in + 80);
-    s[3][0] = LOAD(in + 96);
-    s[3][1] = LOAD(in + 112);
-
-    // Round 1
-    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed);
-
-    MIX2(s[0][0], s[0][1]);
-    MIX2(s[1][0], s[1][1]);
-    MIX2(s[2][0], s[2][1]);
-    MIX2(s[3][0], s[3][1]);
-
-    // Round 2
-    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 4);
-
-    MIX2(s[0][0], s[0][1]);
-    MIX2(s[1][0], s[1][1]);
-    MIX2(s[2][0], s[2][1]);
-    MIX2(s[3][0], s[3][1]);
-
-    // Round 3
-    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 8);
-
-    MIX2(s[0][0], s[0][1]);
-    MIX2(s[1][0], s[1][1]);
-    MIX2(s[2][0], s[2][1]);
-    MIX2(s[3][0], s[3][1]);
-
-    // Round 4
-    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 12);
-
-    MIX2(s[0][0], s[0][1]);
-    MIX2(s[1][0], s[1][1]);
-    MIX2(s[2][0], s[2][1]);
-    MIX2(s[3][0], s[3][1]);
-
-    // Round 5
-    AES2_4x(s[0], s[1], s[2], s[3], ctx->rc_sseed + 16);
-
-    MIX2(s[0][0], s[0][1]);
-    MIX2(s[1][0], s[1][1]);
-    MIX2(s[2][0], s[2][1]);
-    MIX2(s[3][0], s[3][1]);
-
-    // Feed Forward
-    s[0][0] = XOR128(s[0][0], LOAD(in));
-    s[0][1] = XOR128(s[0][1], LOAD(in + 16));
-    s[1][0] = XOR128(s[1][0], LOAD(in + 32));
-    s[1][1] = XOR128(s[1][1], LOAD(in + 48));
-    s[2][0] = XOR128(s[2][0], LOAD(in + 64));
-    s[2][1] = XOR128(s[2][1], LOAD(in + 80));
-    s[3][0] = XOR128(s[3][0], LOAD(in + 96));
-    s[3][1] = XOR128(s[3][1], LOAD(in + 112));
-
     STORE(out, s[0][0]);
     STORE(out + 16, s[0][1]);
     STORE(out + 32, s[1][0]);

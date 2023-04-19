@@ -1,1 +1,1 @@
-../shake256-avx2/merkle.c
+../shake-avx2/merkle.c

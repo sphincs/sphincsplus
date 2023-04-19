@@ -1,6 +1,8 @@
 #ifndef SPX_PARAMS_H
 #define SPX_PARAMS_H
 
+#define SPX_NAMESPACE(s) SPX_##s
+
 /* Hash output length in bytes. */
 #define SPX_N 24
 /* Height of the hypertree. */
@@ -72,11 +74,6 @@
                    SPX_FULL_HEIGHT * SPX_N)
 #define SPX_PK_BYTES (2 * SPX_N)
 #define SPX_SK_BYTES (2 * SPX_N + SPX_PK_BYTES)
-
-/* Optionally, signing can be made non-deterministic using optrand.
-   This can help counter side-channel attacks that would benefit from
-   getting a large number of traces when the signer uses the same nodes. */
-#define SPX_OPTRAND_BYTES 32
 
 #include "../haraka_offsets.h"
 

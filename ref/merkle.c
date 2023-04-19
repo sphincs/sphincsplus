@@ -14,7 +14,7 @@
  * authentication path).  This is in this file because most of the complexity
  * is involved with the WOTS signature; the Merkle authentication path logic
  * is mostly hidden in treehashx4
- */ 
+ */
 void merkle_sign(uint8_t *sig, unsigned char *root,
                  const spx_ctx *ctx,
                  uint32_t wots_addr[8], uint32_t tree_addr[8],
@@ -29,7 +29,6 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
     info.wots_steps = steps;
 
     set_type(&tree_addr[0], SPX_ADDR_TYPE_HASHTREE);
-    set_type(&info.leaf_addr[0], SPX_ADDR_TYPE_WOTS);
     set_type(&info.pk_addr[0], SPX_ADDR_TYPE_WOTSPK);
     copy_subtree_addr(&info.leaf_addr[0], wots_addr);
     copy_subtree_addr(&info.pk_addr[0], wots_addr);
@@ -58,5 +57,5 @@ void merkle_gen_root(unsigned char *root, const spx_ctx *ctx)
 
     merkle_sign(auth_path, root, ctx,
                 wots_addr, top_tree_addr,
-                ~0 /* ~0 means "don't bother generating an auth path */ );
+                (uint32_t)~0 /* ~0 means "don't bother generating an auth path */ );
 }

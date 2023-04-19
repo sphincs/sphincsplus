@@ -13,6 +13,7 @@
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
+#define treehashx1 SPX_NAMESPACE(treehashx1)
 void treehashx1(unsigned char *root, unsigned char *auth_path,
                 const spx_ctx* ctx,
                 uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "address.h"
 #include "params.h"
 #include "utils.h"
 
@@ -9,7 +10,7 @@
  */
 void set_layer_addr(uint32_t addr[8], uint32_t layer)
 {
-    ((unsigned char *)addr)[SPX_OFFSET_LAYER] = layer;
+    ((unsigned char *)addr)[SPX_OFFSET_LAYER] = (unsigned char)layer;
 }
 
 /*
@@ -31,7 +32,7 @@ void set_tree_addr(uint32_t addr[8], uint64_t tree)
  */
 void set_type(uint32_t addr[8], uint32_t type)
 {
-    ((unsigned char *)addr)[SPX_OFFSET_TYPE] = type;
+    ((unsigned char *)addr)[SPX_OFFSET_TYPE] = (unsigned char)type;
 }
 
 /*
@@ -54,9 +55,9 @@ void set_keypair_addr(uint32_t addr[8], uint32_t keypair)
 #if SPX_FULL_HEIGHT/SPX_D > 8
         /* We have > 256 OTS at the bottom of the Merkle tree; to specify */
         /* which one, we'd need to express it in two bytes */
-    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR2] = keypair >> 8;
+    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR2] = (unsigned char)(keypair >> 8);
 #endif
-    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR1] = keypair;
+    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR1] = (unsigned char)keypair;
 }
 
 /*
@@ -78,7 +79,7 @@ void copy_keypair_addr(uint32_t out[8], const uint32_t in[8])
  */
 void set_chain_addr(uint32_t addr[8], uint32_t chain)
 {
-    ((unsigned char *)addr)[SPX_OFFSET_CHAIN_ADDR] = chain;
+    ((unsigned char *)addr)[SPX_OFFSET_CHAIN_ADDR] = (unsigned char)chain;
 }
 
 /*
@@ -87,7 +88,7 @@ void set_chain_addr(uint32_t addr[8], uint32_t chain)
  */
 void set_hash_addr(uint32_t addr[8], uint32_t hash)
 {
-    ((unsigned char *)addr)[SPX_OFFSET_HASH_ADDR] = hash;
+    ((unsigned char *)addr)[SPX_OFFSET_HASH_ADDR] = (unsigned char)hash;
 }
 
 /* These functions are used for all hash tree addresses (including FORS). */
@@ -98,7 +99,7 @@ void set_hash_addr(uint32_t addr[8], uint32_t hash)
  */
 void set_tree_height(uint32_t addr[8], uint32_t tree_height)
 {
-    ((unsigned char *)addr)[SPX_OFFSET_TREE_HGT] = tree_height;
+    ((unsigned char *)addr)[SPX_OFFSET_TREE_HGT] = (unsigned char)tree_height;
 }
 
 /*

@@ -28,6 +28,7 @@ struct leaf_info_x1 {
     memcpy( &info.pk_addr[0], addr, 32 ); \
 }
 
+#define wots_gen_leafx1 SPX_NAMESPACE(wots_gen_leafx1)
 void wots_gen_leafx1(unsigned char *dest,
                    const spx_ctx *ctx,
                    uint32_t leaf_idx, void *v_info);

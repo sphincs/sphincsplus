@@ -1,1 +1,1 @@
-../shake256-avx2/fors.c
+../shake-avx2/fors.c

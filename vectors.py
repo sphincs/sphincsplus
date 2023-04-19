@@ -6,7 +6,7 @@
 # With two arguments, checks whether the sha256 sum of the given
 # generated NIST KAT response file is correct, e.g.:
 #
-#       ./vectors.py sphincs-shake256-128s-simple shake256-avx2
+#       ./vectors.py sphincs-shake-128s-simple shake-avx2
 
 import multiprocessing
 import subprocess
@@ -17,7 +17,7 @@ import shutil
 import os
 import sys
 
-fns = ['shake256', 'sha256', 'haraka']
+fns = ['shake', 'sha2', 'haraka']
 options = ["f", "s"]
 sizes = [128, 192, 256]
 thashes = ['robust', 'simple']
@@ -90,7 +90,7 @@ def check_sum(name, impl):
             sys.stderr.write(f"Test vector mismatch: {line}\n")
             sys.exit(2)
         sys.stderr.write("ok\n")
-        
+
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
         generate_sums()

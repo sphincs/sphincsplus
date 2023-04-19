@@ -19,10 +19,14 @@ void initialize_hash_function(spx_ctx* ctx)
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
-    /* Since SPX_N may be smaller than 32, we need a temporary buffer. */
+    /* Since SPX_N may be smaller than 32, we need temporary buffers. */
     unsigned char outbuf[32];
+    unsigned char buf[64] = {0};
 
-    haraka256_sk(outbuf, (const void *)addr, ctx);
+    memcpy(buf, addr, SPX_ADDR_BYTES);
+    memcpy(buf + SPX_ADDR_BYTES, ctx->sk_seed, SPX_N);
+
+    haraka512(outbuf, (const void *)buf, ctx);
     memcpy(out, outbuf, SPX_N);
 }
 
@@ -83,6 +87,6 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
     bufp += SPX_TREE_BYTES;
 
-    *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
+    *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
 }
