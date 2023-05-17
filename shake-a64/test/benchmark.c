@@ -109,7 +109,7 @@ static void display_result(double result, unsigned long long *l, size_t llen, un
     1000);
 #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
 
-int main()
+int main(void)
 {
     init_cpucycles();
     /* Make stdout buffer more responsive. */

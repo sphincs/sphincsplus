@@ -26,7 +26,7 @@ void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 char    AlgName[] = "My Alg Name";
 
 int
-main()
+main(void)
 {
     char                fn_req[32], fn_rsp[32];
     FILE                *fp_req, *fp_rsp;
@@ -235,8 +235,8 @@ ReadHex(FILE *infile, unsigned char *A, int Length, char *str)
                 ich = 0;
 
 			for ( i=0; i<Length-1; i++ )
-				A[i] = (A[i] << 4) | (A[i+1] >> 4);
-			A[Length-1] = (A[Length-1] << 4) | ich;
+				A[i] = (unsigned char)((A[i] << 4) | (A[i+1] >> 4));
+			A[Length-1] = (unsigned char)((A[Length-1] << 4) | ich);
 		}
 	else
 		return 0;

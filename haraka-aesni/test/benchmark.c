@@ -100,7 +100,7 @@ static void display_result(double result, unsigned long long *l, size_t llen, un
     result = (stop.tv_sec - start.tv_sec) * 1e6 + (stop.tv_nsec - start.tv_nsec) / 1e3;\
     display_result(result, t, NTESTS, MUL);
 
-int main()
+int main(void)
 {
     /* Make stdout buffer more responsive. */
     setbuf(stdout, NULL);

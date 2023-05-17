@@ -9,7 +9,7 @@
 #define SPX_MLEN 32
 #define SPX_SIGNATURES 1
 
-int main()
+int main(void)
 {
     int ret = 0;
     int i;

@@ -22,7 +22,7 @@ struct leaf_info_x1 {
 /* Used only by the benchmark code */
 #define INITIALIZE_LEAF_INFO_X1(info, addr, step_buffer) { \
     info.wots_sig = 0;             \
-    info.wots_sign_leaf = ~0;      \
+    info.wots_sign_leaf = ~0u;      \
     info.wots_steps = step_buffer; \
     memcpy( &info.leaf_addr[0], addr, 32 ); \
     memcpy( &info.pk_addr[0], addr, 32 ); \
