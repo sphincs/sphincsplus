@@ -36,13 +36,13 @@ seedexpander_init(AES_XOF_struct *ctx,
     memcpy(ctx->key, seed, 32);
     
     memcpy(ctx->ctr, diversifier, 8);
-    ctx->ctr[11] = maxlen % 256;
+    ctx->ctr[11] = (unsigned char)(maxlen % 256);
     maxlen >>= 8;
-    ctx->ctr[10] = maxlen % 256;
+    ctx->ctr[10] = (unsigned char)(maxlen % 256);
     maxlen >>= 8;
-    ctx->ctr[9] = maxlen % 256;
+    ctx->ctr[9] = (unsigned char)(maxlen % 256);
     maxlen >>= 8;
-    ctx->ctr[8] = maxlen % 256;
+    ctx->ctr[8] = (unsigned char)(maxlen % 256);
     memset(ctx->ctr+12, 0x00, 4);
     
     ctx->buffer_pos = 16;

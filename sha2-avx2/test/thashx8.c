@@ -13,7 +13,7 @@
 #endif
 
 
-int main()
+int main(void)
 {
     /* Make stdout buffer more responsive. */
     setbuf(stdout, NULL);
