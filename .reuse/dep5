@@ -2,9 +2,63 @@ Upstream-Name: SPHINCS+
 Upstream-Contact: contact@sphincs.org
 Souce: https://github.com/sphincs/sphincsplus
 
-Files: benchmark.py README.md ref/* SHA256SUMS/* sha2-avx2/* shake-a64/* shake-avx2/* vectors.py haraka-aesni/context.h haraka-aesni/harakax4.h haraka-aesni/hash_harakax4.c haraka-aesni/Makefile haraka-aesni/thash_haraka_robustx4.c haraka-aesni/thash_haraka_simplex4.c haraka-aesni/test/benchmark.c
+Files:
+  benchmark.py
+  haraka-aesni/*
+  README.md
+  ref/address.c
+  ref/address.h
+  ref/api.h
+  ref/context.h
+  ref/fips202.c
+  ref/fips202.h
+  ref/fors.c
+  ref/fors.h
+  ref/haraka.h
+  ref/haraka_offsets.h
+  ref/hash.h
+  ref/hash_haraka.c
+  ref/hash_sha2.c
+  ref/hash_shake.c
+  ref/Makefile
+  ref/merkle.c
+  ref/merkle.h
+  ref/params/*
+  ref/params.h
+  ref/PQCgenKAT_sign.c
+  ref/randombytes.c
+  ref/randombytes.h
+  ref/rng.c
+  ref/rng.h
+  ref/sha2.c
+  ref/sha2.h
+  ref/sha2_offsets.h
+  ref/shake_offsets.h
+  ref/sign.c
+  ref/test/*
+  ref/thash.h
+  ref/thash_haraka_robust.c
+  ref/thash_haraka_simple.c
+  ref/thash_sha2_robust.c
+  ref/thash_sha2_simple.c
+  ref/thash_shake_robust.c
+  ref/thash_shake_simple.c
+  ref/utils.c
+  ref/utils.h
+  ref/utilsx1.c
+  ref/utilsx1.h
+  ref/wots.c
+  ref/wots.h
+  ref/wotsx1.c
+  ref/wotsx1.h
+  SHA256SUMS/*
+  sha2-avx2/*
+  shake-a64/*
+  shake-avx2/*
+  vectors.py
 License: LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0
 
-Files: haraka-aesni/haraka.c
-License: MIT
+Files: ref/haraka.c
+Copyright: 2016 Thomas Pornin <pornin@bolet.org> AND SPHINCS+ team
+License: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
 
