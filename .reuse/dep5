@@ -1,0 +1,10 @@
+Upstream-Name: SPHINCS+
+Upstream-Contact: contact@sphincs.org
+Souce: https://github.com/sphincs/sphincsplus
+
+Files: benchmark.py README.md ref/* SHA256SUMS/* sha2-avx2/* shake-a64/* shake-avx2/* vectors.py haraka-aesni/context.h haraka-aesni/harakax4.h haraka-aesni/hash_harakax4.c haraka-aesni/Makefile haraka-aesni/thash_haraka_robustx4.c haraka-aesni/thash_haraka_simplex4.c haraka-aesni/test/benchmark.c
+License: LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0
+
+Files: haraka-aesni/haraka.c
+License: MIT
+
