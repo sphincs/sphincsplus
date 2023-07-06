@@ -59,6 +59,6 @@ Files:
 License: LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0
 
 Files: ref/haraka.c
-Copyright: 2016 Thomas Pornin <pornin@bolet.org> AND SPHINCS+ team
+Copyright: 2016 Thomas Pornin <pornin@bolet.org> and SPHINCS+ team
 License: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
 
