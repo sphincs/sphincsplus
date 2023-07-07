@@ -1,0 +1,15 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: SPHINCS+
+Upstream-Contact: contact@sphincs.org
+Souce: https://github.com/sphincs/sphincsplus
+
+Files: *
+License: LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0
+
+Files: ref/haraka.c
+Copyright: 2016 Thomas Pornin <pornin@bolet.org> and SPHINCS+ team
+License: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
+
+Files: ref/PQCgenKAT_sign.c ref/rng.c ref/rng.h
+Copyright: 2017 Bassham, Lawrence E (Fed).
+License: All rights reserved.
