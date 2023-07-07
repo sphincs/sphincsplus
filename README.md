@@ -22,7 +22,14 @@ The [SPHINCS+ specification](https://sphincs.org/data/sphincs+-specification.pdf
 
 ### License
 
-All included code has been placed into public domain and is available under various open source licenses (see the LICENSE file), with the exception of `rng.c`, `rng.h` and `PQCgenKAT_sign.c`, which were provided by NIST, and parts of `ref/haraka.c`, which are under MIT license.
+All included code has been placed into
+[Public Domain](LICENSES/LicenseRef-SPHINCS-PLUS-Public-Domain.txt)
+and is available under various open source licenses
+([Creative Commons Zero v1.0 Universal (CC0-1.0)](LICENSES/CC0-1.0.txt),
+[BSD Zero Clause License (0BSD)](LICENSES/0BSD.txt), and
+[MIT No Attribution (MIT-0)](LICENSES/MIT-0.txt),
+see the [LICENSE file](LICENSE) and the licenses in the [LICENSES folder](LICENSES)), with the exception of `rng.c`, `rng.h` and `PQCgenKAT_sign.c`, which were provided by NIST, and parts of `ref/haraka.c`, which are under
+[MIT license (MIT)](LICENSES/MIT.txt).
 
 [test-ref]: https://github.com/sphincs/sphincsplus/actions/workflows/test-ref.yml/badge.svg
 [test-sha256-avx2]: https://github.com/sphincs/sphincsplus/actions/workflows/test-sha256-avx2.yml/badge.svg
