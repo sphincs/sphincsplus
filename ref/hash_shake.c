@@ -84,8 +84,12 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     #error For given height and depth, 64 bits cannot represent all subtrees
 #endif
 
-    *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
-    *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+    if (SPX_D == 1) {
+        *tree = 0;
+    } else {
+        *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
+        *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+    }
     bufp += SPX_TREE_BYTES;
 
     *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);

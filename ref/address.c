@@ -52,12 +52,7 @@ void copy_subtree_addr(uint32_t out[8], const uint32_t in[8])
  */
 void set_keypair_addr(uint32_t addr[8], uint32_t keypair)
 {
-#if SPX_FULL_HEIGHT/SPX_D > 8
-        /* We have > 256 OTS at the bottom of the Merkle tree; to specify */
-        /* which one, we'd need to express it in two bytes */
-    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR2] = (unsigned char)(keypair >> 8);
-#endif
-    ((unsigned char *)addr)[SPX_OFFSET_KP_ADDR1] = (unsigned char)keypair;
+    u32_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_KP_ADDR], keypair);
 }
 
 /*
@@ -67,10 +62,7 @@ void set_keypair_addr(uint32_t addr[8], uint32_t keypair)
 void copy_keypair_addr(uint32_t out[8], const uint32_t in[8])
 {
     memcpy( out, in, SPX_OFFSET_TREE+8 );
-#if SPX_FULL_HEIGHT/SPX_D > 8
-    ((unsigned char *)out)[SPX_OFFSET_KP_ADDR2] = ((unsigned char *)in)[SPX_OFFSET_KP_ADDR2];
-#endif
-    ((unsigned char *)out)[SPX_OFFSET_KP_ADDR1] = ((unsigned char *)in)[SPX_OFFSET_KP_ADDR1];
+    memcpy( (unsigned char *)out + SPX_OFFSET_KP_ADDR, (unsigned char *)in + SPX_OFFSET_KP_ADDR, 4); 
 }
 
 /*
