@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
+ * Copyright: TBD
+ * */
+
 #if !defined( WOTSX2_H_ )
 #define WOTSX2_H_ 
 

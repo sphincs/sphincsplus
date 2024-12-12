@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: CC0-1.0 OR 0BSD OR MIT-0 OR LicenseRef-SPHINCS-PLUS-Public-Domain
+ * Copyright: TBD
+ * */
+
 #define _POSIX_C_SOURCE 199309L
 
 #include <stdio.h>

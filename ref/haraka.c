@@ -1,4 +1,6 @@
 /*
+ * SPDX-License-Identifier: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
+ *
  * Constant time implementation of the Haraka hash function.
  *
  * The bit-sliced implementation of the AES round functions are

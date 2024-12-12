@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: CC0-1.0 OR 0BSD OR MIT-0 OR LicenseRef-SPHINCS-PLUS-Public-Domain
+ * Copyright: TBD
+ * */
+
 /*
 Implementation by the Keccak, Keyak and Ketje Teams, namely, Guido Bertoni,
 Joan Daemen, Michaël Peeters, Gilles Van Assche and Ronny Van Keer, hereby

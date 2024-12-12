@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: (LicenseRef-SPHINCS-PLUS-Public-Domain OR CC0-1.0 OR 0BSD OR MIT-0) AND MIT
+ * Copyright: TBD
+ * */
+
 /* Based on the public domain implementation in
  * crypto_hash/sha512/ref/ from http://bench.cr.yp.to/supercop.html
  * by D. J. Bernstein */
