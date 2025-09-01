@@ -77,6 +77,14 @@ int main(void)
     printf("Public key bytes = %d\n", CRYPTO_PUBLICKEYBYTES);
     printf("Secret key bytes = %d\n", CRYPTO_SECRETKEYBYTES);
     printf("Signature bytes = %d\n", CRYPTO_BYTES);
+    
+    const char* thash_str;
+#ifdef SPX_ROBUST
+    thash_str = "robust";
+#else
+    thash_str = "simple";
+#endif
+    printf("Parameters = %s-%s\n", xstr(PARAMS), thash_str);
 
     return 0;
 }

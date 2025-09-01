@@ -3,6 +3,9 @@ THASH = simple
 
 CC = gcc
 CFLAGS=-Wall -Wextra -Wpedantic -O3 -std=c99 -Wconversion -Wmissing-prototypes -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
+ifeq ($(THASH),robust)
+	CFLAGS += -DSPX_ROBUST=1
+endif
 LDLIBS = -lcrypto
 
 SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c

@@ -12,7 +12,7 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE",
-                "PARAMS=sphincs-sha2-128f"
+                "PARAMS=sphincs-sha2-128f" // default value
             ],
             "compilerPath": "C:\\msys64\\ucrt64\\bin\\gcc.exe",
             "cStandard": "c17",

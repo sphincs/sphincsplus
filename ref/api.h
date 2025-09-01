@@ -6,6 +6,10 @@
 
 #include "params.h"
 
+// define macros
+#define str(s) #s
+#define xstr(s) str(s)
+
 #define CRYPTO_ALGNAME "SPHINCS+"
 
 #define CRYPTO_SECRETKEYBYTES SPX_SK_BYTES
