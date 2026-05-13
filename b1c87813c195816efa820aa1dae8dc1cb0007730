@@ -1,0 +1,23 @@
+shake-a64/Makefile
+  b4d0d4a5685a695c 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "b1c87813c195816efa820aa1dae8dc1cb0007730",
+  "prompts": {
+    "b4d0d4a5685a695c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1df25b3fdffeUIMQGQz256I9cn",
+        "model": "anthropic/claude-opus-4-7"
+      },
+      "human_author": "Bas Westerbaan",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 6,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
