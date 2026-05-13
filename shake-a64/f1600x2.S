@@ -102,14 +102,16 @@
 .endm
 
 .align 4
-/* macOS Mach-O prefixes C symbols with `_`, so `extern _f1600x2` from C
- * resolves to the assembler symbol `__f1600x2`. On Linux ELF there is no
- * such prefix, so `extern _f1600x2` resolves directly to `_f1600x2`.
- * Export both labels so this source builds on both platforms. */
+/* macOS Mach-O prefixes C symbols with an extra underscore; ELF on Linux
+ * does not. The header declares `extern void _f1600x2(...)`, so the
+ * assembler symbol must be `__f1600x2` on macOS and `_f1600x2` on Linux. */
+#if defined(__APPLE__)
 .global __f1600x2
-.global _f1600x2
 __f1600x2:
+#else
+.global _f1600x2
 _f1600x2:
+#endif
     stp d8,  d9,  [sp,#-16]!
     stp d10, d11, [sp,#-16]!
     stp d12, d13, [sp,#-16]!
