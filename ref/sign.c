@@ -92,7 +92,8 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 /**
  * Internal core of crypto_sign_signature: signs the buffer (pre || m)
  * (FIPS-205 §10.2 slh_sign_internal). Caller supplies SPX_N bytes of
- * additional randomness `addrnd`.
+ * additional randomness `addrnd`, or NULL to request FIPS-205 deterministic
+ * signing (Alg 22 line 1): addrnd defaults to PK.seed.
  */
 int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
                                    const uint8_t *m, size_t mlen,
@@ -104,6 +105,10 @@ int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
 
     const unsigned char *sk_prf = sk + SPX_N;
     const unsigned char *pk = sk + 2*SPX_N;
+
+    if (addrnd == NULL) {
+        addrnd = pk;            /* PK.seed; FIPS-205 deterministic mode */
+    }
 
     unsigned char mhash[SPX_FORS_MSG_BYTES];
     unsigned char root[SPX_N];

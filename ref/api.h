@@ -61,7 +61,9 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
 /**
  * Derandomised variant of crypto_sign_signature: the caller supplies SPX_N
  * bytes of additional randomness `addrnd` in place of the randombytes() draw
- * that crypto_sign_signature() does internally.
+ * that crypto_sign_signature() does internally. Pass `addrnd == NULL` to
+ * request FIPS-205 deterministic signing (Alg 22): PK.seed is used as
+ * addrnd.
  */
 int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
                                  const uint8_t *m, size_t mlen,
@@ -73,6 +75,8 @@ int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
  * Internal core (FIPS-205 §10.2 slh_sign_internal): the caller supplies the
  * raw `pre` buffer (typically `0x00 || ctxlen || ctx` for pure signing, or
  * the HashSLH-DSA prefix) that should be absorbed before the message.
+ * Pass `addrnd == NULL` for FIPS-205 deterministic signing (addrnd defaults
+ * to PK.seed).
  */
 int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
                                    const uint8_t *m, size_t mlen,
@@ -110,7 +114,8 @@ int crypto_sign_signature_prehash(uint8_t *sig, size_t *siglen,
                                   const uint8_t *sk);
 
 /**
- * Derandomised variant of crypto_sign_signature_prehash.
+ * Derandomised variant of crypto_sign_signature_prehash. Pass `addrnd == NULL`
+ * for FIPS-205 deterministic signing (PK.seed used as addrnd).
  */
 int crypto_sign_signature_prehash_derand(uint8_t *sig, size_t *siglen,
                                          const uint8_t *phm, size_t phmlen,

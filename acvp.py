@@ -202,18 +202,25 @@ class SlhDsa:
             raise RuntimeError(f"crypto_sign_seed_keypair returned {rc}")
         return bytes(self.ffi.buffer(sk)), bytes(self.ffi.buffer(pk))
 
+    def _addrnd_buf(self, addrnd):
+        """Map addrnd (bytes or None) to a cffi pointer; None -> NULL means
+        the C library will use FIPS-205 deterministic mode (PK.seed)."""
+        if addrnd is None:
+            return self.ffi.NULL
+        assert len(addrnd) == self.n_bytes
+        return self.ffi.new(f"unsigned char[{self.n_bytes}]", addrnd)
+
     def sign_internal(self, msg, sk, addrnd):
         """Call crypto_sign_signature_internal with pre=NULL, prelen=0.
         Matches FIPS-205 §10.2 slh_sign_internal."""
         assert len(sk) == self.sk_bytes
-        assert len(addrnd) == self.n_bytes
         sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
         siglen = self.ffi.new("size_t *")
         m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
                              msg if msg else b"\x00")
         rc = self.lib.crypto_sign_signature_internal(
             sig, siglen, m_buf, len(msg),
-            self.ffi.NULL, 0, sk, addrnd
+            self.ffi.NULL, 0, sk, self._addrnd_buf(addrnd)
         )
         if rc != 0:
             raise RuntimeError(f"crypto_sign_signature_internal returned {rc}")
@@ -223,7 +230,6 @@ class SlhDsa:
         """Call crypto_sign_signature_derand with an explicit context string.
         Matches FIPS-205 §10.2 slh_sign (pure, derandomised)."""
         assert len(sk) == self.sk_bytes
-        assert len(addrnd) == self.n_bytes
         sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
         siglen = self.ffi.new("size_t *")
         m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
@@ -234,7 +240,7 @@ class SlhDsa:
             ctx_buf = self.ffi.NULL
         rc = self.lib.crypto_sign_signature_derand(
             sig, siglen, m_buf, len(msg),
-            ctx_buf, len(ctx), sk, addrnd
+            ctx_buf, len(ctx), sk, self._addrnd_buf(addrnd)
         )
         if rc != 0:
             raise RuntimeError(f"crypto_sign_signature_derand returned {rc}")
@@ -270,7 +276,6 @@ class SlhDsa:
         """Call crypto_sign_signature_prehash_derand. Matches FIPS-205
         §10.2.2 HashSLH-DSA (derandomised)."""
         assert len(sk) == self.sk_bytes
-        assert len(addrnd) == self.n_bytes
         sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
         siglen = self.ffi.new("size_t *")
         phm_buf = self.ffi.new(f"unsigned char[{max(len(phm), 1)}]",
@@ -282,7 +287,7 @@ class SlhDsa:
             ctx_buf = self.ffi.NULL
         rc = self.lib.crypto_sign_signature_prehash_derand(
             sig, siglen, phm_buf, len(phm), oid_buf, len(oid),
-            ctx_buf, len(ctx), sk, addrnd
+            ctx_buf, len(ctx), sk, self._addrnd_buf(addrnd)
         )
         if rc != 0:
             raise RuntimeError(f"crypto_sign_signature_prehash_derand returned {rc}")
@@ -380,12 +385,9 @@ def run_siggen_for(slh, pset, vectors, limit):
             sk = _hex(t["sk"])
             msg = _hex(t.get("message", ""))
             sig_exp = _hex(t["signature"])
-            # FIPS-205 deterministic mode uses PK.seed as addrnd. PK.seed sits
-            # at sk[2N : 3N].
-            if deterministic:
-                addrnd = sk[2*slh.n_bytes : 3*slh.n_bytes]
-            else:
-                addrnd = _hex(t["additionalRandomness"])
+            # FIPS-205 deterministic mode passes addrnd=NULL, which the C
+            # library interprets as "use PK.seed".
+            addrnd = None if deterministic else _hex(t["additionalRandomness"])
 
             try:
                 if internal:
