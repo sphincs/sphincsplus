@@ -7,11 +7,17 @@ on:
 jobs:
   acvp:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        impl:
+          - ref
+          - sha2-avx2
+          - shake-avx2
     steps:
       - uses: actions/checkout@v1
       - name: Install cffi
         run: pip install --user cffi
       - name: Run ACVP harness
-        run: python3 acvp.py --impl ref
+        run: python3 acvp.py --impl ${{ matrix.impl }}
 
 #  vim: set ft=yaml ts=2 sw=2 et :
