@@ -1,0 +1,17 @@
+name: ACVP SLH-DSA (FIPS-205) test vectors
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  acvp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install cffi
+        run: pip install --user cffi
+      - name: Run ACVP harness
+        run: python3 acvp.py --impl ref
+
+#  vim: set ft=yaml ts=2 sw=2 et :

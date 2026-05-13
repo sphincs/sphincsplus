@@ -430,7 +430,7 @@ def main():
     ap.add_argument("--limit", type=int, default=None,
                     help="cap tests per group (smoke testing)")
     ap.add_argument("-j", "--jobs", type=int,
-                    default=max(1, multiprocessing.cpu_count() // 2))
+                    default=multiprocessing.cpu_count())
     ap.add_argument("--max-failures", type=int, default=10)
     args = ap.parse_args()
 
