@@ -1,8 +1,9 @@
 name: ACVP SLH-DSA (FIPS-205) test vectors
 
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master]
+  pull_request:
 
 jobs:
   acvp:

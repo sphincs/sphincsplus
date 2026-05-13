@@ -1,8 +1,9 @@
 name: Tests for sha2-avx2 implementation
 
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master]
+  pull_request:
 
 jobs:
   build:
