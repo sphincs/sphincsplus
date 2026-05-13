@@ -49,32 +49,62 @@ int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
 int crypto_sign_keypair(unsigned char *pk, unsigned char *sk);
 
 /**
- * Returns an array containing a detached signature.
+ * Returns an array containing a detached signature, with caller-supplied
+ * context string `ctx` (up to 255 bytes; pass NULL/0 for empty). Returns -1
+ * if ctxlen > 255.
  */
 int crypto_sign_signature(uint8_t *sig, size_t *siglen,
-                          const uint8_t *m, size_t mlen, const uint8_t *sk);
+                          const uint8_t *m, size_t mlen,
+                          const uint8_t *ctx, size_t ctxlen,
+                          const uint8_t *sk);
 
 /**
- * Derandomized variant of crypto_sign_signature: the caller supplies SPX_N
+ * Derandomised variant of crypto_sign_signature: the caller supplies SPX_N
  * bytes of additional randomness `addrnd` in place of the randombytes() draw
  * that crypto_sign_signature() does internally.
  */
 int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
                                  const uint8_t *m, size_t mlen,
+                                 const uint8_t *ctx, size_t ctxlen,
                                  const uint8_t *sk,
                                  const uint8_t *addrnd);
 
 /**
- * Verifies a detached signature and message under a given public key.
+ * Internal core (FIPS-205 §10.2 slh_sign_internal): the caller supplies the
+ * raw `pre` buffer (typically `0x00 || ctxlen || ctx` for pure signing, or
+ * the HashSLH-DSA prefix) that should be absorbed before the message.
  */
-int crypto_sign_verify(const uint8_t *sig, size_t siglen,
-                       const uint8_t *m, size_t mlen, const uint8_t *pk);
+int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
+                                   const uint8_t *m, size_t mlen,
+                                   const uint8_t *pre, size_t prelen,
+                                   const uint8_t *sk,
+                                   const uint8_t *addrnd);
 
 /**
- * Returns an array containing the signature followed by the message.
+ * Verifies a detached signature and message under a given public key.
+ * Returns 0 on success, non-zero on failure (including ctxlen > 255).
+ */
+int crypto_sign_verify(const uint8_t *sig, size_t siglen,
+                       const uint8_t *m, size_t mlen,
+                       const uint8_t *ctx, size_t ctxlen,
+                       const uint8_t *pk);
+
+/**
+ * Internal core (FIPS-205 §10.2 slh_verify_internal): like crypto_sign_verify
+ * but the caller supplies the raw `pre` buffer.
+ */
+int crypto_sign_verify_internal(const uint8_t *sig, size_t siglen,
+                                const uint8_t *m, size_t mlen,
+                                const uint8_t *pre, size_t prelen,
+                                const uint8_t *pk);
+
+/**
+ * Returns an array containing the signature followed by the message, with
+ * an explicit context string (NULL/0 for empty).
  */
 int crypto_sign(unsigned char *sm, unsigned long long *smlen,
                 const unsigned char *m, unsigned long long mlen,
+                const unsigned char *ctx, size_t ctxlen,
                 const unsigned char *sk);
 
 /**
@@ -82,6 +112,7 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen,
  */
 int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
                      const unsigned char *sm, unsigned long long smlen,
+                     const unsigned char *ctx, size_t ctxlen,
                      const unsigned char *pk);
 
 #endif

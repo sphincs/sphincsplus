@@ -40,7 +40,7 @@ int main(void)
     for (i = 0; i < SPX_SIGNATURES; i++) {
         printf("  - iteration #%d:\n", i);
 
-        crypto_sign(sm, &smlen, m, SPX_MLEN, sk);
+        crypto_sign(sm, &smlen, m, SPX_MLEN, NULL, 0, sk);
 
         if (smlen != SPX_BYTES + SPX_MLEN) {
             printf("  X smlen incorrect [%llu != %u]!\n",
@@ -52,7 +52,7 @@ int main(void)
         }
 
         /* Test if signature is valid. */
-        if (crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
+        if (crypto_sign_open(mout, &mlen, sm, smlen, NULL, 0, pk)) {
             printf("  X verification failed!\n");
             ret = -1;
         }
@@ -77,7 +77,7 @@ int main(void)
         }
 
         /* Test if signature is valid when validating in-place. */
-        if (crypto_sign_open(sm, &mlen, sm, smlen, pk)) {
+        if (crypto_sign_open(sm, &mlen, sm, smlen, NULL, 0, pk)) {
             printf("  X in-place verification failed!\n");
             ret = -1;
         }
@@ -89,7 +89,7 @@ int main(void)
 
         /* Flip the first bit of the message. Should invalidate. */
         sm[smlen - 1] ^= 1;
-        if (!crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
+        if (!crypto_sign_open(mout, &mlen, sm, smlen, NULL, 0, pk)) {
             printf("  X flipping a bit of m DID NOT invalidate signature!\n");
             ret = -1;
         }
@@ -103,7 +103,7 @@ int main(void)
         /* Flip one bit per hash; the signature is entirely hashes. */
         for (j = 0; j < (int)(smlen - SPX_MLEN); j += SPX_N) {
             sm[j] ^= 1;
-            if (!crypto_sign_open(mout, &mlen, sm, smlen, pk)) {
+            if (!crypto_sign_open(mout, &mlen, sm, smlen, NULL, 0, pk)) {
                 printf("  X flipping bit %d DID NOT invalidate sig + m!\n", j);
                 sm[j] ^= 1;
                 ret = -1;

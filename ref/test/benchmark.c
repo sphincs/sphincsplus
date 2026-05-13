@@ -147,10 +147,10 @@ int main(void)
     MEASURT("thash                ", 1, thash(block, block, 1, &ctx, (uint32_t*)addr));
     MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
     MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
-    MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
+    MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, NULL, 0, sk));
     MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, &ctx, (uint32_t *) addr));
     MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
-    MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
+    MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, NULL, 0, pk));
 
     printf("Signature size: %d (%.2f KiB)\n", SPX_BYTES, SPX_BYTES / 1024.0);
     printf("Public key size: %d (%.2f KiB)\n", SPX_PK_BYTES, SPX_PK_BYTES / 1024.0);

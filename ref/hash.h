@@ -1,6 +1,7 @@
 #ifndef SPX_HASH_H
 #define SPX_HASH_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include "context.h"
 #include "params.h"
@@ -12,15 +13,23 @@ void initialize_hash_function(spx_ctx *ctx);
 void prf_addr(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8]);
 
+/* `pre` is the FIPS-205 message-prefix buffer (domain byte + context length
+ * + context for pure SLH-DSA, with optional OID + PHM for HashSLH-DSA). It
+ * is absorbed between the standard header (sk_prf/optrand for
+ * gen_message_random, or R/PK for hash_message) and the message itself.
+ * Passing `prelen == 0` skips the prefix absorb. */
+
 #define gen_message_random SPX_NAMESPACE(gen_message_random)
 void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
+                        const unsigned char *pre, size_t prelen,
                         const unsigned char *m, unsigned long long mlen,
                         const spx_ctx *ctx);
 
 #define hash_message SPX_NAMESPACE(hash_message)
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
+                  const unsigned char *pre, size_t prelen,
                   const unsigned char *m, unsigned long long mlen,
                   const spx_ctx *ctx);
 

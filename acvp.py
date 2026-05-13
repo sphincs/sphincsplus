@@ -10,13 +10,12 @@ For each (implementation, parameter-set) combination supported by FIPS-205
   3. exercises the keyGen, sigGen, and sigVer ACVP test vectors found in
      ./acvp/
 
-The "internal" ACVP test groups map directly onto crypto_sign_seed_keypair,
-crypto_sign_signature_derand, and crypto_sign_verify, so they run today.
-
-External and pre-hash groups require the FIPS-205 message prefix (context
-string + domain-separator byte, optionally an OID for HashSLH-DSA) which is
-NOT yet implemented in this tree. The runner therefore treats those groups
-as expected-fail; passing them will require the upcoming FIPS-205 changes.
+The "internal" ACVP test groups exercise crypto_sign_seed_keypair,
+crypto_sign_signature_internal, and crypto_sign_verify_internal directly.
+The "external" (pure) groups call crypto_sign_signature_derand and
+crypto_sign_verify with the FIPS-205 (0x00 || |ctx| || ctx) prefix.
+"preHash" / HashSLH-DSA groups are not yet implemented and are recorded
+as expected-fail.
 
 Usage:
     ./acvp.py                                  # all (impl, params) combos
@@ -83,13 +82,27 @@ unsigned long long crypto_sign_seedbytes(void);
 int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed);
 
+int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
+                                   const uint8_t *m, size_t mlen,
+                                   const uint8_t *pre, size_t prelen,
+                                   const uint8_t *sk,
+                                   const uint8_t *addrnd);
+
 int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
                                  const uint8_t *m, size_t mlen,
+                                 const uint8_t *ctx, size_t ctxlen,
                                  const uint8_t *sk,
                                  const uint8_t *addrnd);
 
+int crypto_sign_verify_internal(const uint8_t *sig, size_t siglen,
+                                const uint8_t *m, size_t mlen,
+                                const uint8_t *pre, size_t prelen,
+                                const uint8_t *pk);
+
 int crypto_sign_verify(const uint8_t *sig, size_t siglen,
-                       const uint8_t *m, size_t mlen, const uint8_t *pk);
+                       const uint8_t *m, size_t mlen,
+                       const uint8_t *ctx, size_t ctxlen,
+                       const uint8_t *pk);
 """
 
 
@@ -148,27 +161,68 @@ class SlhDsa:
             raise RuntimeError(f"crypto_sign_seed_keypair returned {rc}")
         return bytes(self.ffi.buffer(sk)), bytes(self.ffi.buffer(pk))
 
-    def sign_derand(self, msg, sk, addrnd):
+    def sign_internal(self, msg, sk, addrnd):
+        """Call crypto_sign_signature_internal with pre=NULL, prelen=0.
+        Matches FIPS-205 §10.2 slh_sign_internal."""
         assert len(sk) == self.sk_bytes
         assert len(addrnd) == self.n_bytes
         sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
         siglen = self.ffi.new("size_t *")
         m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
                              msg if msg else b"\x00")
+        rc = self.lib.crypto_sign_signature_internal(
+            sig, siglen, m_buf, len(msg),
+            self.ffi.NULL, 0, sk, addrnd
+        )
+        if rc != 0:
+            raise RuntimeError(f"crypto_sign_signature_internal returned {rc}")
+        return bytes(self.ffi.buffer(sig, siglen[0]))
+
+    def sign_derand(self, msg, ctx, sk, addrnd):
+        """Call crypto_sign_signature_derand with an explicit context string.
+        Matches FIPS-205 §10.2 slh_sign (pure, derandomised)."""
+        assert len(sk) == self.sk_bytes
+        assert len(addrnd) == self.n_bytes
+        sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
+        siglen = self.ffi.new("size_t *")
+        m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
+                             msg if msg else b"\x00")
+        if ctx:
+            ctx_buf = self.ffi.new(f"unsigned char[{len(ctx)}]", ctx)
+        else:
+            ctx_buf = self.ffi.NULL
         rc = self.lib.crypto_sign_signature_derand(
-            sig, siglen, m_buf, len(msg), sk, addrnd
+            sig, siglen, m_buf, len(msg),
+            ctx_buf, len(ctx), sk, addrnd
         )
         if rc != 0:
             raise RuntimeError(f"crypto_sign_signature_derand returned {rc}")
         return bytes(self.ffi.buffer(sig, siglen[0]))
 
-    def verify(self, msg, sig, pk):
+    def verify_internal(self, msg, sig, pk):
         assert len(pk) == self.pk_bytes
         sig_buf = self.ffi.new(f"unsigned char[{max(len(sig), 1)}]",
                                sig if sig else b"\x00")
         m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
                              msg if msg else b"\x00")
-        rc = self.lib.crypto_sign_verify(sig_buf, len(sig), m_buf, len(msg), pk)
+        rc = self.lib.crypto_sign_verify_internal(
+            sig_buf, len(sig), m_buf, len(msg), self.ffi.NULL, 0, pk
+        )
+        return rc == 0
+
+    def verify(self, msg, sig, ctx, pk):
+        assert len(pk) == self.pk_bytes
+        sig_buf = self.ffi.new(f"unsigned char[{max(len(sig), 1)}]",
+                               sig if sig else b"\x00")
+        m_buf = self.ffi.new(f"unsigned char[{max(len(msg), 1)}]",
+                             msg if msg else b"\x00")
+        if ctx:
+            ctx_buf = self.ffi.new(f"unsigned char[{len(ctx)}]", ctx)
+        else:
+            ctx_buf = self.ffi.NULL
+        rc = self.lib.crypto_sign_verify(
+            sig_buf, len(sig), m_buf, len(msg), ctx_buf, len(ctx), pk
+        )
         return rc == 0
 
 
@@ -217,8 +271,6 @@ def _is_prehash(group):
 def _xfail_reason(group):
     if _is_prehash(group):
         return "HashSLH-DSA (preHash) not implemented yet"
-    if not _is_internal(group):
-        return "external interface (context+domain-sep) not implemented yet"
     return None
 
 
@@ -254,6 +306,7 @@ def run_siggen_for(slh, pset, vectors, limit):
             continue
         xfail = _xfail_reason(group)
         deterministic = group["deterministic"]
+        internal = _is_internal(group)
         for t in (group["tests"][:limit] if limit else group["tests"]):
             sk = _hex(t["sk"])
             msg = _hex(t.get("message", ""))
@@ -266,7 +319,11 @@ def run_siggen_for(slh, pset, vectors, limit):
                 addrnd = _hex(t["additionalRandomness"])
 
             try:
-                sig = slh.sign_derand(msg, sk, addrnd)
+                if internal:
+                    sig = slh.sign_internal(msg, sk, addrnd)
+                else:
+                    ctx = _hex(t.get("context", ""))
+                    sig = slh.sign_derand(msg, ctx, sk, addrnd)
                 ok = sig == sig_exp
             except Exception as exc:
                 if xfail:
@@ -301,18 +358,21 @@ def run_sigver_for(slh, pset, vectors, limit):
         if group["parameterSet"] != pset:
             continue
         xfail = _xfail_reason(group)
+        internal = _is_internal(group)
         for t in (group["tests"][:limit] if limit else group["tests"]):
             pk = _hex(t["pk"])
             sig = _hex(t["signature"])
             msg = _hex(t.get("message", ""))
             expected = bool(t["testPassed"])
             if xfail:
-                # For external/prehash, our verify (lacking the prefix) cannot
-                # produce the right answer. Count as xfail unconditionally.
                 res.xfailed += 1
                 continue
             try:
-                ok = slh.verify(msg, sig, pk)
+                if internal:
+                    ok = slh.verify_internal(msg, sig, pk)
+                else:
+                    ctx = _hex(t.get("context", ""))
+                    ok = slh.verify(msg, sig, ctx, pk)
             except Exception as exc:
                 res.failed += 1
                 res.failures.append(f"sigVer {pset} tc={t['tcId']}: {exc!r}")

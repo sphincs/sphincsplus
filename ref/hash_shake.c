@@ -32,9 +32,14 @@ void prf_addr(unsigned char *out, const spx_ctx *ctx,
 /**
  * Computes the message-dependent randomness R, using a secret seed and an
  * optional randomization value as well as the message.
+ *
+ * The `pre` buffer (length `prelen`) is absorbed between optrand and m; it
+ * is used by the FIPS-205 external interfaces to inject the domain-separator
+ * byte and context string.
  */
 void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
+                        const unsigned char *pre, size_t prelen,
                         const unsigned char *m, unsigned long long mlen,
                         const spx_ctx *ctx)
 {
@@ -44,6 +49,9 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
     shake256_inc_init(s_inc);
     shake256_inc_absorb(s_inc, sk_prf, SPX_N);
     shake256_inc_absorb(s_inc, optrand, SPX_N);
+    if (prelen) {
+        shake256_inc_absorb(s_inc, pre, prelen);
+    }
     shake256_inc_absorb(s_inc, m, mlen);
     shake256_inc_finalize(s_inc);
     shake256_inc_squeeze(R, SPX_N, s_inc);
@@ -53,9 +61,14 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
  * Computes the message hash using R, the public key, and the message.
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
+ *
+ * The `pre` buffer (length `prelen`) is absorbed between PK and m; it is
+ * used by the FIPS-205 external interfaces to inject the domain-separator
+ * byte and context string.
  */
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
+                  const unsigned char *pre, size_t prelen,
                   const unsigned char *m, unsigned long long mlen,
                   const spx_ctx *ctx)
 {
@@ -73,6 +86,9 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     shake256_inc_init(s_inc);
     shake256_inc_absorb(s_inc, R, SPX_N);
     shake256_inc_absorb(s_inc, pk, SPX_PK_BYTES);
+    if (prelen) {
+        shake256_inc_absorb(s_inc, pre, prelen);
+    }
     shake256_inc_absorb(s_inc, m, mlen);
     shake256_inc_finalize(s_inc);
     shake256_inc_squeeze(buf, SPX_DGST_BYTES, s_inc);
