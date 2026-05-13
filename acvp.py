@@ -155,14 +155,20 @@ def build_libspx(impl, params, bindir, jobs=1):
     """
     impl_dir = ROOT / impl
     overrides = [f"PARAMS={params}"]
-    subprocess.run(
+    # Suppress stdout (compiler info messages) but capture stderr so build
+    # failures surface useful diagnostics on CI.
+    for argv in (
         ["make", "-C", str(impl_dir), "clean", *overrides],
-        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
-    subprocess.run(
         ["make", "-C", str(impl_dir), f"-j{jobs}", "libspx.so", *overrides],
-        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
+    ):
+        p = subprocess.run(argv, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.PIPE)
+        if p.returncode != 0:
+            raise subprocess.CalledProcessError(
+                p.returncode, argv,
+                output=p.stdout,
+                stderr=p.stderr.decode(errors="replace"),
+            )
     src = impl_dir / "libspx.so"
     dst = Path(bindir) / f"libspx_{impl}_{params}.so"
     shutil.move(str(src), str(dst))
@@ -544,7 +550,10 @@ def main():
                 lib_path = build_libspx(impl, params, bindir)
                 run_items.append((impl, acvp_pset, str(lib_path), phases, args.limit))
             except subprocess.CalledProcessError as exc:
-                build_errors.append(f"{impl}/{acvp_pset}: build failed: {exc}")
+                msg = f"{impl}/{acvp_pset}: build failed: {exc}"
+                if isinstance(exc.stderr, str) and exc.stderr.strip():
+                    msg += "\n    " + exc.stderr.strip().replace("\n", "\n    ")
+                build_errors.append(msg)
 
         with multiprocessing.Pool(processes=args.jobs) as pool:
             for impl, acvp_pset, phase_results, err in pool.imap_unordered(
