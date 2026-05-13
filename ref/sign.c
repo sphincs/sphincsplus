@@ -90,17 +90,26 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 }
 
 /**
- * Returns an array containing a detached signature.
+ * Internal core of crypto_sign_signature: signs the buffer (pre || m)
+ * (FIPS-205 §10.2 slh_sign_internal). Caller supplies SPX_N bytes of
+ * additional randomness `addrnd`, or NULL to request FIPS-205 deterministic
+ * signing (Alg 22 line 1): addrnd defaults to PK.seed.
  */
-int crypto_sign_signature(uint8_t *sig, size_t *siglen,
-                          const uint8_t *m, size_t mlen, const uint8_t *sk)
+int crypto_sign_signature_internal(uint8_t *sig, size_t *siglen,
+                                   const uint8_t *m, size_t mlen,
+                                   const uint8_t *pre, size_t prelen,
+                                   const uint8_t *sk,
+                                   const uint8_t *addrnd)
 {
     spx_ctx ctx;
 
     const unsigned char *sk_prf = sk + SPX_N;
     const unsigned char *pk = sk + 2*SPX_N;
 
-    unsigned char optrand[SPX_N];
+    if (addrnd == NULL) {
+        addrnd = pk;            /* PK.seed; FIPS-205 deterministic mode */
+    }
+
     unsigned char mhash[SPX_FORS_MSG_BYTES];
     unsigned char root[SPX_N];
     uint32_t i;
@@ -119,15 +128,15 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     set_type(wots_addr, SPX_ADDR_TYPE_WOTS);
     set_type(tree_addr, SPX_ADDR_TYPE_HASHTREE);
 
-    /* Optionally, signing can be made non-deterministic using optrand.
-       This can help counter side-channel attacks that would benefit from
-       getting a large number of traces when the signer uses the same nodes. */
-    randombytes(optrand, SPX_N);
+    /* The caller-supplied addrnd takes the place of the randombytes() draw
+       that crypto_sign_signature() does internally. It can help counter
+       side-channel attacks that would benefit from getting a large number
+       of traces when the signer uses the same nodes. */
     /* Compute the digest randomization value. */
-    gen_message_random(sig, sk_prf, optrand, m, mlen, &ctx);
+    gen_message_random(sig, sk_prf, addrnd, pre, prelen, m, mlen, &ctx);
 
-    /* Derive the message digest and leaf index from R, PK and M. */
-    hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, &ctx);
+    /* Derive the message digest and leaf index from R, PK and pre || M. */
+    hash_message(mhash, &tree, &idx_leaf, sig, pk, pre, prelen, m, mlen, &ctx);
     sig += SPX_N;
 
     set_tree_addr(wots_addr, tree);
@@ -157,11 +166,142 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     return 0;
 }
 
-/**
- * Verifies a detached signature and message under a given public key.
+/*
+ * Build the FIPS-205 pure-signing prefix:  0x00 || |ctx| || ctx
+ * into `pre`. Returns the total length, or -1 if ctxlen > 255.
+ * `pre` must have room for at least 257 bytes.
  */
-int crypto_sign_verify(const uint8_t *sig, size_t siglen,
-                       const uint8_t *m, size_t mlen, const uint8_t *pk)
+static int build_pre(uint8_t pre[257],
+                     const uint8_t *ctx, size_t ctxlen)
+{
+    if (ctxlen > 255) {
+        return -1;
+    }
+    pre[0] = 0x00;
+    pre[1] = (uint8_t)ctxlen;
+    if (ctxlen) {
+        memcpy(pre + 2, ctx, ctxlen);
+    }
+    return (int)(2 + ctxlen);
+}
+
+/**
+ * Derandomised variant of crypto_sign_signature, accepting an explicit
+ * context string `ctx` (up to 255 bytes; pass NULL/0 for empty) and SPX_N
+ * bytes of additional randomness `addrnd`.
+ */
+int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
+                                 const uint8_t *m, size_t mlen,
+                                 const uint8_t *ctx, size_t ctxlen,
+                                 const uint8_t *sk,
+                                 const uint8_t *addrnd)
+{
+    uint8_t pre[257];
+    int prelen = build_pre(pre, ctx, ctxlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_signature_internal(sig, siglen, m, mlen,
+                                          pre, (size_t)prelen, sk, addrnd);
+}
+
+/**
+ * Returns an array containing a detached signature. Accepts an explicit
+ * context string (FIPS-205 §10.2 slh_sign); pass NULL/0 for empty context.
+ * Draws SPX_N bytes of additional randomness via randombytes().
+ */
+int crypto_sign_signature(uint8_t *sig, size_t *siglen,
+                          const uint8_t *m, size_t mlen,
+                          const uint8_t *ctx, size_t ctxlen,
+                          const uint8_t *sk)
+{
+    unsigned char addrnd[SPX_N];
+    randombytes(addrnd, SPX_N);
+    return crypto_sign_signature_derand(sig, siglen, m, mlen,
+                                        ctx, ctxlen, sk, addrnd);
+}
+
+/*
+ * Build the FIPS-205 prehash-signing prefix (FIPS-205 §10.2.2 Alg 23):
+ *      0x01 || |ctx| || ctx || OID
+ * into `pre`. The PHM is the message passed to _internal (so the resulting
+ * hashed buffer is `pre || phm` which matches the FIPS-205 M').
+ *
+ * Returns the total length, or -1 if ctxlen > 255 or the assembled prefix
+ * would exceed `cap` bytes.
+ */
+static int build_pre_prehash(uint8_t *pre, size_t cap,
+                             const uint8_t *ctx, size_t ctxlen,
+                             const uint8_t *oid, size_t oidlen)
+{
+    if (ctxlen > 255) {
+        return -1;
+    }
+    size_t total = 2 + ctxlen + oidlen;
+    if (total > cap) {
+        return -1;
+    }
+    pre[0] = 0x01;
+    pre[1] = (uint8_t)ctxlen;
+    if (ctxlen) {
+        memcpy(pre + 2, ctx, ctxlen);
+    }
+    if (oidlen) {
+        memcpy(pre + 2 + ctxlen, oid, oidlen);
+    }
+    return (int)total;
+}
+
+/**
+ * Derandomised variant of crypto_sign_signature_prehash. Caller supplies the
+ * pre-hashed message `phm` (the output of one of the FIPS-205 §10.2.2
+ * pre-hash functions), its DER-encoded OID, and an explicit context string.
+ */
+int crypto_sign_signature_prehash_derand(uint8_t *sig, size_t *siglen,
+                                         const uint8_t *phm, size_t phmlen,
+                                         const uint8_t *oid, size_t oidlen,
+                                         const uint8_t *ctx, size_t ctxlen,
+                                         const uint8_t *sk,
+                                         const uint8_t *addrnd)
+{
+    /* The prefix is 0x01 || |ctx| || ctx || OID. ctx is at most 255 bytes.
+       DER short-form OIDs are at most 1 (tag) + 1 (length) + 127 (content)
+       = 129 bytes; the FIPS-205 OIDs are 11 bytes each. We size for ctx +
+       any DER short-form OID with comfortable headroom. Callers using long
+       enough OIDs will get a -1 from build_pre_prehash. */
+    uint8_t pre[2 + 255 + 256];
+    int prelen = build_pre_prehash(pre, sizeof pre, ctx, ctxlen, oid, oidlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_signature_internal(sig, siglen, phm, phmlen,
+                                          pre, (size_t)prelen, sk, addrnd);
+}
+
+/**
+ * HashSLH-DSA: sign a pre-hashed message. See crypto_sign_signature_prehash_derand
+ * for argument semantics. Draws SPX_N bytes of randomness via randombytes().
+ */
+int crypto_sign_signature_prehash(uint8_t *sig, size_t *siglen,
+                                  const uint8_t *phm, size_t phmlen,
+                                  const uint8_t *oid, size_t oidlen,
+                                  const uint8_t *ctx, size_t ctxlen,
+                                  const uint8_t *sk)
+{
+    unsigned char addrnd[SPX_N];
+    randombytes(addrnd, SPX_N);
+    return crypto_sign_signature_prehash_derand(sig, siglen, phm, phmlen,
+                                                oid, oidlen,
+                                                ctx, ctxlen, sk, addrnd);
+}
+
+/**
+ * Internal core of crypto_sign_verify: verifies the buffer (pre || m).
+ */
+int crypto_sign_verify_internal(const uint8_t *sig, size_t siglen,
+                                const uint8_t *m, size_t mlen,
+                                const uint8_t *pre, size_t prelen,
+                                const uint8_t *pk)
 {
     spx_ctx ctx;
     const unsigned char *pub_root = pk + SPX_N;
@@ -190,9 +330,9 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
     set_type(tree_addr, SPX_ADDR_TYPE_HASHTREE);
     set_type(wots_pk_addr, SPX_ADDR_TYPE_WOTSPK);
 
-    /* Derive the message digest and leaf index from R || PK || M. */
+    /* Derive the message digest and leaf index from R || PK || pre || M. */
     /* The additional SPX_N is a result of the hash domain separator. */
-    hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, &ctx);
+    hash_message(mhash, &tree, &idx_leaf, sig, pk, pre, prelen, m, mlen, &ctx);
     sig += SPX_N;
 
     /* Layer correctly defaults to 0, so no need to set_layer_addr */
@@ -239,18 +379,61 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
     return 0;
 }
 
+/**
+ * Verifies a detached signature under a given public key, accepting an
+ * explicit context string (FIPS-205 §10.2 slh_verify); pass NULL/0 for
+ * empty context. Returns -1 if ctxlen > 255.
+ */
+int crypto_sign_verify(const uint8_t *sig, size_t siglen,
+                       const uint8_t *m, size_t mlen,
+                       const uint8_t *ctx, size_t ctxlen,
+                       const uint8_t *pk)
+{
+    uint8_t pre[257];
+    int prelen = build_pre(pre, ctx, ctxlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_verify_internal(sig, siglen, m, mlen,
+                                       pre, (size_t)prelen, pk);
+}
+
+/**
+ * Verifies a HashSLH-DSA detached signature (FIPS-205 §10.2.2). Caller
+ * supplies the pre-hashed message `phm` and its DER-encoded OID.
+ */
+int crypto_sign_verify_prehash(const uint8_t *sig, size_t siglen,
+                               const uint8_t *phm, size_t phmlen,
+                               const uint8_t *oid, size_t oidlen,
+                               const uint8_t *ctx, size_t ctxlen,
+                               const uint8_t *pk)
+{
+    /* See crypto_sign_signature_prehash_derand for the sizing rationale. */
+    uint8_t pre[2 + 255 + 256];
+    int prelen = build_pre_prehash(pre, sizeof pre, ctx, ctxlen, oid, oidlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_verify_internal(sig, siglen, phm, phmlen,
+                                       pre, (size_t)prelen, pk);
+}
+
 
 /**
  * Returns an array containing the signature followed by the message.
+ * Accepts an explicit context string; pass NULL/0 for empty context.
  */
 int crypto_sign(unsigned char *sm, unsigned long long *smlen,
                 const unsigned char *m, unsigned long long mlen,
+                const unsigned char *ctx, size_t ctxlen,
                 const unsigned char *sk)
 {
     size_t siglen;
-
-    crypto_sign_signature(sm, &siglen, m, (size_t)mlen, sk);
-
+    int rc = crypto_sign_signature(sm, &siglen, m, (size_t)mlen,
+                                   ctx, ctxlen, sk);
+    if (rc) {
+        return rc;
+    }
     memmove(sm + SPX_BYTES, m, mlen);
     *smlen = siglen + mlen;
 
@@ -258,10 +441,12 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen,
 }
 
 /**
- * Verifies a given signature-message pair under a given public key.
+ * Verifies a given signature-message pair under a given public key. Accepts
+ * an explicit context string; pass NULL/0 for empty context.
  */
 int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
                      const unsigned char *sm, unsigned long long smlen,
+                     const unsigned char *ctx, size_t ctxlen,
                      const unsigned char *pk)
 {
     /* The API caller does not necessarily know what size a signature should be
@@ -274,7 +459,8 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
 
     *mlen = smlen - SPX_BYTES;
 
-    if (crypto_sign_verify(sm, SPX_BYTES, sm + SPX_BYTES, (size_t)*mlen, pk)) {
+    if (crypto_sign_verify(sm, SPX_BYTES, sm + SPX_BYTES, (size_t)*mlen,
+                           ctx, ctxlen, pk)) {
         memset(m, 0, smlen);
         *mlen = 0;
         return -1;

@@ -1,0 +1,29 @@
+name: ACVP SLH-DSA (FIPS-205) test vectors
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  acvp:
+    strategy:
+      matrix:
+        include:
+          - impl: ref
+            runs-on: ubuntu-latest
+          - impl: sha2-avx2
+            runs-on: ubuntu-latest
+          - impl: shake-avx2
+            runs-on: ubuntu-latest
+          - impl: shake-a64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install cffi
+        run: pip install --user cffi
+      - name: Run ACVP harness
+        run: python3 acvp.py --impl ${{ matrix.impl }}
+
+#  vim: set ft=yaml ts=2 sw=2 et :

@@ -17,17 +17,18 @@ import shutil
 import os
 import sys
 
-fns = ['shake', 'sha2', 'haraka']
+fns = ['shake', 'sha2']
 options = ["f", "s"]
 sizes = [128, 192, 256]
-thashes = ['robust', 'simple']
 
-def nameFor(fn, opt, size, thash):
-    return f"sphincs-{fn}-{size}{opt}-{thash}"
+def nameFor(fn, opt, size):
+    # The trailing "-simple" suffix is retained for backwards compatibility
+    # with SHA256SUMS entries; FIPS-205 only standardises the simple thash.
+    return f"sphincs-{fn}-{size}{opt}-simple"
 
-def make(fn, opt, size, thash, bindir, impl):
-    name = nameFor(fn, opt, size, thash)
-    overrides = [f'PARAMS=sphincs-{fn}-{size}{opt}', 'THASH='+thash]
+def make(fn, opt, size, bindir, impl):
+    name = nameFor(fn, opt, size)
+    overrides = [f'PARAMS=sphincs-{fn}-{size}{opt}']
 
     sys.stderr.write(f"Compiling {name} …\n")
     sys.stderr.flush()
@@ -64,8 +65,8 @@ def generate_sums():
         with multiprocessing.Pool() as pool:
             name_sizes = []
             for fn in fns:
-                for opt, size, thash in itertools.product(options, sizes, thashes):
-                    name_sizes.append(make(fn, opt, size, thash, bindir, 'ref'))
+                for opt, size in itertools.product(options, sizes):
+                    name_sizes.append(make(fn, opt, size, bindir, 'ref'))
 
             res = pool.starmap(run, zip(name_sizes, [bindir]*len(name_sizes)))
             res.sort()
@@ -75,11 +76,10 @@ def check_sum(name, impl):
     line = None
     with tempfile.TemporaryDirectory() as bindir:
         for fn in fns:
-            for opt, size, thash in itertools.product(
-                    options, sizes, thashes):
-                if nameFor(fn, opt, size, thash) != name:
+            for opt, size in itertools.product(options, sizes):
+                if nameFor(fn, opt, size) != name:
                     continue
-                name_size = make(fn, opt, size, thash, bindir, impl)
+                name_size = make(fn, opt, size, bindir, impl)
                 line = run(name_size, bindir)
                 break
     if not line:

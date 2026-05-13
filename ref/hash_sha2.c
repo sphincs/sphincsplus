@@ -55,56 +55,110 @@ void prf_addr(unsigned char *out, const spx_ctx *ctx,
     memcpy(out, outbuf, SPX_N);
 }
 
+/*
+ * Byte-granular incremental absorb on top of the block-granular SHA-X inc
+ * API. A `shaX_buf` bundles the underlying SHA-X state with a sub-block
+ * carry buffer so callers can feed any number of variable-length chunks
+ * before finalising. Usage:
+ *
+ *     struct shaX_buf b;
+ *     shaX_buf_init(&b);
+ *     shaX_buf_absorb(&b, chunk1, len1);
+ *     shaX_buf_absorb(&b, chunk2, len2);
+ *     ...
+ *     shaX_buf_finalize(out, &b, m, mlen);
+ */
+struct shaX_buf {
+    uint8_t       state[8 + SPX_SHAX_OUTPUT_BYTES];
+    unsigned char carry[SPX_SHAX_BLOCK_BYTES];
+    size_t        carry_len;
+};
+
+static void shaX_buf_init(struct shaX_buf *b)
+{
+    shaX_inc_init(b->state);
+    b->carry_len = 0;
+}
+
+static void shaX_buf_absorb(struct shaX_buf *b,
+                            const unsigned char *in, size_t inlen)
+{
+    /* Top up the carry to a full block first, if it isn't empty. */
+    if (b->carry_len) {
+        size_t fill = SPX_SHAX_BLOCK_BYTES - b->carry_len;
+        if (inlen < fill) {
+            memcpy(b->carry + b->carry_len, in, inlen);
+            b->carry_len += inlen;
+            return;
+        }
+        memcpy(b->carry + b->carry_len, in, fill);
+        shaX_inc_blocks(b->state, b->carry, 1);
+        in    += fill;
+        inlen -= fill;
+        b->carry_len = 0;
+    }
+
+    /* Feed as many whole blocks as we can directly from the input. */
+    size_t full = inlen / SPX_SHAX_BLOCK_BYTES;
+    if (full) {
+        shaX_inc_blocks(b->state, in, full);
+        in    += full * SPX_SHAX_BLOCK_BYTES;
+        inlen -= full * SPX_SHAX_BLOCK_BYTES;
+    }
+
+    /* Stash any sub-block tail in the carry. */
+    if (inlen) {
+        memcpy(b->carry, in, inlen);
+        b->carry_len = inlen;
+    }
+}
+
+static void shaX_buf_finalize(unsigned char *out, struct shaX_buf *b,
+                              const unsigned char *m, unsigned long long mlen)
+{
+    shaX_buf_absorb(b, m, (size_t)mlen);
+    shaX_inc_finalize(out, b->state, b->carry, b->carry_len);
+}
+
 /**
  * Computes the message-dependent randomness R, using a secret seed as a key
  * for HMAC, and an optional randomization value prefixed to the message.
- * This requires m to have at least SPX_SHAX_BLOCK_BYTES + SPX_N space
- * available in front of the pointer, i.e. before the message to use for the
- * prefix. This is necessary to prevent having to move the message around (and
- * allocate memory for it).
+ *
+ * The `pre` buffer (length `prelen`) is absorbed between `optrand` and `m`;
+ * it is used by the FIPS-205 external interfaces to inject the
+ * domain-separator byte and context string.
  */
 void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
+                        const unsigned char *pre, size_t prelen,
                         const unsigned char *m, unsigned long long mlen,
                         const spx_ctx *ctx)
 {
     (void)ctx;
 
     unsigned char buf[SPX_SHAX_BLOCK_BYTES + SPX_SHAX_OUTPUT_BYTES];
-    uint8_t state[8 + SPX_SHAX_OUTPUT_BYTES];
+    struct shaX_buf b;
     int i;
 
 #if SPX_N > SPX_SHAX_BLOCK_BYTES
     #error "Currently only supports SPX_N of at most SPX_SHAX_BLOCK_BYTES"
 #endif
 
-    /* This implements HMAC-SHA */
+    /* HMAC inner: H(ipad-keyed-block || optrand || pre || m). */
     for (i = 0; i < SPX_N; i++) {
         buf[i] = 0x36 ^ sk_prf[i];
     }
     memset(buf + SPX_N, 0x36, SPX_SHAX_BLOCK_BYTES - SPX_N);
 
-    shaX_inc_init(state);
-    shaX_inc_blocks(state, buf, 1);
-
-    memcpy(buf, optrand, SPX_N);
-
-    /* If optrand + message cannot fill up an entire block */
-    if (SPX_N + mlen < SPX_SHAX_BLOCK_BYTES) {
-        memcpy(buf + SPX_N, m, mlen);
-        shaX_inc_finalize(buf + SPX_SHAX_BLOCK_BYTES, state,
-                            buf, mlen + SPX_N);
+    shaX_buf_init(&b);
+    shaX_buf_absorb(&b, buf, SPX_SHAX_BLOCK_BYTES);
+    shaX_buf_absorb(&b, optrand, SPX_N);
+    if (prelen) {
+        shaX_buf_absorb(&b, pre, prelen);
     }
-    /* Otherwise first fill a block, so that finalize only uses the message */
-    else {
-        memcpy(buf + SPX_N, m, SPX_SHAX_BLOCK_BYTES - SPX_N);
-        shaX_inc_blocks(state, buf, 1);
+    shaX_buf_finalize(buf + SPX_SHAX_BLOCK_BYTES, &b, m, mlen);
 
-        m += SPX_SHAX_BLOCK_BYTES - SPX_N;
-        mlen -= SPX_SHAX_BLOCK_BYTES - SPX_N;
-        shaX_inc_finalize(buf + SPX_SHAX_BLOCK_BYTES, state, m, mlen);
-    }
-
+    /* HMAC outer: H(opad-keyed-block || inner-digest). */
     for (i = 0; i < SPX_N; i++) {
         buf[i] = 0x5c ^ sk_prf[i];
     }
@@ -118,9 +172,14 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
  * Computes the message hash using R, the public key, and the message.
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
+ *
+ * The `pre` buffer (length `prelen`) is absorbed between PK and `m`; it is
+ * used by the FIPS-205 external interfaces to inject the domain-separator
+ * byte and context string.
  */
 void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
+                  const unsigned char *pre, size_t prelen,
                   const unsigned char *m, unsigned long long mlen,
                   const spx_ctx *ctx)
 {
@@ -133,41 +192,21 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
     unsigned char seed[2*SPX_N + SPX_SHAX_OUTPUT_BYTES];
 
-    /* Round to nearest multiple of SPX_SHAX_BLOCK_BYTES */
-#if (SPX_SHAX_BLOCK_BYTES & (SPX_SHAX_BLOCK_BYTES-1)) != 0
-    #error "Assumes that SPX_SHAX_BLOCK_BYTES is a power of 2"
-#endif
-#define SPX_INBLOCKS (((SPX_N + SPX_PK_BYTES + SPX_SHAX_BLOCK_BYTES - 1) & \
-                        -SPX_SHAX_BLOCK_BYTES) / SPX_SHAX_BLOCK_BYTES)
-    unsigned char inbuf[SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES];
-
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
-    uint8_t state[8 + SPX_SHAX_OUTPUT_BYTES];
+    struct shaX_buf b;
 
-    shaX_inc_init(state);
+    shaX_buf_init(&b);
 
-    // seed: SHA-X(R ‖ PK.seed ‖ PK.root ‖ M)
-    memcpy(inbuf, R, SPX_N);
-    memcpy(inbuf + SPX_N, pk, SPX_PK_BYTES);
-
-    /* If R + pk + message cannot fill up an entire block */
-    if (SPX_N + SPX_PK_BYTES + mlen < SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES) {
-        memcpy(inbuf + SPX_N + SPX_PK_BYTES, m, mlen);
-        shaX_inc_finalize(seed + 2*SPX_N, state, inbuf, SPX_N + SPX_PK_BYTES + mlen);
+    /* seed: SHA-X(R ‖ PK.seed ‖ PK.root ‖ pre ‖ M) */
+    shaX_buf_absorb(&b, R,  SPX_N);
+    shaX_buf_absorb(&b, pk, SPX_PK_BYTES);
+    if (prelen) {
+        shaX_buf_absorb(&b, pre, prelen);
     }
-    /* Otherwise first fill a block, so that finalize only uses the message */
-    else {
-        memcpy(inbuf + SPX_N + SPX_PK_BYTES, m,
-               SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES - SPX_N - SPX_PK_BYTES);
-        shaX_inc_blocks(state, inbuf, SPX_INBLOCKS);
+    shaX_buf_finalize(seed + 2*SPX_N, &b, m, mlen);
 
-        m += SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
-        mlen -= SPX_INBLOCKS * SPX_SHAX_BLOCK_BYTES - SPX_N - SPX_PK_BYTES;
-        shaX_inc_finalize(seed + 2*SPX_N, state, m, mlen);
-    }
-
-    // H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed)
+    /* H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed) */
     memcpy(seed, R, SPX_N);
     memcpy(seed + SPX_N, pk, SPX_N);
 
