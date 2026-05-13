@@ -1,0 +1,45 @@
+shake-avx2/test/benchmark.c
+  b4d0d4a5685a695c 140,143
+ref/PQCgenKAT_sign.c
+  b4d0d4a5685a695c 125,133
+ref/hash.h
+  b4d0d4a5685a695c 4,16-21,25,32
+ref/hash_sha2.c
+  b4d0d4a5685a695c 58-122,126-129,133,140,147,153-157,159,161,175-178,182,197,199,201-205,207,209
+ref/test/spx.c
+  b4d0d4a5685a695c 43,55,80,92,106
+ref/hash_shake.c
+  b4d0d4a5685a695c 35-38,42,52-54,64-67,71,89-91
+ref/sign.c
+  b4d0d4a5685a695c 93-95,97-101,131,133-134,164-182,184-200,204-206,209-211,215-216,220,222-225,254,256,303-319,325,329,333-337,345-346,350,363-364
+ref/api.h
+  b4d0d4a5685a695c 52-54,57-59,62,68,73-82,85,88-99,102-103,107,115
+sha2-avx2/test/benchmark.c
+  b4d0d4a5685a695c 140,143
+ref/test/benchmark.c
+  b4d0d4a5685a695c 150,153
+acvp.py
+  b4d0d4a5685a695c 13-18,85-90,93,97-100,103-105,164-179,181-183,190-193,195-196,202-211,213,219-225,309,322-326,361,371-375
+shake-a64/test/benchmark.c
+  b4d0d4a5685a695c 154,157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "1120d9e7dc0702d7629cee015b229d6975429a3c",
+  "prompts": {
+    "b4d0d4a5685a695c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1df25b3fdffeUIMQGQz256I9cn",
+        "model": "anthropic/claude-opus-4-7"
+      },
+      "human_author": "Bas Westerbaan",
+      "messages": [],
+      "total_additions": 345,
+      "total_deletions": 119,
+      "accepted_lines": 345,
+      "overriden_lines": 0
+    }
+  }
+}
