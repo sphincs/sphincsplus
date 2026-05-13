@@ -1,0 +1,23 @@
+acvp.py
+  b4d0d4a5685a695c 317-318,329-330,568
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "7328a14d210b8acf6dc460b05a55c1ed25306eed",
+  "prompts": {
+    "b4d0d4a5685a695c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1df25b3fdffeUIMQGQz256I9cn",
+        "model": "anthropic/claude-opus-4-7"
+      },
+      "human_author": "Bas Westerbaan",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 10,
+      "accepted_lines": 163,
+      "overriden_lines": 0
+    }
+  }
+}
