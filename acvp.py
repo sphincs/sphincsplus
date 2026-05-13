@@ -5,7 +5,7 @@ Run the NIST ACVP SLH-DSA (FIPS-205) test vectors against this implementation.
 For each (implementation, parameter-set) combination supported by FIPS-205
 (SHA2/SHAKE, simple thash), this script:
 
-  1. builds <impl>/libspx.so with PARAMS=<params> THASH=simple
+  1. builds <impl>/libspx.so with PARAMS=<params>
   2. loads it via cffi using a small subset of crypto_sign_* declarations
   3. exercises the keyGen, sigGen, and sigVer ACVP test vectors found in
      ./acvp/
@@ -106,7 +106,7 @@ def build_libspx(impl, params, bindir, jobs=1):
     params) gets its own file. Callers must serialise builds per-impl-dir.
     """
     impl_dir = ROOT / impl
-    overrides = [f"PARAMS={params}", "THASH=simple"]
+    overrides = [f"PARAMS={params}"]
     subprocess.run(
         ["make", "-C", str(impl_dir), "clean", *overrides],
         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,

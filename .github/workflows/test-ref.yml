@@ -19,18 +19,15 @@ jobs:
         option:
           - s
           - f
-        thash:
-          - simple
-          - robust
     steps:
       - uses: actions/checkout@v1
       - name: Run make
         run: |
-          make -C ref HASH=${{ matrix.hash }} THASH=${{ matrix.thash }} clean
-          make -C ref HASH=${{ matrix.hash }} THASH=${{ matrix.thash }} PARAMS=sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }} tests
-          make -C ref HASH=${{ matrix.hash }} THASH=${{ matrix.thash }} PARAMS=sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }} test
-          make -C ref THASH=${{ matrix.thash }} PQCgenKAT_sign
+          make -C ref HASH=${{ matrix.hash }} clean
+          make -C ref HASH=${{ matrix.hash }} PARAMS=sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }} tests
+          make -C ref HASH=${{ matrix.hash }} PARAMS=sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }} test
+          make -C ref PQCgenKAT_sign
       - name: Run PQCgenKAT_sign
-        run: python3 vectors.py sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }}-${{ matrix.thash }} ref
+        run: python3 vectors.py sphincs-${{ matrix.hash }}-${{ matrix.size }}${{ matrix.option }}-simple ref
 
 #  vim: set ft=yaml ts=2 sw=2 et :

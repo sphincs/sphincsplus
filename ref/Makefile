@@ -1,5 +1,4 @@
 PARAMS = sphincs-sha2-128f
-THASH = robust
 
 CC=/usr/bin/gcc
 CFLAGS=-Wall -Wextra -Wpedantic -O3 -std=c99 -Wconversion -Wmissing-prototypes -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
@@ -8,11 +7,11 @@ SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c util
 HEADERS = params.h address.h randombytes.h merkle.h wots.h wotsx1.h utils.h utilsx1.h fors.h api.h  hash.h thash.h
 
 ifneq (,$(findstring shake,$(PARAMS)))
-	SOURCES += fips202.c hash_shake.c thash_shake_$(THASH).c
+	SOURCES += fips202.c hash_shake.c thash_shake_simple.c
 	HEADERS += fips202.h
 endif
 ifneq (,$(findstring sha2,$(PARAMS)))
-	SOURCES += sha2.c hash_sha2.c thash_sha2_$(THASH).c
+	SOURCES += sha2.c hash_sha2.c thash_sha2_simple.c
 	HEADERS += sha2.h
 endif
 
