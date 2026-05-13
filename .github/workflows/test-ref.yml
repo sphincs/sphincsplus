@@ -12,7 +12,6 @@ jobs:
         hash:
           - sha2
           - shake
-          - haraka
         size:
           - 128
           - 192

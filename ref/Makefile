@@ -1,4 +1,4 @@
-PARAMS = sphincs-haraka-128f
+PARAMS = sphincs-sha2-128f
 THASH = robust
 
 CC=/usr/bin/gcc
@@ -10,10 +10,6 @@ HEADERS = params.h address.h randombytes.h merkle.h wots.h wotsx1.h utils.h util
 ifneq (,$(findstring shake,$(PARAMS)))
 	SOURCES += fips202.c hash_shake.c thash_shake_$(THASH).c
 	HEADERS += fips202.h
-endif
-ifneq (,$(findstring haraka,$(PARAMS)))
-	SOURCES += haraka.c hash_haraka.c thash_haraka_$(THASH).c
-	HEADERS += haraka.h
 endif
 ifneq (,$(findstring sha2,$(PARAMS)))
 	SOURCES += sha2.c hash_sha2.c thash_sha2_$(THASH).c
@@ -53,9 +49,6 @@ test/benchmark: test/benchmark.c test/cycles.c $(SOURCES) $(HEADERS)
 
 test/%: test/%.c $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)
-
-test/haraka: test/haraka.c $(filter-out haraka.c,$(SOURCES)) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(filter-out haraka.c,$(SOURCES)) $< $(LDLIBS)
 
 test/%.exec: test/%
 	@$<

@@ -1,1 +1,0 @@
-../shake-avx2/wots.c

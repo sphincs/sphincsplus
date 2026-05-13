@@ -6,8 +6,7 @@ import sys
 from subprocess import DEVNULL, run
 
 implementations = [
-                   ('ref', ['shake', 'sha2', 'haraka']),
-                   ('haraka-aesni', ['haraka']),
+                   ('ref', ['shake', 'sha2']),
                    ('shake-avx2', ['shake']),
                    ('sha2-avx2', ['sha2']),
                    ]

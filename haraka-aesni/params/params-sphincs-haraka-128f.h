@@ -1,1 +1,0 @@
-../../ref/params/params-sphincs-haraka-128f.h
