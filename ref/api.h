@@ -99,6 +99,37 @@ int crypto_sign_verify_internal(const uint8_t *sig, size_t siglen,
                                 const uint8_t *pk);
 
 /**
+ * HashSLH-DSA signing (FIPS-205 §10.2.2). Caller supplies the pre-hashed
+ * message `phm` (length `phmlen`) and the DER-encoded OID of the pre-hash
+ * function. Returns -1 if ctxlen > 255 or the assembled prefix is too long.
+ */
+int crypto_sign_signature_prehash(uint8_t *sig, size_t *siglen,
+                                  const uint8_t *phm, size_t phmlen,
+                                  const uint8_t *oid, size_t oidlen,
+                                  const uint8_t *ctx, size_t ctxlen,
+                                  const uint8_t *sk);
+
+/**
+ * Derandomised variant of crypto_sign_signature_prehash.
+ */
+int crypto_sign_signature_prehash_derand(uint8_t *sig, size_t *siglen,
+                                         const uint8_t *phm, size_t phmlen,
+                                         const uint8_t *oid, size_t oidlen,
+                                         const uint8_t *ctx, size_t ctxlen,
+                                         const uint8_t *sk,
+                                         const uint8_t *addrnd);
+
+/**
+ * HashSLH-DSA verification (FIPS-205 §10.2.2). Caller supplies the pre-hashed
+ * message and the DER-encoded OID of the pre-hash function.
+ */
+int crypto_sign_verify_prehash(const uint8_t *sig, size_t siglen,
+                               const uint8_t *phm, size_t phmlen,
+                               const uint8_t *oid, size_t oidlen,
+                               const uint8_t *ctx, size_t ctxlen,
+                               const uint8_t *pk);
+
+/**
  * Returns an array containing the signature followed by the message, with
  * an explicit context string (NULL/0 for empty).
  */

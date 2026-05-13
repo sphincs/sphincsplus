@@ -216,6 +216,80 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
                                         ctx, ctxlen, sk, addrnd);
 }
 
+/*
+ * Build the FIPS-205 prehash-signing prefix (FIPS-205 §10.2.2 Alg 23):
+ *      0x01 || |ctx| || ctx || OID
+ * into `pre`. The PHM is the message passed to _internal (so the resulting
+ * hashed buffer is `pre || phm` which matches the FIPS-205 M').
+ *
+ * Returns the total length, or -1 if ctxlen > 255 or the assembled prefix
+ * would exceed `cap` bytes.
+ */
+static int build_pre_prehash(uint8_t *pre, size_t cap,
+                             const uint8_t *ctx, size_t ctxlen,
+                             const uint8_t *oid, size_t oidlen)
+{
+    if (ctxlen > 255) {
+        return -1;
+    }
+    size_t total = 2 + ctxlen + oidlen;
+    if (total > cap) {
+        return -1;
+    }
+    pre[0] = 0x01;
+    pre[1] = (uint8_t)ctxlen;
+    if (ctxlen) {
+        memcpy(pre + 2, ctx, ctxlen);
+    }
+    if (oidlen) {
+        memcpy(pre + 2 + ctxlen, oid, oidlen);
+    }
+    return (int)total;
+}
+
+/**
+ * Derandomised variant of crypto_sign_signature_prehash. Caller supplies the
+ * pre-hashed message `phm` (the output of one of the FIPS-205 §10.2.2
+ * pre-hash functions), its DER-encoded OID, and an explicit context string.
+ */
+int crypto_sign_signature_prehash_derand(uint8_t *sig, size_t *siglen,
+                                         const uint8_t *phm, size_t phmlen,
+                                         const uint8_t *oid, size_t oidlen,
+                                         const uint8_t *ctx, size_t ctxlen,
+                                         const uint8_t *sk,
+                                         const uint8_t *addrnd)
+{
+    /* The prefix is 0x01 || |ctx| || ctx || OID. ctx is at most 255 bytes.
+       DER short-form OIDs are at most 1 (tag) + 1 (length) + 127 (content)
+       = 129 bytes; the FIPS-205 OIDs are 11 bytes each. We size for ctx +
+       any DER short-form OID with comfortable headroom. Callers using long
+       enough OIDs will get a -1 from build_pre_prehash. */
+    uint8_t pre[2 + 255 + 256];
+    int prelen = build_pre_prehash(pre, sizeof pre, ctx, ctxlen, oid, oidlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_signature_internal(sig, siglen, phm, phmlen,
+                                          pre, (size_t)prelen, sk, addrnd);
+}
+
+/**
+ * HashSLH-DSA: sign a pre-hashed message. See crypto_sign_signature_prehash_derand
+ * for argument semantics. Draws SPX_N bytes of randomness via randombytes().
+ */
+int crypto_sign_signature_prehash(uint8_t *sig, size_t *siglen,
+                                  const uint8_t *phm, size_t phmlen,
+                                  const uint8_t *oid, size_t oidlen,
+                                  const uint8_t *ctx, size_t ctxlen,
+                                  const uint8_t *sk)
+{
+    unsigned char addrnd[SPX_N];
+    randombytes(addrnd, SPX_N);
+    return crypto_sign_signature_prehash_derand(sig, siglen, phm, phmlen,
+                                                oid, oidlen,
+                                                ctx, ctxlen, sk, addrnd);
+}
+
 /**
  * Internal core of crypto_sign_verify: verifies the buffer (pre || m).
  */
@@ -316,6 +390,26 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
         return -1;
     }
     return crypto_sign_verify_internal(sig, siglen, m, mlen,
+                                       pre, (size_t)prelen, pk);
+}
+
+/**
+ * Verifies a HashSLH-DSA detached signature (FIPS-205 §10.2.2). Caller
+ * supplies the pre-hashed message `phm` and its DER-encoded OID.
+ */
+int crypto_sign_verify_prehash(const uint8_t *sig, size_t siglen,
+                               const uint8_t *phm, size_t phmlen,
+                               const uint8_t *oid, size_t oidlen,
+                               const uint8_t *ctx, size_t ctxlen,
+                               const uint8_t *pk)
+{
+    /* See crypto_sign_signature_prehash_derand for the sizing rationale. */
+    uint8_t pre[2 + 255 + 256];
+    int prelen = build_pre_prehash(pre, sizeof pre, ctx, ctxlen, oid, oidlen);
+    if (prelen < 0) {
+        return -1;
+    }
+    return crypto_sign_verify_internal(sig, siglen, phm, phmlen,
                                        pre, (size_t)prelen, pk);
 }
 

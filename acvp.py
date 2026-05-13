@@ -14,8 +14,8 @@ The "internal" ACVP test groups exercise crypto_sign_seed_keypair,
 crypto_sign_signature_internal, and crypto_sign_verify_internal directly.
 The "external" (pure) groups call crypto_sign_signature_derand and
 crypto_sign_verify with the FIPS-205 (0x00 || |ctx| || ctx) prefix.
-"preHash" / HashSLH-DSA groups are not yet implemented and are recorded
-as expected-fail.
+The "preHash" (HashSLH-DSA) groups pre-hash the message in Python and
+call crypto_sign_signature_prehash_derand / crypto_sign_verify_prehash.
 
 Usage:
     ./acvp.py                                  # all (impl, params) combos
@@ -26,6 +26,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import multiprocessing
 import shutil
@@ -103,7 +104,41 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen,
                        const uint8_t *m, size_t mlen,
                        const uint8_t *ctx, size_t ctxlen,
                        const uint8_t *pk);
+
+int crypto_sign_signature_prehash_derand(uint8_t *sig, size_t *siglen,
+                                         const uint8_t *phm, size_t phmlen,
+                                         const uint8_t *oid, size_t oidlen,
+                                         const uint8_t *ctx, size_t ctxlen,
+                                         const uint8_t *sk,
+                                         const uint8_t *addrnd);
+
+int crypto_sign_verify_prehash(const uint8_t *sig, size_t siglen,
+                               const uint8_t *phm, size_t phmlen,
+                               const uint8_t *oid, size_t oidlen,
+                               const uint8_t *ctx, size_t ctxlen,
+                               const uint8_t *pk);
 """
+
+# Map ACVP hashAlg strings to (pre-hash function, DER-encoded OID).
+# OIDs are 11-byte DER-encoded ASN.1 OBJECT IDENTIFIERs as specified in
+# FIPS-205 §10.2.2 / IANA. All begin with 06 09 60 86 48 01 65 03 04 02
+# (object identifier, 9-byte body, joint-iso-itu-t.country.us.gov.csor.
+# nistalgorithm.hashalgs) and end with a single byte for the specific hash.
+# FIPS-205 SHAKE PHM output lengths are fixed (Table 3).
+PREHASH = {
+    "SHA2-224":     (lambda m: hashlib.sha224(m).digest(),               bytes.fromhex("0609608648016503040204")),
+    "SHA2-256":     (lambda m: hashlib.sha256(m).digest(),               bytes.fromhex("0609608648016503040201")),
+    "SHA2-384":     (lambda m: hashlib.sha384(m).digest(),               bytes.fromhex("0609608648016503040202")),
+    "SHA2-512":     (lambda m: hashlib.sha512(m).digest(),               bytes.fromhex("0609608648016503040203")),
+    "SHA2-512/224": (lambda m: hashlib.new("sha512_224", m).digest(),    bytes.fromhex("0609608648016503040205")),
+    "SHA2-512/256": (lambda m: hashlib.new("sha512_256", m).digest(),    bytes.fromhex("0609608648016503040206")),
+    "SHA3-224":     (lambda m: hashlib.sha3_224(m).digest(),             bytes.fromhex("0609608648016503040207")),
+    "SHA3-256":     (lambda m: hashlib.sha3_256(m).digest(),             bytes.fromhex("0609608648016503040208")),
+    "SHA3-384":     (lambda m: hashlib.sha3_384(m).digest(),             bytes.fromhex("0609608648016503040209")),
+    "SHA3-512":     (lambda m: hashlib.sha3_512(m).digest(),             bytes.fromhex("060960864801650304020A")),
+    "SHAKE-128":    (lambda m: hashlib.shake_128(m).digest(32),          bytes.fromhex("060960864801650304020B")),
+    "SHAKE-256":    (lambda m: hashlib.shake_256(m).digest(64),          bytes.fromhex("060960864801650304020C")),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -225,6 +260,45 @@ class SlhDsa:
         )
         return rc == 0
 
+    def sign_prehash_derand(self, phm, oid, ctx, sk, addrnd):
+        """Call crypto_sign_signature_prehash_derand. Matches FIPS-205
+        §10.2.2 HashSLH-DSA (derandomised)."""
+        assert len(sk) == self.sk_bytes
+        assert len(addrnd) == self.n_bytes
+        sig = self.ffi.new(f"unsigned char[{self.sig_bytes}]")
+        siglen = self.ffi.new("size_t *")
+        phm_buf = self.ffi.new(f"unsigned char[{max(len(phm), 1)}]",
+                               phm if phm else b"\x00")
+        oid_buf = self.ffi.new(f"unsigned char[{len(oid)}]", oid)
+        if ctx:
+            ctx_buf = self.ffi.new(f"unsigned char[{len(ctx)}]", ctx)
+        else:
+            ctx_buf = self.ffi.NULL
+        rc = self.lib.crypto_sign_signature_prehash_derand(
+            sig, siglen, phm_buf, len(phm), oid_buf, len(oid),
+            ctx_buf, len(ctx), sk, addrnd
+        )
+        if rc != 0:
+            raise RuntimeError(f"crypto_sign_signature_prehash_derand returned {rc}")
+        return bytes(self.ffi.buffer(sig, siglen[0]))
+
+    def verify_prehash(self, phm, sig, oid, ctx, pk):
+        assert len(pk) == self.pk_bytes
+        sig_buf = self.ffi.new(f"unsigned char[{max(len(sig), 1)}]",
+                               sig if sig else b"\x00")
+        phm_buf = self.ffi.new(f"unsigned char[{max(len(phm), 1)}]",
+                               phm if phm else b"\x00")
+        oid_buf = self.ffi.new(f"unsigned char[{len(oid)}]", oid)
+        if ctx:
+            ctx_buf = self.ffi.new(f"unsigned char[{len(ctx)}]", ctx)
+        else:
+            ctx_buf = self.ffi.NULL
+        rc = self.lib.crypto_sign_verify_prehash(
+            sig_buf, len(sig), phm_buf, len(phm), oid_buf, len(oid),
+            ctx_buf, len(ctx), pk
+        )
+        return rc == 0
+
 
 # ---------------------------------------------------------------------------
 # ACVP vectors
@@ -268,12 +342,6 @@ def _is_prehash(group):
     return group.get("preHash", "none") == "preHash"
 
 
-def _xfail_reason(group):
-    if _is_prehash(group):
-        return "HashSLH-DSA (preHash) not implemented yet"
-    return None
-
-
 def _load_vectors(name):
     p = ACVP_DIR / f"{name}-internalProjection.json"
     if not p.is_file():
@@ -304,9 +372,9 @@ def run_siggen_for(slh, pset, vectors, limit):
     for group in vectors["testGroups"]:
         if group["parameterSet"] != pset:
             continue
-        xfail = _xfail_reason(group)
         deterministic = group["deterministic"]
         internal = _is_internal(group)
+        prehash = _is_prehash(group)
         for t in (group["tests"][:limit] if limit else group["tests"]):
             sk = _hex(t["sk"])
             msg = _hex(t.get("message", ""))
@@ -321,34 +389,30 @@ def run_siggen_for(slh, pset, vectors, limit):
             try:
                 if internal:
                     sig = slh.sign_internal(msg, sk, addrnd)
+                elif prehash:
+                    ph, oid = PREHASH[t["hashAlg"]]
+                    phm = ph(msg)
+                    ctx = _hex(t.get("context", ""))
+                    sig = slh.sign_prehash_derand(phm, oid, ctx, sk, addrnd)
                 else:
                     ctx = _hex(t.get("context", ""))
                     sig = slh.sign_derand(msg, ctx, sk, addrnd)
                 ok = sig == sig_exp
             except Exception as exc:
-                if xfail:
-                    res.xfailed += 1
-                else:
-                    res.failed += 1
-                    res.failures.append(f"sigGen {pset} tc={t['tcId']}: {exc!r}")
+                res.failed += 1
+                res.failures.append(f"sigGen {pset} tc={t['tcId']}: {exc!r}")
                 continue
 
-            if xfail:
-                if ok:
-                    res.xpassed += 1
-                else:
-                    res.xfailed += 1
+            if ok:
+                res.passed += 1
             else:
-                if ok:
-                    res.passed += 1
-                else:
-                    res.failed += 1
-                    diff_idx = next((i for i, (a, b) in enumerate(zip(sig, sig_exp)) if a != b),
-                                    min(len(sig), len(sig_exp)))
-                    res.failures.append(
-                        f"sigGen {pset} tc={t['tcId']}: sig mismatch at byte {diff_idx} "
-                        f"(got {len(sig)}, expected {len(sig_exp)})"
-                    )
+                res.failed += 1
+                diff_idx = next((i for i, (a, b) in enumerate(zip(sig, sig_exp)) if a != b),
+                                min(len(sig), len(sig_exp)))
+                res.failures.append(
+                    f"sigGen {pset} tc={t['tcId']}: sig mismatch at byte {diff_idx} "
+                    f"(got {len(sig)}, expected {len(sig_exp)})"
+                )
     return res
 
 
@@ -357,19 +421,21 @@ def run_sigver_for(slh, pset, vectors, limit):
     for group in vectors["testGroups"]:
         if group["parameterSet"] != pset:
             continue
-        xfail = _xfail_reason(group)
         internal = _is_internal(group)
+        prehash = _is_prehash(group)
         for t in (group["tests"][:limit] if limit else group["tests"]):
             pk = _hex(t["pk"])
             sig = _hex(t["signature"])
             msg = _hex(t.get("message", ""))
             expected = bool(t["testPassed"])
-            if xfail:
-                res.xfailed += 1
-                continue
             try:
                 if internal:
                     ok = slh.verify_internal(msg, sig, pk)
+                elif prehash:
+                    ph, oid = PREHASH[t["hashAlg"]]
+                    phm = ph(msg)
+                    ctx = _hex(t.get("context", ""))
+                    ok = slh.verify_prehash(phm, sig, oid, ctx, pk)
                 else:
                     ctx = _hex(t.get("context", ""))
                     ok = slh.verify(msg, sig, ctx, pk)
