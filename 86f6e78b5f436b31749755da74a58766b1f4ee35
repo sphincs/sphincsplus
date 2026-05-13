@@ -1,0 +1,29 @@
+acvp/sigGen-internalProjection.json
+  b4d0d4a5685a695c 1-7113
+acvp/keyGen-internalProjection.json
+  b4d0d4a5685a695c 1-1173
+acvp/sigVer-internalProjection.json
+  b4d0d4a5685a695c 1-6717
+acvp.py
+  b4d0d4a5685a695c 1-464
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "86f6e78b5f436b31749755da74a58766b1f4ee35",
+  "prompts": {
+    "b4d0d4a5685a695c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1df25b3fdffeUIMQGQz256I9cn",
+        "model": "anthropic/claude-opus-4-7"
+      },
+      "human_author": "Bas Westerbaan",
+      "messages": [],
+      "total_additions": 15467,
+      "total_deletions": 0,
+      "accepted_lines": 15467,
+      "overriden_lines": 0
+    }
+  }
+}
