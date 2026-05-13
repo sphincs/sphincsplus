@@ -1,5 +1,12 @@
 # From https://github.com/bwesterb/armed-keccak
 
+/* The Keccak round below uses eor3 / rax1 / xar / bcax, which live in the
+ * optional FEAT_SHA3 extension. Apple's assembler enables it by default;
+ * GNU `as` needs to be told. */
+#if !defined(__APPLE__)
+.arch armv8.2-a+sha3
+#endif
+
 .macro round
     # Execute theta, but without xoring into the state yet.
     # Compute parities p[i] = a[i] ^ a[5+i] ^ ... ^ a[20+i].
