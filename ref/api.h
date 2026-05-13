@@ -55,6 +55,16 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
                           const uint8_t *m, size_t mlen, const uint8_t *sk);
 
 /**
+ * Derandomized variant of crypto_sign_signature: the caller supplies SPX_N
+ * bytes of additional randomness `addrnd` in place of the randombytes() draw
+ * that crypto_sign_signature() does internally.
+ */
+int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
+                                 const uint8_t *m, size_t mlen,
+                                 const uint8_t *sk,
+                                 const uint8_t *addrnd);
+
+/**
  * Verifies a detached signature and message under a given public key.
  */
 int crypto_sign_verify(const uint8_t *sig, size_t siglen,

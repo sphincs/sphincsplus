@@ -90,17 +90,21 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 }
 
 /**
- * Returns an array containing a detached signature.
+ * Returns an array containing a detached signature, using caller-supplied
+ * randomness `addrnd` (SPX_N bytes) in place of the randombytes() draw that
+ * the non-derandomized API would do internally. This is the explicit derand
+ * variant of crypto_sign_signature(); the two are otherwise identical.
  */
-int crypto_sign_signature(uint8_t *sig, size_t *siglen,
-                          const uint8_t *m, size_t mlen, const uint8_t *sk)
+int crypto_sign_signature_derand(uint8_t *sig, size_t *siglen,
+                                 const uint8_t *m, size_t mlen,
+                                 const uint8_t *sk,
+                                 const uint8_t *addrnd)
 {
     spx_ctx ctx;
 
     const unsigned char *sk_prf = sk + SPX_N;
     const unsigned char *pk = sk + 2*SPX_N;
 
-    unsigned char optrand[SPX_N];
     unsigned char mhash[SPX_FORS_MSG_BYTES];
     unsigned char root[SPX_N];
     uint32_t i;
@@ -119,12 +123,12 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     set_type(wots_addr, SPX_ADDR_TYPE_WOTS);
     set_type(tree_addr, SPX_ADDR_TYPE_HASHTREE);
 
-    /* Optionally, signing can be made non-deterministic using optrand.
-       This can help counter side-channel attacks that would benefit from
-       getting a large number of traces when the signer uses the same nodes. */
-    randombytes(optrand, SPX_N);
+    /* The caller-supplied addrnd takes the place of the randombytes() draw
+       that crypto_sign_signature() does internally. It can help counter
+       side-channel attacks that would benefit from getting a large number
+       of traces when the signer uses the same nodes. */
     /* Compute the digest randomization value. */
-    gen_message_random(sig, sk_prf, optrand, m, mlen, &ctx);
+    gen_message_random(sig, sk_prf, addrnd, m, mlen, &ctx);
 
     /* Derive the message digest and leaf index from R, PK and M. */
     hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, &ctx);
@@ -155,6 +159,18 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     *siglen = SPX_BYTES;
 
     return 0;
+}
+
+/**
+ * Returns an array containing a detached signature. Draws `SPX_N` bytes of
+ * randomness via randombytes() and forwards to crypto_sign_signature_derand().
+ */
+int crypto_sign_signature(uint8_t *sig, size_t *siglen,
+                          const uint8_t *m, size_t mlen, const uint8_t *sk)
+{
+    unsigned char addrnd[SPX_N];
+    randombytes(addrnd, SPX_N);
+    return crypto_sign_signature_derand(sig, siglen, m, mlen, sk, addrnd);
 }
 
 /**
