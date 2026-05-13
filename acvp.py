@@ -314,25 +314,20 @@ class SlhDsa:
 @dataclass
 class PhaseResult:
     name: str
-    passed:  int = 0
-    failed:  int = 0
-    xfailed: int = 0
-    xpassed: int = 0
+    passed: int = 0
+    failed: int = 0
     failures: list = field(default_factory=list)
 
     def __iadd__(self, other):
         self.passed   += other.passed
         self.failed   += other.failed
-        self.xfailed  += other.xfailed
-        self.xpassed  += other.xpassed
         self.failures += other.failures
         return self
 
     def summary(self):
         bits = [f"{self.passed} pass"]
-        if self.failed:  bits.append(f"{self.failed} FAIL")
-        if self.xfailed: bits.append(f"{self.xfailed} xfail")
-        if self.xpassed: bits.append(f"{self.xpassed} XPASS")
+        if self.failed:
+            bits.append(f"{self.failed} FAIL")
         return ", ".join(bits)
 
 
@@ -570,7 +565,7 @@ def main():
     print()
     print(f"=== ACVP summary  ({dt:.1f}s, jobs={args.jobs}) ===")
     for name, r in totals.items():
-        if r.passed or r.failed or r.xfailed or r.xpassed:
+        if r.passed or r.failed:
             print(f"  {name:7s}  {r.summary()}")
     if build_errors:
         print()
