@@ -6,13 +6,18 @@ on:
 
 jobs:
   acvp:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        impl:
-          - ref
-          - sha2-avx2
-          - shake-avx2
+        include:
+          - impl: ref
+            runs-on: ubuntu-latest
+          - impl: sha2-avx2
+            runs-on: ubuntu-latest
+          - impl: shake-avx2
+            runs-on: ubuntu-latest
+          - impl: shake-a64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v1
       - name: Install cffi
