@@ -45,6 +45,9 @@ benchmark: $(BENCHMARK:=.exec)
 PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
+libspx.so: $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -fPIC -shared -o $@ $(SOURCES)
+
 test/benchmark: test/benchmark.c test/cycles.c $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ test/cycles.c $(SOURCES) $< $(LDLIBS)
 
@@ -63,3 +66,4 @@ clean:
 	-$(RM) PQCgenKAT_sign
 	-$(RM) PQCsignKAT_*.rsp
 	-$(RM) PQCsignKAT_*.req
+	-$(RM) libspx.so
