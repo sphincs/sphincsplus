@@ -1,0 +1,23 @@
+.github/workflows/test-acvp.yml
+  b4d0d4a5685a695c 10-15,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "2e13daba722be738a2e9e4dc9815de2b3aa01c5e",
+  "prompts": {
+    "b4d0d4a5685a695c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1df25b3fdffeUIMQGQz256I9cn",
+        "model": "anthropic/claude-opus-4-7"
+      },
+      "human_author": "Bas Westerbaan",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 1,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
