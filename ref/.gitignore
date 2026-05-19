@@ -3,3 +3,5 @@ test/*
 PQCsignKAT_*.rsp
 PQCsignKAT_*.req
 PQCgenKAT_sign
+!test/input.txt
+test/output.txt

@@ -1,10 +1,23 @@
-PARAMS = sphincs-haraka-128f
-THASH = robust
+PARAMS = sphincs-sha2-128f
+THASH = simple
 
-CC=/usr/bin/gcc
-CFLAGS=-Wall -Wextra -Wpedantic -O3 -std=c99 -Wconversion -Wmissing-prototypes -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS)
+CC = gcc
+CFLAGS= -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wredundant-decls \
+	-Wshadow -Wpointer-arith -Wconversion -O3 -DPARAMS=$(PARAMS) $(EXTRA_CFLAGS) -z noexecstack
+ifeq ($(THASH),robust)
+	CFLAGS += -DSPX_ROBUST=1
+endif
+LDLIBS = -lcrypto
 
-SOURCES =          address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c
+# OS-specific adjustments for randombytes
+ifeq ($(OS),Windows_NT)
+    RANDOMBYTES_SRC = randombytes_win.c
+    LDLIBS += -lbcrypt
+else
+    RANDOMBYTES_SRC = randombytes.c
+endif
+
+SOURCES =          address.c $(RANDOMBYTES_SRC) merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c
 HEADERS = params.h address.h randombytes.h merkle.h wots.h wotsx1.h utils.h utilsx1.h fors.h api.h  hash.h thash.h
 
 ifneq (,$(findstring shake,$(PARAMS)))
@@ -20,7 +33,8 @@ ifneq (,$(findstring sha2,$(PARAMS)))
 	HEADERS += sha2.h
 endif
 
-DET_SOURCES = $(SOURCES:randombytes.%=rng.%)
+# For deterministic KAT generation, replace randombytes with rng.c
+DET_SOURCES = $(filter-out $(RANDOMBYTES_SRC),$(SOURCES)) rng.c
 DET_HEADERS = $(HEADERS:randombytes.%=rng.%)
 
 TESTS =         test/fors \
@@ -29,6 +43,9 @@ TESTS =         test/fors \
 BENCHMARK = test/benchmark
 
 .PHONY: clean test benchmark
+
+test_sphincsplus: test/test_sphincsplus.c $(SOURCES) $(HEADERS) Makefile
+	$(CC) $(CFLAGS) -o test/$@ $(SOURCES) $< $(LDLIBS)
 
 default: PQCgenKAT_sign
 
@@ -42,17 +59,17 @@ benchmarks: $(BENCHMARK)
 
 benchmark: $(BENCHMARK:=.exec)
 
-PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS)
+PQCgenKAT_sign: PQCgenKAT_sign.c $(DET_SOURCES) $(DET_HEADERS) Makefile
 	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
 
-test/benchmark: test/benchmark.c test/cycles.c $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ test/cycles.c $(SOURCES) $< $(LDLIBS)
+test/benchmark: test/benchmark.c test/cycles.c $(DET_SOURCES) $(DET_HEADERS) Makefile
+	$(CC) $(CFLAGS) -o $@ test/cycles.c $(DET_SOURCES) $< $(LDLIBS)
 
-test/%: test/%.c $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(SOURCES) $< $(LDLIBS)
+test/%: test/%.c $(DET_SOURCES) $(DET_HEADERS) Makefile
+	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< $(LDLIBS) 
 
-test/haraka: test/haraka.c $(filter-out haraka.c,$(SOURCES)) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(filter-out haraka.c,$(SOURCES)) $< $(LDLIBS)
+test/haraka: test/haraka.c $(filter-out haraka.c,$(DET_SOURCES)) $(DET_HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(filter-out haraka.c,$(DET_SOURCES)) $< $(LDLIBS)
 
 test/%.exec: test/%
 	@$<

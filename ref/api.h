@@ -6,6 +6,10 @@
 
 #include "params.h"
 
+// define macros
+#define str(s) #s
+#define xstr(s) str(s)
+
 #define CRYPTO_ALGNAME "SPHINCS+"
 
 #define CRYPTO_SECRETKEYBYTES SPX_SK_BYTES
@@ -73,5 +77,23 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen,
 int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
                      const unsigned char *sm, unsigned long long smlen,
                      const unsigned char *pk);
+
+// Timing struct for benchmarking
+typedef struct {
+    double keygen;
+    double sign;
+    double verify;
+    double all;
+    double temp;
+} timing_info_t;
+
+// Expose global timing variable for test aggregation
+extern timing_info_t g_time;
+
+// Print and return timing info
+timing_info_t print_timing_info(void);
+
+// add prototypes
+void run_test(const unsigned char *m, unsigned long long mlen, int test_idx);
 
 #endif
